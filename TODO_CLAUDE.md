@@ -173,7 +173,7 @@ ist.
 
 - [x] `ProjectPicker`: Ordnerdialog, Prüfung auf `project.godot` im gewählten Ordner, klare Meldung falls nicht vorhanden.
 - [x] Projektname aus `project.godot` (`config/name`) lesen und in Titelleiste und Statusleiste anzeigen.
-- [ ] Zuletzt verwendete Projekte (max. 5) in `QSettings` merken; beim Start letztes Projekt anbieten.
+- [x] Zuletzt verwendete Projekte (max. 5) in `QSettings` merken; beim Start letztes Projekt öffnen.
 - [x] Projektwurzel einmalig mit `Path.resolve()` normalisieren und danach nicht mehr ändern.
 
 ### 1.2 Pfadschutz (`path_guard.py`)
@@ -288,7 +288,7 @@ Damit die Clientarbeit nicht auf den Server warten muss, wird zuerst gegen `Fake
 - [ ] `ConnectionMonitor`: Health-Check alle 15 s (bei Fehler häufiger), drei Zustände je Komponente: Lernserver erreichbar · Modell verfügbar · Sitzung aktiv.
 - [x] Ampel in der Statusleiste mit kindgerechtem Tooltip („Der Lernhelfer ist da“ / „Der Lernhelfer macht gerade Pause“).
 - [x] `DiagnosticsPanel` (über Menü „Hilfe → Technische Details“): URL, letzte Fehler, Latenz, Protokollversion, optional Ausgabe von `tailscale status` falls verfügbar.
-- [ ] Bei Verbindungsverlust: Tutor- und Übungsbereich deaktivieren, Editor bleibt voll nutzbar, Eingaben im Chatfeld bleiben erhalten.
+- [x] Bei Verbindungsverlust: Tutor- und Übungsbereich deaktivieren, Editor bleibt voll nutzbar, Eingaben im Chatfeld bleiben erhalten.
 
 **Fertig, wenn:** Client arbeitet gegen den Fake vollständig, und gegen den echten Server laufen Health-Check und eine gestreamte Antwort; Server stoppen während einer Antwort führt zu sauberer Meldung ohne Datenverlust.
 
@@ -313,7 +313,8 @@ Damit die Clientarbeit nicht auf den Server warten muss, wird zuerst gegen `Fake
 - [x] **Level 9 (vorläufig):** Lösungsweg auswählen und begründen.
 - [x] **Level 10 (vorläufig):** eigenes Feature beschreiben und den Plan des Agenten prüfen.
 - [x] Bei falscher Antwort keinerlei Dateiänderung zulassen.
-- [x] Bei richtiger Antwort vollständige `*.gd`-Datei mit Erklärung übernehmen; vorher Backup,
+- [x] Bei richtiger Antwort vollständige `*.gd`-Datei mit Erklärung übernehmen – nur die Datei der
+  aktuellen Lernrunde, andere Pfade werden abgewiesen; vorher Backup,
   Pfadschutz und Konfliktprüfung ausführen.
 - [x] Ungespeicherten eigenen Code niemals durch Agenten-Code überschreiben.
 - [ ] Die genaue Didaktik der vorläufigen Level 5–10 nach einem Test mit Kindern festlegen.

@@ -98,5 +98,13 @@ def main(argv: list[str] | None = None) -> int:
             window.open_project(GodotProject.open(args.project))
         except (OSError, ValueError) as exc:
             QMessageBox.warning(window, "Projekt nicht geöffnet", str(exc))
+    else:
+        # Children should land directly in their game; the last project opens automatically.
+        for recent in settings.recent_projects:
+            try:
+                window.open_project(GodotProject.open(recent))
+                break
+            except (OSError, ValueError):
+                continue
     window.show()
     return app.exec()

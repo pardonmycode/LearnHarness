@@ -87,6 +87,22 @@ class TutorPanel(QWidget):
         self.stop_button.clicked.connect(self.cancel_requested)
         self.input.textChanged.connect(self._update_counter)
         self._stream_cursor: QTextCursor | None = None
+        self._online = True
+        self._streaming = False
+
+    def set_available(self, online: bool) -> None:
+        """Offline: the question stays in the input field, only sending is paused."""
+        self._online = online
+        self._sync_buttons()
+
+    def _sync_buttons(self) -> None:
+        can_send = self._online and not self._streaming
+        self.send_button.setEnabled(can_send)
+        self.hint_button.setEnabled(can_send)
+        self.stop_button.setEnabled(self._streaming)
+        tip = "" if self._online else "Der Lernhelfer macht Pause. Deine Frage bleibt hier stehen."
+        self.send_button.setToolTip(tip)
+        self.hint_button.setToolTip(tip)
 
     def _update_counter(self) -> None:
         text = self.input.toPlainText()
@@ -100,7 +116,7 @@ class TutorPanel(QWidget):
 
     def _submit(self) -> None:
         text = self.input.toPlainText().strip()
-        if not text:
+        if not text or not self.send_button.isEnabled():
             return
         self.append_message("Du", text, QColor(colors().accent))
         self.input.clear()
@@ -120,8 +136,8 @@ class TutorPanel(QWidget):
         self.history.ensureCursorVisible()
 
     def begin_stream(self) -> None:
-        self.send_button.setEnabled(False)
-        self.stop_button.setEnabled(True)
+        self._streaming = True
+        self._sync_buttons()
         cursor = self.history.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)
         if not self.history.document().isEmpty():
@@ -146,15 +162,15 @@ class TutorPanel(QWidget):
         if self._stream_cursor is None:
             self.append_message("Lernhelfer", response.message, QColor(colors().success))
         self._stream_cursor = None
-        self.send_button.setEnabled(True)
-        self.stop_button.setEnabled(False)
+        self._streaming = False
+        self._sync_buttons()
         self.hint_progress.setValue(response.hint_level)
 
     def show_error(self, message: str) -> None:
         self.append_message("Hinweis", message, QColor(colors().danger))
         self._stream_cursor = None
-        self.send_button.setEnabled(True)
-        self.stop_button.setEnabled(False)
+        self._streaming = False
+        self._sync_buttons()
 
     def set_context_description(self, filename: str, start: int, end: int) -> None:
         self.context_label.setText(f"Ich zeige dem Lernhelfer: {filename}, Zeilen {start}–{end}.")

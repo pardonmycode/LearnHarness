@@ -77,3 +77,37 @@ def test_review_marks_items_and_locks_after_success(qtbot: QtBot) -> None:
     )
     assert widget.inputs["blank_1"].property("mark") == "correct"
     assert not widget.submit_button.isEnabled()
+
+
+def test_agent_may_only_write_the_round_target() -> None:
+    from types import SimpleNamespace
+
+    from learnharness_client.ui.main_window import MainWindow
+
+    window = SimpleNamespace(_learn_target_file="scripts/player.gd")
+    assert MainWindow._is_learn_target(window, "scripts/player.gd")  # type: ignore[arg-type]
+    assert MainWindow._is_learn_target(window, "./scripts\Player.gd")  # type: ignore[arg-type]
+    assert not MainWindow._is_learn_target(window, "scripts/enemy.gd")  # type: ignore[arg-type]
+    window._learn_target_file = None
+    assert not MainWindow._is_learn_target(window, "scripts/player.gd")  # type: ignore[arg-type]
+
+
+def test_offline_pauses_sending_but_keeps_input(qtbot: QtBot) -> None:
+    from learnharness_client.ui.panels.learn_agent_panel import LearnAgentPanel
+    from learnharness_client.ui.panels.tutor_panel import TutorPanel
+
+    tutor = TutorPanel()
+    agent = LearnAgentPanel(max_unlocked_level=1)
+    qtbot.addWidget(tutor)
+    qtbot.addWidget(agent)
+    tutor.input.setPlainText("Wie bewege ich die Figur?")
+    tutor.set_available(False)
+    agent.set_available(False)
+    assert not tutor.send_button.isEnabled()
+    assert not agent.start_button.isEnabled()
+    tutor._submit()
+    assert tutor.input.toPlainText() == "Wie bewege ich die Figur?"
+    tutor.set_available(True)
+    agent.set_available(True)
+    assert tutor.send_button.isEnabled()
+    assert agent.start_button.isEnabled()

@@ -57,6 +57,8 @@ class LearnAgentPanel(QWidget):
         super().__init__(parent)
         self.max_unlocked_level = max(1, min(10, max_unlocked_level))
         self.exercise_widget: QWidget | None = None
+        self._online = True
+        self._busy = False
 
         content = QWidget()
         layout = QVBoxLayout(content)
@@ -140,6 +142,20 @@ class LearnAgentPanel(QWidget):
         self.level_choice.setCurrentIndex(self.max_unlocked_level - 1)
         self._level_changed()
 
+    def set_available(self, online: bool) -> None:
+        self._online = online
+        self._sync_start_button()
+
+    def _set_busy(self, busy: bool) -> None:
+        self._busy = busy
+        self._sync_start_button()
+
+    def _sync_start_button(self) -> None:
+        self.start_button.setEnabled(self._online and not self._busy)
+        self.start_button.setToolTip(
+            "" if self._online else "Der Lernhelfer macht Pause. Du kannst weiter programmieren."
+        )
+
     @property
     def current_level(self) -> int:
         return int(self.level_choice.currentData())
@@ -175,13 +191,13 @@ class LearnAgentPanel(QWidget):
         if not prompt:
             self._set_feedback("Beschreibe zuerst kurz deinen Spielwunsch.", "error")
             return
-        self.start_button.setEnabled(False)
+        self._set_busy(True)
         self.clear_exercise()
         self._set_feedback("Der LearnAgent bereitet eine passende Lernfrage vor …", "neutral")
         self.start_requested.emit(prompt, self.current_level)
 
     def show_response(self, response: LearningResponse) -> None:
-        self.start_button.setEnabled(True)
+        self._set_busy(False)
         self._set_feedback(response.message, "info")
         if response.exercise is not None:
             self.show_exercise(response.exercise)
@@ -228,7 +244,7 @@ class LearnAgentPanel(QWidget):
             )
 
     def show_error(self, message: str) -> None:
-        self.start_button.setEnabled(True)
+        self._set_busy(False)
         if isinstance(self.exercise_widget, ExerciseWidget):
             self.exercise_widget.submission_failed()
         self._set_feedback(message, "error")

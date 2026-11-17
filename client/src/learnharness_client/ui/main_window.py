@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from learnharness_protocol import (
     HealthStatus,
@@ -67,6 +67,7 @@ class MainWindow(QMainWindow):
         self.current_task_id = "move_player_right"
         self.learn_round_active = False
         self._awaiting_learn_response = False
+        self._learn_target_file: str | None = None
         self.active_learning_level = 1
         self.setWindowTitle("LearnHarness – Godot-Programmierwerkstatt")
         self.resize(1380, 840)
@@ -276,6 +277,7 @@ class MainWindow(QMainWindow):
         self._awaiting_learn_response = True
         self.active_learning_level = level
         relative = document.path.relative_to(self.project.root).as_posix()
+        self._learn_target_file = relative
         message = StudentMessage(
             session_id=self.session_id,
             project_id=self.project.project_id,
@@ -351,6 +353,10 @@ class MainWindow(QMainWindow):
             LOG.warning("Ignored generated files outside an active LearnAgent round")
         if review.correct and self.learn_round_active:
             for generated in review.generated_files:
+                if not self._is_learn_target(generated.path):
+                    # The agent may only write the file the child chose for this round.
+                    LOG.warning("Rejected generated file outside the active LearnAgent target")
+                    continue
                 if self.editor_tabs.apply_generated_file(generated.path, generated.content):
                     written_files.append(generated.path)
                     explanations.append(generated.explanation)
@@ -372,6 +378,12 @@ class MainWindow(QMainWindow):
             for line in review.marked_lines:
                 self.problems_panel.add_problem(Problem(relative, line, review.feedback, "Prüfung"))
 
+    def _is_learn_target(self, path: str) -> bool:
+        if self._learn_target_file is None:
+            return False
+        normalized = PurePosixPath(path.replace("\\", "/")).as_posix().removeprefix("./")
+        return normalized.casefold() == self._learn_target_file.casefold()
+
     def _health_changed(self, health: HealthStatus) -> None:
         self._set_online(health.server_ok and health.model_ok)
         self.diagnostics.set_health(health)
@@ -386,6 +398,8 @@ class MainWindow(QMainWindow):
             else "Du kannst trotzdem weiter programmieren und speichern."
         )
         set_state(self.connection_status, state="online" if online else "offline")
+        self.tutor_panel.set_available(online)
+        self.learn_agent_panel.set_available(online)
 
     def _client_error(self, error: ClientError) -> None:
         self.tutor_panel.show_error(error.message_for_child)
