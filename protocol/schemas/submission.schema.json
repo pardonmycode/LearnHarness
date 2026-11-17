@@ -1,0 +1,76 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "protocol_version": {
+      "default": "1.1",
+      "title": "Protocol Version",
+      "type": "string"
+    },
+    "type": {
+      "const": "exercise_submission",
+      "default": "exercise_submission",
+      "title": "Type",
+      "type": "string"
+    },
+    "exercise_id": {
+      "title": "Exercise Id",
+      "type": "string"
+    },
+    "session_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Session Id"
+    },
+    "answers": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        ]
+      },
+      "title": "Answers",
+      "type": "object"
+    },
+    "explanation": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Explanation"
+    }
+  },
+  "required": [
+    "exercise_id",
+    "answers"
+  ],
+  "title": "Submission",
+  "type": "object"
+}

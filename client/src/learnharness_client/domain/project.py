@@ -1,0 +1,32 @@
+"""Godot project discovery and metadata."""
+
+from __future__ import annotations
+
+import hashlib
+import re
+from dataclasses import dataclass
+from pathlib import Path
+
+from .path_guard import PathGuard, PathNotAllowed
+
+_PROJECT_NAME = re.compile(r'^config/name\s*=\s*"((?:[^"\\]|\\.)*)"\s*$', re.MULTILINE)
+
+
+@dataclass(frozen=True, slots=True)
+class GodotProject:
+    root: Path
+    name: str
+    project_id: str
+    guard: PathGuard
+
+    @classmethod
+    def open(cls, root: Path | str) -> GodotProject:
+        candidate = Path(root).resolve(strict=True)
+        descriptor = candidate / "project.godot"
+        if not descriptor.is_file():
+            raise PathNotAllowed("In diesem Ordner fehlt die Datei project.godot.")
+        text = descriptor.read_text(encoding="utf-8-sig", errors="replace")
+        match = _PROJECT_NAME.search(text)
+        name = match.group(1).replace(r"\"", '"') if match else candidate.name
+        digest = hashlib.sha256(str(candidate).casefold().encode("utf-8")).hexdigest()[:16]
+        return cls(candidate, name, digest, PathGuard(candidate))

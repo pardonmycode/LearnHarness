@@ -1,0 +1,14 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "learnharness-protocol"
+version = "0.2.0"
+description = "Shared protocol models for LearnHarness"
+requires-python = ">=3.12"
+dependencies = ["pydantic>=2.8,<3"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/learnharness_protocol"]
+

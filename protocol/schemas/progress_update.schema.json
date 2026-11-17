@@ -1,0 +1,65 @@
+{
+  "$defs": {
+    "Skill": {
+      "additionalProperties": false,
+      "properties": {
+        "protocol_version": {
+          "default": "1.1",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "level": {
+          "$ref": "#/$defs/SkillLevel"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "level"
+      ],
+      "title": "Skill",
+      "type": "object"
+    },
+    "SkillLevel": {
+      "enum": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "title": "SkillLevel",
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "protocol_version": {
+      "default": "1.1",
+      "title": "Protocol Version",
+      "type": "string"
+    },
+    "type": {
+      "const": "progress_update",
+      "default": "progress_update",
+      "title": "Type",
+      "type": "string"
+    },
+    "skills": {
+      "items": {
+        "$ref": "#/$defs/Skill"
+      },
+      "title": "Skills",
+      "type": "array"
+    }
+  },
+  "title": "ProgressUpdate",
+  "type": "object"
+}

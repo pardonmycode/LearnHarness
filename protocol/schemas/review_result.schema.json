@@ -1,0 +1,140 @@
+{
+  "$defs": {
+    "GeneratedFile": {
+      "additionalProperties": false,
+      "properties": {
+        "protocol_version": {
+          "default": "1.1",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "path": {
+          "maxLength": 500,
+          "minLength": 3,
+          "title": "Path",
+          "type": "string"
+        },
+        "content": {
+          "maxLength": 524288,
+          "title": "Content",
+          "type": "string"
+        },
+        "explanation": {
+          "title": "Explanation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "content",
+        "explanation"
+      ],
+      "title": "GeneratedFile",
+      "type": "object"
+    },
+    "ReviewItem": {
+      "additionalProperties": false,
+      "properties": {
+        "protocol_version": {
+          "default": "1.1",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "correct": {
+          "title": "Correct",
+          "type": "boolean"
+        },
+        "feedback": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Feedback"
+        }
+      },
+      "required": [
+        "id",
+        "correct"
+      ],
+      "title": "ReviewItem",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "protocol_version": {
+      "default": "1.1",
+      "title": "Protocol Version",
+      "type": "string"
+    },
+    "type": {
+      "const": "review_result",
+      "default": "review_result",
+      "title": "Type",
+      "type": "string"
+    },
+    "correct": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Correct"
+    },
+    "per_item": {
+      "items": {
+        "$ref": "#/$defs/ReviewItem"
+      },
+      "title": "Per Item",
+      "type": "array"
+    },
+    "feedback": {
+      "title": "Feedback",
+      "type": "string"
+    },
+    "follow_up_question": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Follow Up Question"
+    },
+    "marked_lines": {
+      "items": {
+        "type": "integer"
+      },
+      "title": "Marked Lines",
+      "type": "array"
+    },
+    "generated_files": {
+      "items": {
+        "$ref": "#/$defs/GeneratedFile"
+      },
+      "title": "Generated Files",
+      "type": "array"
+    }
+  },
+  "required": [
+    "feedback"
+  ],
+  "title": "ReviewResult",
+  "type": "object"
+}

@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "learnharness-client"
+version = "0.2.0"
+description = "Child-friendly Godot programming learning client"
+requires-python = ">=3.12"
+dependencies = [
+    "PyQt6>=6.7,<7",
+    "pydantic>=2.8,<3",
+    "learnharness-protocol>=0.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<9",
+    "pytest-qt>=4.4,<5",
+    "ruff>=0.8,<1",
+    "mypy>=1.13,<2",
+    "pyinstaller>=6.11,<7",
+]
+
+[project.scripts]
+learnharness = "learnharness_client.app:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/learnharness_client"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["learnharness_client.domain", "learnharness_protocol"]
+

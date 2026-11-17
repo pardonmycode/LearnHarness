@@ -1,0 +1,51 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "protocol_version": {
+      "default": "1.1",
+      "title": "Protocol Version",
+      "type": "string"
+    },
+    "type": {
+      "const": "session_create",
+      "default": "session_create",
+      "title": "Type",
+      "type": "string"
+    },
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "client_version": {
+      "title": "Client Version",
+      "type": "string"
+    },
+    "student_profile_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Student Profile Id",
+      "type": "string"
+    },
+    "student_pseudonym": {
+      "maxLength": 30,
+      "minLength": 2,
+      "title": "Student Pseudonym",
+      "type": "string"
+    },
+    "experience_level": {
+      "maximum": 3,
+      "minimum": 0,
+      "title": "Experience Level",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "project_id",
+    "client_version",
+    "student_profile_id",
+    "student_pseudonym",
+    "experience_level"
+  ],
+  "title": "SessionCreate",
+  "type": "object"
+}

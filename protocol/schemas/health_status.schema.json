@@ -1,0 +1,47 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "protocol_version": {
+      "default": "1.1",
+      "title": "Protocol Version",
+      "type": "string"
+    },
+    "type": {
+      "const": "health",
+      "default": "health",
+      "title": "Type",
+      "type": "string"
+    },
+    "server_ok": {
+      "title": "Server Ok",
+      "type": "boolean"
+    },
+    "model_ok": {
+      "title": "Model Ok",
+      "type": "boolean"
+    },
+    "session_active": {
+      "default": false,
+      "title": "Session Active",
+      "type": "boolean"
+    },
+    "latency_ms": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Latency Ms"
+    }
+  },
+  "required": [
+    "server_ok",
+    "model_ok"
+  ],
+  "title": "HealthStatus",
+  "type": "object"
+}

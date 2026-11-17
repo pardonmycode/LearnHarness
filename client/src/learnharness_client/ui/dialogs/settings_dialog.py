@@ -1,0 +1,56 @@
+"""Small settings dialog; network changes apply after restart."""
+
+from __future__ import annotations
+
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QFormLayout,
+    QLineEdit,
+    QSpinBox,
+    QVBoxLayout,
+)
+
+from learnharness_client.config import AppSettings
+
+
+class SettingsDialog(QDialog):
+    def __init__(self, settings: AppSettings, parent=None) -> None:
+        super().__init__(parent)
+        self.settings = settings
+        self.setWindowTitle("Einstellungen")
+        layout = QVBoxLayout(self)
+        form = QFormLayout()
+        self.server_url = QLineEdit(settings.server_url)
+        self.fake_server = QCheckBox("Eingebauten Übungsserver verwenden")
+        self.fake_server.setChecked(settings.use_fake_server)
+        self.font_size = QSpinBox()
+        self.font_size.setRange(11, 28)
+        self.font_size.setValue(settings.font_size)
+        self.theme = QComboBox()
+        self.theme.addItem("Hell", "light")
+        self.theme.addItem("Hoher Kontrast", "high_contrast")
+        index = self.theme.findData(settings.theme)
+        self.theme.setCurrentIndex(max(0, index))
+        form.addRow("Lernserver-Adresse:", self.server_url)
+        form.addRow("Entwicklung:", self.fake_server)
+        form.addRow("Schriftgröße:", self.font_size)
+        form.addRow("Darstellung:", self.theme)
+        layout.addLayout(form)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self._save)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def _save(self) -> None:
+        url = self.server_url.text().strip()
+        if url:
+            self.settings.server_url = url
+        self.settings.use_fake_server = self.fake_server.isChecked()
+        self.settings.font_size = self.font_size.value()
+        self.settings.theme = str(self.theme.currentData())
+        self.accept()
