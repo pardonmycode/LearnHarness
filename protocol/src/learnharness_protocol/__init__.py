@@ -1,5 +1,6 @@
 """Validated messages shared by the LearnHarness client and server."""
 
+from .base import PROTOCOL_VERSION
 from .exercises import (
     Blank,
     Choice,
@@ -29,8 +30,6 @@ from .messages import (
     Task,
 )
 from .progress import ProgressUpdate, Skill, SkillLevel
-
-PROTOCOL_VERSION = "1.1"
 
 __all__ = [
     "PROTOCOL_VERSION",

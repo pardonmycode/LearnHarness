@@ -5,7 +5,7 @@ from __future__ import annotations
 from PyQt6.QtCore import QRegularExpression
 from PyQt6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat, QTextDocument
 
-from ..theme import CODE_COLORS
+from ..theme import code_color
 
 
 def _format(color: QColor, *, bold: bool = False, italic: bool = False) -> QTextCharFormat:
@@ -90,8 +90,8 @@ class GDScriptHighlighter(QSyntaxHighlighter):
     def __init__(self, document: QTextDocument) -> None:
         super().__init__(document)
         self.rules: list[tuple[QRegularExpression, QTextCharFormat]] = []
-        keyword_format = _format(CODE_COLORS["keyword"], bold=True)
-        type_format = _format(CODE_COLORS["type"])
+        keyword_format = _format(code_color("keyword"), bold=True)
+        type_format = _format(code_color("type"))
         self.rules.append(
             (QRegularExpression(r"\b(?:" + "|".join(self.KEYWORDS) + r")\b"), keyword_format)
         )
@@ -102,20 +102,20 @@ class GDScriptHighlighter(QSyntaxHighlighter):
             [
                 (
                     QRegularExpression(r"\b(?:0x[0-9A-Fa-f]+|\d+(?:\.\d+)?)\b"),
-                    _format(CODE_COLORS["number"]),
+                    _format(code_color("number")),
                 ),
                 (
                     QRegularExpression(r"@[A-Za-z_]\w*"),
-                    _format(CODE_COLORS["annotation"], bold=True),
+                    _format(code_color("annotation"), bold=True),
                 ),
-                (QRegularExpression(r"(?:\$|%)[A-Za-z0-9_./]+"), _format(CODE_COLORS["node_path"])),
-                (QRegularExpression(r'"(?:\\.|[^"\\])*"'), _format(CODE_COLORS["string"])),
-                (QRegularExpression(r"'(?:\\.|[^'\\])*'"), _format(CODE_COLORS["string"])),
-                (QRegularExpression(r"#.*$"), _format(CODE_COLORS["comment"], italic=True)),
+                (QRegularExpression(r"(?:\$|%)[A-Za-z0-9_./]+"), _format(code_color("node_path"))),
+                (QRegularExpression(r'"(?:\\.|[^"\\])*"'), _format(code_color("string"))),
+                (QRegularExpression(r"'(?:\\.|[^'\\])*'"), _format(code_color("string"))),
+                (QRegularExpression(r"#.*$"), _format(code_color("comment"), italic=True)),
             ]
         )
         self.triple = QRegularExpression(r'"""')
-        self.triple_format = _format(CODE_COLORS["string"])
+        self.triple_format = _format(code_color("string"))
 
     def highlightBlock(self, text: str) -> None:  # noqa: N802 - Qt API
         for pattern, text_format in self.rules:

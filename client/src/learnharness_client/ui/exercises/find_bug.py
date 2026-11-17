@@ -5,6 +5,7 @@ from __future__ import annotations
 from learnharness_protocol import FindBugExercise, Submission
 from PyQt6.QtWidgets import QAbstractItemView, QLineEdit, QListWidget, QListWidgetItem
 
+from ..theme import monospace_font
 from .base import ExerciseWidget
 
 
@@ -17,6 +18,8 @@ class FindBugWidget(ExerciseWidget):
             if exercise.allow_multiple
             else QAbstractItemView.SelectionMode.SingleSelection
         )
+        self.lines.setFont(monospace_font())
+        self.lines.setAccessibleName("Codezeilen – wähle die fehlerhafte Zeile")
         for number, line in enumerate(exercise.lines, start=1):
             self.lines.addItem(QListWidgetItem(f"{number:>3}  {line}"))
         self.explanation = QLineEdit()

@@ -18,6 +18,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ..theme import colors
+
 LOG = logging.getLogger(__name__)
 
 
@@ -42,9 +44,14 @@ class TutorPanel(QWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+        heading = QLabel("Lernhelfer")
+        heading.setProperty("role", "heading")
+        layout.addWidget(heading)
         self.context_label = QLabel("Dem Lernhelfer wird nur ein kleiner Codeausschnitt gezeigt.")
         self.context_label.setWordWrap(True)
-        self.context_label.setStyleSheet("color: #475569;")
+        self.context_label.setProperty("role", "small")
         self.history = QTextBrowser()
         self.history.setOpenExternalLinks(False)
         self.history.setOpenLinks(False)
@@ -60,6 +67,7 @@ class TutorPanel(QWidget):
         self.hint_progress.setFormat("Hinweisstufe %v von %m")
         buttons = QHBoxLayout()
         self.send_button = QPushButton("Frage senden")
+        self.send_button.setProperty("primary", "true")
         self.hint_button = QPushButton("Nächster Hinweis")
         self.stop_button = QPushButton("Stopp")
         self.stop_button.setEnabled(False)
@@ -94,7 +102,7 @@ class TutorPanel(QWidget):
         text = self.input.toPlainText().strip()
         if not text:
             return
-        self.append_message("Du", text, QColor("#1d4ed8"))
+        self.append_message("Du", text, QColor(colors().accent))
         self.input.clear()
         self.message_submitted.emit(text)
 
@@ -119,7 +127,7 @@ class TutorPanel(QWidget):
         if not self.history.document().isEmpty():
             cursor.insertText("\n\n")
         teacher_format = QTextCharFormat()
-        teacher_format.setForeground(QColor("#15803d"))
+        teacher_format.setForeground(QColor(colors().success))
         teacher_format.setFontWeight(700)
         cursor.insertText("Lernhelfer: ", teacher_format)
         self._stream_cursor = cursor
@@ -136,14 +144,14 @@ class TutorPanel(QWidget):
         if response.code_changes:
             LOG.warning("Ignored forbidden code_changes in learning response")
         if self._stream_cursor is None:
-            self.append_message("Lernhelfer", response.message, QColor("#15803d"))
+            self.append_message("Lernhelfer", response.message, QColor(colors().success))
         self._stream_cursor = None
         self.send_button.setEnabled(True)
         self.stop_button.setEnabled(False)
         self.hint_progress.setValue(response.hint_level)
 
     def show_error(self, message: str) -> None:
-        self.append_message("Hinweis", message, QColor("#b91c1c"))
+        self.append_message("Hinweis", message, QColor(colors().danger))
         self._stream_cursor = None
         self.send_button.setEnabled(True)
         self.stop_button.setEnabled(False)

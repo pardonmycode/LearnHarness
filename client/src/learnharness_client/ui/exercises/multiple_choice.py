@@ -3,22 +3,19 @@
 from __future__ import annotations
 
 from learnharness_protocol import MultipleChoiceExercise, Submission
-from PyQt6.QtWidgets import QButtonGroup, QCheckBox, QPlainTextEdit, QRadioButton
+from PyQt6.QtWidgets import QAbstractButton, QButtonGroup, QCheckBox, QRadioButton, QWidget
 
-from .base import ExerciseWidget
+from .base import ExerciseWidget, code_view
 
 
 class MultipleChoiceWidget(ExerciseWidget):
     def __init__(self, exercise: MultipleChoiceExercise, parent=None) -> None:
         super().__init__(exercise, parent)
         if exercise.code:
-            code = QPlainTextEdit(exercise.code)
-            code.setReadOnly(True)
-            code.setMaximumHeight(100)
-            self.layout.addWidget(code)
+            self.layout.addWidget(code_view(exercise.code, accessible_name="Code zur Frage"))
         self.group = QButtonGroup(self)
         self.group.setExclusive(not exercise.multiple)
-        self.buttons = {}
+        self.buttons: dict[str, QAbstractButton] = {}
         for choice in exercise.choices:
             button = QCheckBox(choice.text) if exercise.multiple else QRadioButton(choice.text)
             button.setAccessibleName(choice.text)
@@ -26,6 +23,9 @@ class MultipleChoiceWidget(ExerciseWidget):
             self.buttons[choice.id] = button
             self.layout.addWidget(button)
         self.finish_layout()
+
+    def item_widgets(self) -> dict[str, QWidget]:
+        return dict(self.buttons)
 
     def answers(self) -> Submission:
         selected = [choice_id for choice_id, button in self.buttons.items() if button.isChecked()]

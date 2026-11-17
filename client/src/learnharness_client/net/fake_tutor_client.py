@@ -51,9 +51,7 @@ class FakeTutorClient(TutorClient):
     def check_health(self) -> None:
         if self.simulate_failure:
             self._later(
-                lambda: self.error.emit(
-                    ClientError("Der Lernhelfer macht gerade Pause.", "fake_unavailable")
-                )
+                lambda: self.health_changed.emit(HealthStatus(server_ok=False, model_ok=False))
             )
             return
         self._later(

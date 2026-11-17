@@ -17,7 +17,7 @@ from learnharness_client.net.fake_tutor_client import FakeTutorClient
 from learnharness_client.net.http_tutor_client import HttpTutorClient
 from learnharness_client.ui.dialogs.login_dialog import LoginDialog
 from learnharness_client.ui.main_window import MainWindow
-from learnharness_client.ui.theme import APP_STYLESHEET, apply_theme
+from learnharness_client.ui.theme import apply_theme
 
 LOG = logging.getLogger(__name__)
 
@@ -56,7 +56,6 @@ def main(argv: list[str] | None = None) -> int:
     QCoreApplication.setOrganizationName("LearnHarness")
     QCoreApplication.setApplicationName("LearnHarnessClient")
     app = QApplication(sys.argv[:1])
-    app.setStyleSheet(APP_STYLESHEET)
     settings = AppSettings()
     apply_theme(app, settings.font_size, settings.theme)
     configure_logging()

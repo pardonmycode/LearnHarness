@@ -11,6 +11,7 @@ from learnharness_protocol import (
     ReviewResult,
     SessionInfo,
     StudentMessage,
+    Submission,
 )
 from PyQt6.QtCore import QByteArray, Qt
 from PyQt6.QtGui import QAction, QCloseEvent, QKeySequence
@@ -41,6 +42,7 @@ from .panels.progress_panel import ProgressPanel
 from .panels.tutor_panel import TutorPanel
 from .project_picker import choose_project
 from .script_tree import ScriptTree
+from .theme import set_state
 
 LOG = logging.getLogger(__name__)
 
@@ -64,6 +66,7 @@ class MainWindow(QMainWindow):
         self.session_id: str | None = None
         self.current_task_id = "move_player_right"
         self.learn_round_active = False
+        self._awaiting_learn_response = False
         self.active_learning_level = 1
         self.setWindowTitle("LearnHarness – Godot-Programmierwerkstatt")
         self.resize(1380, 840)
@@ -89,7 +92,8 @@ class MainWindow(QMainWindow):
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 4)
         splitter.setStretchFactor(2, 2)
-        splitter.setSizes([230, 760, 390])
+        splitter.setChildrenCollapsible(False)
+        splitter.setSizes([220, 700, 460])
         self.splitter = splitter
         self.setCentralWidget(splitter)
 
@@ -108,8 +112,11 @@ class MainWindow(QMainWindow):
         )
         self.cursor_status = QLabel("Zeile – · Spalte –")
         self.connection_status = QLabel("● Lernhelfer wird geprüft")
-        self.statusBar().addWidget(self.project_status, 1)
-        self.statusBar().addWidget(self.file_status, 1)
+        self.connection_status.setObjectName("connectionBadge")
+        set_state(self.connection_status, state="checking")
+        # Everything is permanent so temporary messages never overlap these labels.
+        self.statusBar().addPermanentWidget(self.project_status)
+        self.statusBar().addPermanentWidget(self.file_status)
         self.statusBar().addPermanentWidget(self.profile_status)
         self.statusBar().addPermanentWidget(self.cursor_status)
         self.statusBar().addPermanentWidget(self.connection_status)
@@ -176,7 +183,7 @@ class MainWindow(QMainWindow):
             lambda line, column: self.cursor_status.setText(f"Zeile {line} · Spalte {column}")
         )
         self.learn_agent_panel.start_requested.connect(self.start_learning_round)
-        self.learn_agent_panel.exercise_submitted.connect(self.tutor_client.submit_exercise)
+        self.learn_agent_panel.exercise_submitted.connect(self._submit_exercise)
         self.tutor_panel.message_submitted.connect(self.send_tutor_message)
         self.tutor_panel.next_hint_requested.connect(
             lambda: self.tutor_client.request_next_hint(self.current_task_id)
@@ -186,8 +193,8 @@ class MainWindow(QMainWindow):
 
         self.tutor_client.health_changed.connect(self._health_changed)
         self.tutor_client.session_started.connect(self._session_started)
-        self.tutor_client.stream_started.connect(self.tutor_panel.begin_stream)
-        self.tutor_client.stream_chunk.connect(self.tutor_panel.append_stream_chunk)
+        self.tutor_client.stream_started.connect(self._stream_started)
+        self.tutor_client.stream_chunk.connect(self._stream_chunk)
         self.tutor_client.stream_finished.connect(self._learning_response)
         self.tutor_client.exercise_received.connect(self._exercise_received)
         self.tutor_client.review_received.connect(self._review_received)
@@ -266,6 +273,7 @@ class MainWindow(QMainWindow):
             )
             return
         self.learn_round_active = True
+        self._awaiting_learn_response = True
         self.active_learning_level = level
         relative = document.path.relative_to(self.project.root).as_posix()
         message = StudentMessage(
@@ -307,11 +315,28 @@ class MainWindow(QMainWindow):
         )
         self.tutor_client.send_message(message)
 
+    def _submit_exercise(self, submission: Submission) -> None:
+        # The server needs the session to know which LearnAgent round is being answered.
+        if self.session_id and submission.session_id is None:
+            submission = submission.model_copy(update={"session_id": self.session_id})
+        self.tutor_client.submit_exercise(submission)
+
+    def _stream_started(self) -> None:
+        if not self._awaiting_learn_response:
+            self.tutor_panel.begin_stream()
+
+    def _stream_chunk(self, text: str) -> None:
+        if not self._awaiting_learn_response:
+            self.tutor_panel.append_stream_chunk(text)
+
     def _learning_response(self, response: LearningResponse) -> None:
-        self.tutor_panel.finish_stream(response)
-        if self.learn_round_active:
+        if self._awaiting_learn_response:
+            # LearnAgent answers belong in the LearnAgent tab, not in the tutor chat.
+            self._awaiting_learn_response = False
             self.learn_agent_panel.show_response(response)
-        elif response.exercise is not None:
+            return
+        self.tutor_panel.finish_stream(response)
+        if response.exercise is not None:
             self._exercise_received(response.exercise)
 
     def _exercise_received(self, exercise) -> None:
@@ -342,29 +367,35 @@ class MainWindow(QMainWindow):
         if editor:
             editor.set_error_lines(review.marked_lines)
         document = self.editor_tabs.current_document()
-        if document:
-            relative = document.path.name
+        if document and self.project:
+            relative = document.path.relative_to(self.project.root).as_posix()
             for line in review.marked_lines:
                 self.problems_panel.add_problem(Problem(relative, line, review.feedback, "Prüfung"))
 
     def _health_changed(self, health: HealthStatus) -> None:
-        online = health.server_ok and health.model_ok
+        self._set_online(health.server_ok and health.model_ok)
+        self.diagnostics.set_health(health)
+
+    def _set_online(self, online: bool) -> None:
         self.connection_status.setText(
             "● Der Lernhelfer ist da" if online else "● Der Lernhelfer macht Pause"
         )
-        self.connection_status.setObjectName("connectionOnline" if online else "connectionOffline")
-        self.connection_status.style().unpolish(self.connection_status)
-        self.connection_status.style().polish(self.connection_status)
-        self.diagnostics.set_health(health)
+        self.connection_status.setToolTip(
+            "Du kannst Fragen stellen."
+            if online
+            else "Du kannst trotzdem weiter programmieren und speichern."
+        )
+        set_state(self.connection_status, state="online" if online else "offline")
 
     def _client_error(self, error: ClientError) -> None:
         self.tutor_panel.show_error(error.message_for_child)
         if self.learn_round_active:
             self.learn_agent_panel.show_error(error.message_for_child)
             self.learn_round_active = False
+            self._awaiting_learn_response = False
         self.diagnostics.set_error(error.technical_code)
-        self.connection_status.setText("● Der Lernhelfer macht Pause")
-        self.connection_status.setObjectName("connectionOffline")
+        if error.technical_code in {"network_error", "socket"}:
+            self._set_online(False)
 
     def open_relative_file(self, relative: str) -> None:
         if self.project:

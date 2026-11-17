@@ -16,7 +16,9 @@ class ScriptTree(QTreeWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.project: GodotProject | None = None
-        self.setHeaderLabel("GDScript-Dateien")
+        self.setHeaderLabel("Skripte")
+        self.setIndentation(14)
+        self.setAnimated(True)
         self.itemDoubleClicked.connect(self._open_item)
         self.setAccessibleName("Skriptdateien im Godot-Projekt")
 

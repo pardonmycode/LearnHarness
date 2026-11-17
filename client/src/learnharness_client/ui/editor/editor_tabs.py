@@ -37,6 +37,8 @@ class EditorTabs(QWidget):
         self.documents: dict[CodeEditor, ScriptDocument] = {}
         self.paths: dict[Path, CodeEditor] = {}
         self.tabs = QTabWidget()
+        self.tabs.setObjectName("editorTabs")
+        self.tabs.setDocumentMode(True)
         self.tabs.setTabsClosable(True)
         self.tabs.setMovable(True)
         self.tabs.tabCloseRequested.connect(self.close_tab)
@@ -134,7 +136,8 @@ class EditorTabs(QWidget):
                 "Speichere oder verwerfe sie und versuche es danach erneut.",
             )
             return False
-        editor.setPlainText(content)
+        # One undo step: the child can press Strg+Z to see their previous code again.
+        editor.replace_all_text(content)
         if not self.save_editor(editor):
             return False
         self.status_message.emit(f"LearnAgent hat {document.path.name} vollständig geschrieben.")

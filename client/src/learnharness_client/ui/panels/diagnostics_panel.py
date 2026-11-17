@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from learnharness_protocol import HealthStatus
+from learnharness_protocol import PROTOCOL_VERSION, HealthStatus
 from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
 
 
@@ -11,7 +11,7 @@ class DiagnosticsPanel(QWidget):
         super().__init__(parent)
         layout = QFormLayout(self)
         self.url = QLabel(server_url)
-        self.protocol = QLabel("1.1")
+        self.protocol = QLabel(PROTOCOL_VERSION)
         self.server = QLabel("Noch nicht geprüft")
         self.model = QLabel("Noch nicht geprüft")
         self.latency = QLabel("–")

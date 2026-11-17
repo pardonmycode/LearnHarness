@@ -40,7 +40,7 @@ class AppSettings:
 
     @property
     def theme(self) -> str:
-        return str(self._settings.value("appearance/theme", "light"))
+        return str(self._settings.value("appearance/theme", "system"))
 
     @theme.setter
     def theme(self, value: str) -> None:

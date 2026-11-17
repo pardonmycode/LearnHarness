@@ -5,8 +5,6 @@ from __future__ import annotations
 from PyQt6.QtCore import QRect, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import (
     QColor,
-    QFont,
-    QFontDatabase,
     QKeyEvent,
     QPainter,
     QPaintEvent,
@@ -16,7 +14,11 @@ from PyQt6.QtGui import (
 )
 from PyQt6.QtWidgets import QPlainTextEdit, QTextEdit, QWidget
 
+from ..theme import colors, monospace_font
 from .gdscript_highlighter import GDScriptHighlighter
+
+_BRACKETS = {"(": ")", "[": "]", "{": "}"}
+_CLOSING = {value: key for key, value in _BRACKETS.items()}
 
 
 class LineNumberArea(QWidget):
@@ -39,10 +41,8 @@ class CodeEditor(QPlainTextEdit):
         super().__init__(parent)
         self.line_number_area = LineNumberArea(self)
         self.error_lines: set[int] = set()
-        font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
-        font.setPointSize(font_size)
-        font.setStyleHint(QFont.StyleHint.Monospace)
-        self.setFont(font)
+        self.setObjectName("codeEditor")
+        self.setFont(monospace_font(font_size))
         self.setTabStopDistance(self.fontMetrics().horizontalAdvance(" ") * 4)
         self.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
         self.setAcceptDrops(False)
@@ -55,7 +55,7 @@ class CodeEditor(QPlainTextEdit):
 
     def line_number_area_width(self) -> int:
         digits = len(str(max(1, self.blockCount())))
-        return 14 + self.fontMetrics().horizontalAdvance("9") * digits
+        return 30 + self.fontMetrics().horizontalAdvance("9") * max(2, digits)
 
     def _update_margin(self, _count: int = 0) -> None:
         self.setViewportMargins(self.line_number_area_width(), 0, 0, 0)
@@ -76,8 +76,12 @@ class CodeEditor(QPlainTextEdit):
         )
 
     def paint_line_numbers(self, event: QPaintEvent) -> None:
+        palette = colors()
         painter = QPainter(self.line_number_area)
-        painter.fillRect(event.rect(), QColor("#f1f5f9"))
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.fillRect(event.rect(), QColor(palette.gutter_bg))
+        current_line = self.textCursor().blockNumber() + 1
+        line_height = self.fontMetrics().height()
         block = self.firstVisibleBlock()
         number = block.blockNumber()
         top = round(self.blockBoundingGeometry(block).translated(self.contentOffset()).top())
@@ -85,14 +89,25 @@ class CodeEditor(QPlainTextEdit):
         while block.isValid() and top <= event.rect().bottom():
             if block.isVisible() and bottom >= event.rect().top():
                 line_number = number + 1
-                painter.setPen(
-                    QColor("#b91c1c") if line_number in self.error_lines else QColor("#64748b")
-                )
+                is_error = line_number in self.error_lines
+                if is_error:
+                    # Colored dot so errors are not signalled by text color alone.
+                    radius = max(3, line_height // 5)
+                    painter.setPen(Qt.PenStyle.NoPen)
+                    painter.setBrush(QColor(palette.danger))
+                    painter.drawEllipse(8, top + line_height // 2 - radius, radius * 2, radius * 2)
+                if is_error:
+                    pen = QColor(palette.danger)
+                elif line_number == current_line:
+                    pen = QColor(palette.text)
+                else:
+                    pen = QColor(palette.gutter_text)
+                painter.setPen(pen)
                 painter.drawText(
                     0,
                     top,
-                    self.line_number_area.width() - 5,
-                    self.fontMetrics().height(),
+                    self.line_number_area.width() - 10,
+                    line_height,
                     Qt.AlignmentFlag.AlignRight,
                     str(line_number),
                 )
@@ -107,9 +122,10 @@ class CodeEditor(QPlainTextEdit):
         self._update_extra_selections()
 
     def _update_extra_selections(self) -> None:
+        palette = colors()
         selections: list[QTextEdit.ExtraSelection] = []
         current = QTextEdit.ExtraSelection()
-        current.format.setBackground(QColor("#eff6ff"))
+        current.format.setBackground(QColor(palette.current_line))
         current.format.setProperty(QTextFormat.Property.FullWidthSelection, True)
         current.cursor = self.textCursor()
         current.cursor.clearSelection()
@@ -119,12 +135,65 @@ class CodeEditor(QPlainTextEdit):
             if not block.isValid():
                 continue
             selection = QTextEdit.ExtraSelection()
-            selection.format.setBackground(QColor("#fee2e2"))
+            selection.format.setBackground(QColor(palette.error_line))
             selection.format.setProperty(QTextFormat.Property.FullWidthSelection, True)
             selection.cursor = QTextCursor(block)
             selections.append(selection)
+        selections.extend(self._bracket_selections())
         self.setExtraSelections(selections)
         self.line_number_area.update()
+
+    def _bracket_selections(self) -> list[QTextEdit.ExtraSelection]:
+        text = self.toPlainText()
+        position = self.textCursor().position()
+        candidates = [position, position - 1]
+        for index in candidates:
+            if 0 <= index < len(text) and (text[index] in _BRACKETS or text[index] in _CLOSING):
+                match = self._matching_bracket(text, index)
+                if match is None:
+                    return []
+                result: list[QTextEdit.ExtraSelection] = []
+                for bracket_index in (index, match):
+                    selection = QTextEdit.ExtraSelection()
+                    selection.format.setBackground(QColor(colors().selection))
+                    cursor = QTextCursor(self.document())
+                    cursor.setPosition(bracket_index)
+                    cursor.movePosition(
+                        QTextCursor.MoveOperation.NextCharacter, QTextCursor.MoveMode.KeepAnchor
+                    )
+                    selection.cursor = cursor
+                    result.append(selection)
+                return result
+        return []
+
+    @staticmethod
+    def _matching_bracket(text: str, index: int, limit: int = 20_000) -> int | None:
+        char = text[index]
+        if char in _BRACKETS:
+            opening, closing, step = char, _BRACKETS[char], 1
+        else:
+            opening, closing, step = char, _CLOSING[char], -1
+        depth = 0
+        position = index
+        for _ in range(limit):
+            if not 0 <= position < len(text):
+                return None
+            if text[position] == opening:
+                depth += 1
+            elif text[position] == closing:
+                depth -= 1
+                if depth == 0:
+                    return position
+            position += step
+        return None
+
+    def replace_all_text(self, text: str) -> None:
+        """Replace the whole content as one undoable step (Strg+Z restores the old code)."""
+        cursor = QTextCursor(self.document())
+        cursor.beginEditBlock()
+        cursor.select(QTextCursor.SelectionType.Document)
+        cursor.insertText(text)
+        cursor.endEditBlock()
 
     def set_error_lines(self, lines: list[int]) -> None:
         self.error_lines = {line for line in lines if line > 0}

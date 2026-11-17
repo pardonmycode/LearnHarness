@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
 )
 
 from learnharness_client.config import AppSettings
+from learnharness_client.ui.theme import THEME_CHOICES
 
 
 class SettingsDialog(QDialog):
@@ -30,8 +31,8 @@ class SettingsDialog(QDialog):
         self.font_size.setRange(11, 28)
         self.font_size.setValue(settings.font_size)
         self.theme = QComboBox()
-        self.theme.addItem("Hell", "light")
-        self.theme.addItem("Hoher Kontrast", "high_contrast")
+        for value, label in THEME_CHOICES:
+            self.theme.addItem(label, value)
         index = self.theme.findData(settings.theme)
         self.theme.setCurrentIndex(max(0, index))
         form.addRow("Lernserver-Adresse:", self.server_url)

@@ -56,6 +56,7 @@ class HttpTutorClient(TutorClient):
         path: str,
         payload: dict[str, object] | None,
         handler: Callable[[dict[str, object]], None],
+        on_failure: Callable[[ClientError], None] | None = None,
     ) -> None:
         request = QNetworkRequest(self._url(path))
         request.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader, "application/json")
@@ -65,18 +66,20 @@ class HttpTutorClient(TutorClient):
             reply = self.network.get(request)
         else:
             reply = self.network.sendCustomRequest(request, method.encode("ascii"), body)
-        reply.finished.connect(lambda current=reply: self._finish_reply(current, handler))
+        reply.finished.connect(
+            lambda current=reply: self._finish_reply(current, handler, on_failure)
+        )
 
     def _finish_reply(
         self,
         reply: QNetworkReply,
         handler: Callable[[dict[str, object]], None],
+        on_failure: Callable[[ClientError], None] | None = None,
     ) -> None:
+        fail = on_failure or self.error.emit
         try:
             if reply.error() != QNetworkReply.NetworkError.NoError:
-                self.error.emit(
-                    ClientError("Der Lernhelfer ist gerade nicht erreichbar.", "network_error")
-                )
+                fail(ClientError("Der Lernhelfer ist gerade nicht erreichbar.", "network_error"))
                 return
             raw = bytes(reply.readAll())
             if len(raw) > self.MAX_MESSAGE_BYTES:
@@ -87,9 +90,7 @@ class HttpTutorClient(TutorClient):
             handler(data)
         except (UnicodeDecodeError, json.JSONDecodeError, ValidationError, ValueError) as exc:
             LOG.warning("Invalid learning-server response: %s", type(exc).__name__)
-            self.error.emit(
-                ClientError("Der Lernhelfer hat gerade Schwierigkeiten.", "invalid_response")
-            )
+            fail(ClientError("Der Lernhelfer hat gerade Schwierigkeiten.", "invalid_response"))
         finally:
             reply.deleteLater()
 
@@ -99,6 +100,8 @@ class HttpTutorClient(TutorClient):
             "/health",
             None,
             lambda data: self.health_changed.emit(HealthStatus.model_validate(data)),
+            # A failed background health check is a status change, not a chat message.
+            lambda _error: self.health_changed.emit(HealthStatus(server_ok=False, model_ok=False)),
         )
 
     def start_session(

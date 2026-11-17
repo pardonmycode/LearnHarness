@@ -5,6 +5,20 @@ Lernserver, vLLM, Tailscale-Einrichtung, Prompts und Agentenlogik sind **nicht**
 
 Grundlage: [TODO_GPT.md](TODO_GPT.md) (Zielbild) und die drei PDFs (Agentenrollen, Nachrichtenbeispiele, Sicherheitsregeln).
 
+## Stand nach Review (17.11.2026)
+
+Abgehakt ist, was im Code umgesetzt und durch Tests oder Ansicht geprüft ist. Bewusste Abweichungen:
+
+- Skriptbaum nutzt `QTreeWidget` aus `PathGuard.iter_scripts()` statt `QFileSystemModel` – sicherer,
+  aktualisiert sich aber nur beim Öffnen/Anlegen (Menü „Datei“).
+- Lückentexte zeigen nummerierte Lücken im Code und darunter je ein Auswahlfeld, nicht eingebettet.
+- Punkte unter „Fertig, wenn“ mit echtem Godot (Phase 1) sind erst nach einem manuellen Test abhakbar.
+
+Beim Review behoben: Schriftgröße wirkte nicht (Stylesheet überschrieb sie), Dunkelmodus unlesbar,
+fehlgeschlagener Health-Check schrieb alle 15 s Fehler in den Chat und brach Lernrunden ab,
+Übungsabgaben ohne `session_id`, Problem-Links bei Unterordnern, LearnAgent-Antworten landeten
+zusätzlich im Tutor-Chat, Agenten-Code war nicht per Strg+Z rückgängig zu machen.
+
 ---
 
 ## Leitplanken für den Client
@@ -115,13 +129,13 @@ LearnHarness/
 
 ## Phase 0 – Grundgerüst
 
-- [ ] `protocol/` und `client/` als eigenständige Pakete mit `pyproject.toml` anlegen; Client hängt von `learnharness_protocol` ab (lokal per `pip install -e`).
-- [ ] Abhängigkeiten festlegen und pinnen: `PyQt6`, `pydantic>=2`; Dev: `pytest`, `pytest-qt`, `ruff`, `mypy`, `pyinstaller`.
-- [ ] `python -m learnharness_client` startet ein leeres Hauptfenster.
-- [ ] Logging einrichten: rotierende Logdatei in AppData; **keine Code- oder Chatinhalte** im Log, nur Ereignisse, Dateinamen relativ zum Projekt, Fehlertypen.
-- [ ] Globalen Exception-Hook (`sys.excepthook`) setzen: Fehler loggen, kindgerechten Dialog zeigen, vorher Recovery-Entwürfe schreiben.
-- [ ] Testfixture `sample_godot_project` anlegen.
-- [ ] `ruff` und `pytest` laufen lokal ohne Fehler.
+- [x] `protocol/` und `client/` als eigenständige Pakete mit `pyproject.toml` anlegen; Client hängt von `learnharness_protocol` ab (lokal per `pip install -e`).
+- [x] Abhängigkeiten festlegen und pinnen: `PyQt6`, `pydantic>=2`; Dev: `pytest`, `pytest-qt`, `ruff`, `mypy`, `pyinstaller`.
+- [x] `python -m learnharness_client` startet ein leeres Hauptfenster.
+- [x] Logging einrichten: rotierende Logdatei in AppData; **keine Code- oder Chatinhalte** im Log, nur Ereignisse, Dateinamen relativ zum Projekt, Fehlertypen.
+- [x] Globalen Exception-Hook (`sys.excepthook`) setzen: Fehler loggen, kindgerechten Dialog zeigen, vorher Recovery-Entwürfe schreiben.
+- [x] Testfixture `sample_godot_project` anlegen.
+- [x] `ruff` und `pytest` laufen lokal ohne Fehler.
 
 **Fertig, wenn:** Fenster startet, Tests laufen grün, Log wird geschrieben.
 
@@ -157,72 +171,72 @@ ist.
 
 ### 1.1 Projekt auswählen
 
-- [ ] `ProjectPicker`: Ordnerdialog, Prüfung auf `project.godot` im gewählten Ordner, klare Meldung falls nicht vorhanden.
-- [ ] Projektname aus `project.godot` (`config/name`) lesen und in Titelleiste und Statusleiste anzeigen.
+- [x] `ProjectPicker`: Ordnerdialog, Prüfung auf `project.godot` im gewählten Ordner, klare Meldung falls nicht vorhanden.
+- [x] Projektname aus `project.godot` (`config/name`) lesen und in Titelleiste und Statusleiste anzeigen.
 - [ ] Zuletzt verwendete Projekte (max. 5) in `QSettings` merken; beim Start letztes Projekt anbieten.
-- [ ] Projektwurzel einmalig mit `Path.resolve()` normalisieren und danach nicht mehr ändern.
+- [x] Projektwurzel einmalig mit `Path.resolve()` normalisieren und danach nicht mehr ändern.
 
 ### 1.2 Pfadschutz (`path_guard.py`)
 
-- [ ] Jeder Dateizugriff läuft über eine zentrale Funktion `ensure_allowed(path) -> Path`.
-- [ ] Prüfen: `resolve()`-Ergebnis liegt innerhalb der Projektwurzel (`is_relative_to`).
-- [ ] Symlinks und Windows-Junctions/Reparse-Points ablehnen (`os.lstat` + `st_file_attributes & FILE_ATTRIBUTE_REPARSE_POINT`).
-- [ ] Whitelist der Dateiendungen, zunächst nur `.gd`.
-- [ ] Ordner ausschließen: `.godot/`, `.import/`, `.git/`, Ordner mit `.gdignore`; `addons/` standardmäßig ausblenden (konfigurierbar).
+- [x] Jeder Dateizugriff läuft über eine zentrale Funktion `ensure_allowed(path) -> Path`.
+- [x] Prüfen: `resolve()`-Ergebnis liegt innerhalb der Projektwurzel (`is_relative_to`).
+- [x] Symlinks und Windows-Junctions/Reparse-Points ablehnen (`os.lstat` + `st_file_attributes & FILE_ATTRIBUTE_REPARSE_POINT`).
+- [x] Whitelist der Dateiendungen, zunächst nur `.gd`.
+- [x] Ordner ausschließen: `.godot/`, `.import/`, `.git/`, Ordner mit `.gdignore`; `addons/` standardmäßig ausblenden (konfigurierbar).
 - [ ] Unit-Tests: `../`-Traversal, absolute Pfade außerhalb, Symlink, Junction, falsche Endung, Groß-/Kleinschreibung unter Windows.
 
 ### 1.3 Skriptbaum
 
 - [ ] `ScriptTree` auf Basis von `QFileSystemModel` mit `QSortFilterProxyModel`, das nur erlaubte Dateien und Ordner mit erlaubten Dateien zeigt.
-- [ ] Doppelklick öffnet Datei im Editor; bereits offene Datei wird nur fokussiert.
-- [ ] Neue `.gd`-Datei anlegen (Name prüfen, Vorlage `extends Node`); Löschen und Umbenennen zunächst **nicht** anbieten.
+- [x] Doppelklick öffnet Datei im Editor; bereits offene Datei wird nur fokussiert.
+- [x] Neue `.gd`-Datei anlegen (Name prüfen, Vorlage `extends Node`); Löschen und Umbenennen zunächst **nicht** anbieten.
 
 ### 1.4 Laden und Speichern (`file_store.py`, `script_document.py`)
 
-- [ ] Laden: Bytes lesen, als UTF-8 dekodieren (BOM erkennen und beim Speichern beibehalten), Zeilenende (LF/CRLF) erkennen und beibehalten, SHA-256 und `mtime` des geladenen Stands merken.
-- [ ] Dateigrößenlimit (z. B. 512 KB) – größere Dateien schreibgeschützt öffnen oder ablehnen.
-- [ ] Speichern:
+- [x] Laden: Bytes lesen, als UTF-8 dekodieren (BOM erkennen und beim Speichern beibehalten), Zeilenende (LF/CRLF) erkennen und beibehalten, SHA-256 und `mtime` des geladenen Stands merken.
+- [x] Dateigrößenlimit (z. B. 512 KB) – größere Dateien schreibgeschützt öffnen oder ablehnen.
+- [x] Speichern:
   1. Aktuellen Datei-Hash auf der Platte mit dem gemerkten Hash vergleichen.
   2. Bei Abweichung → Konfliktdialog (siehe 1.5), **kein** Speichern.
   3. Vorherigen Stand als Sicherung ablegen (siehe 1.6).
   4. Mit `QSaveFile` atomisch schreiben, `commit()` prüfen.
   5. Neuen Hash merken, Dirty-Status zurücksetzen.
-- [ ] Fehler beim Speichern (gesperrte Datei, keine Rechte, Platte voll) verständlich anzeigen; Inhalt bleibt im Editor und im Recovery-Entwurf.
-- [ ] Tests: Roundtrip erhält Bytes exakt (BOM, CRLF, Tabs, Umlaute); Speichern bei geänderter Platte schlägt kontrolliert fehl.
+- [x] Fehler beim Speichern (gesperrte Datei, keine Rechte, Platte voll) verständlich anzeigen; Inhalt bleibt im Editor und im Recovery-Entwurf.
+- [x] Tests: Roundtrip erhält Bytes exakt (BOM, CRLF, Tabs, Umlaute); Speichern bei geänderter Platte schlägt kontrolliert fehl.
 
 ### 1.5 Externe Änderungen und Konflikte
 
-- [ ] `QFileSystemWatcher` für alle offenen Dateien; nach jedem Signal Pfad neu hinzufügen (atomisches Ersetzen durch Godot entfernt ihn sonst unter Windows aus dem Watcher).
-- [ ] Signale entprellen (ca. 300 ms), danach Hash vergleichen – nur echte Inhaltsänderungen zählen.
+- [x] `QFileSystemWatcher` für alle offenen Dateien; nach jedem Signal Pfad neu hinzufügen (atomisches Ersetzen durch Godot entfernt ihn sonst unter Windows aus dem Watcher).
+- [x] Signale entprellen (ca. 300 ms), danach Hash vergleichen – nur echte Inhaltsänderungen zählen.
 - [ ] Datei extern geändert, Editor **nicht** dirty → still neu laden, Cursorposition und Scrollposition möglichst erhalten, kurzer Hinweis in der Statusleiste.
-- [ ] Datei extern geändert, Editor **dirty** → Konfliktdialog mit drei Optionen: „Meine Version behalten“, „Version aus Godot laden“, „Vergleichen“. Vergleich als einfache Zeilen-Diff-Ansicht (`difflib`), kindgerecht beschriftet.
-- [ ] Datei extern gelöscht → Hinweis, Inhalt bleibt im Editor, „Erneut speichern“ möglich.
-- [ ] Beim Wechsel zurück ins Fenster (`QApplication.applicationStateChanged`) alle offenen Dateien prüfen.
+- [x] Datei extern geändert, Editor **dirty** → Konfliktdialog mit drei Optionen: „Meine Version behalten“, „Version aus Godot laden“, „Vergleichen“. Vergleich als einfache Zeilen-Diff-Ansicht (`difflib`), kindgerecht beschriftet.
+- [x] Datei extern gelöscht → Hinweis, Inhalt bleibt im Editor, „Erneut speichern“ möglich.
+- [x] Beim Wechsel zurück ins Fenster (`QApplication.applicationStateChanged`) alle offenen Dateien prüfen.
 
 ### 1.6 Sicherungen und Wiederherstellung
 
-- [ ] Vor jedem Speichern alten Stand nach `AppData/backups/<projekt-hash>/<relpfad>/<zeitstempel>.gd` kopieren; je Datei die letzten 20 behalten.
-- [ ] Autosave-Entwurf aller dirty Dokumente alle 30 s nach `AppData/recovery/`; Entwurf nach erfolgreichem Speichern löschen.
-- [ ] Beim Start vorhandene Entwürfe erkennen und `RecoveryDialog` anbieten (wiederherstellen / verwerfen / anzeigen).
+- [x] Vor jedem Speichern alten Stand nach `AppData/backups/<projekt-hash>/<relpfad>/<zeitstempel>.gd` kopieren; je Datei die letzten 20 behalten.
+- [x] Autosave-Entwurf aller dirty Dokumente alle 30 s nach `AppData/recovery/`; Entwurf nach erfolgreichem Speichern löschen.
+- [x] Beim Start vorhandene Entwürfe erkennen und `RecoveryDialog` anbieten (wiederherstellen / verwerfen / anzeigen).
 - [ ] Menüpunkt „Ältere Version ansehen“ zeigt Sicherungen einer Datei schreibgeschützt; Übernahme nur durch Kopieren des Kindes oder explizites „Diese Version wiederherstellen“.
 
 ### 1.7 Code-Editor
 
-- [ ] `CodeEditor(QPlainTextEdit)` mit Zeilennummernbereich (Muster „Code Editor Example“ aus der Qt-Doku).
-- [ ] Hervorhebung der aktuellen Zeile; Markierungen für Fehlerzeilen (`ExtraSelection` + Symbol im Rand).
-- [ ] Monospace-Schrift, einstellbare Größe (Strg + Mausrad, Strg +/-), Standard ≥ 14 pt.
-- [ ] Einrückung mit **Tabs** (GDScript-Standard), Tab-Breite 4; Auto-Einrückung nach Zeilen mit `:`; Umschalt+Tab rückt aus; Blockeinrückung bei Mehrfachauswahl.
-- [ ] Klammerpaar-Hervorhebung für `()[]{}`.
-- [ ] Undo/Redo (eingebaut), Speichern mit Strg+S, Dirty-Markierung `•` im Tab-Titel.
-- [ ] Suchleiste (Strg+F) und Ersetzen (Strg+H), Gehe zu Zeile (Strg+G).
-- [ ] Einfügen aus der Zwischenablage nur als Klartext (`insertFromMimeData` überschreiben).
-- [ ] Tabs für mehrere Dateien; Schließen mit Rückfrage bei ungespeicherten Änderungen; beim Beenden alle prüfen.
+- [x] `CodeEditor(QPlainTextEdit)` mit Zeilennummernbereich (Muster „Code Editor Example“ aus der Qt-Doku).
+- [x] Hervorhebung der aktuellen Zeile; Markierungen für Fehlerzeilen (`ExtraSelection` + Symbol im Rand).
+- [x] Monospace-Schrift, einstellbare Größe (Strg + Mausrad, Strg +/-), Standard ≥ 14 pt.
+- [x] Einrückung mit **Tabs** (GDScript-Standard), Tab-Breite 4; Auto-Einrückung nach Zeilen mit `:`; Umschalt+Tab rückt aus; Blockeinrückung bei Mehrfachauswahl.
+- [x] Klammerpaar-Hervorhebung für `()[]{}`.
+- [x] Undo/Redo (eingebaut), Speichern mit Strg+S, Dirty-Markierung `•` im Tab-Titel.
+- [x] Suchleiste (Strg+F) und Ersetzen (Strg+H), Gehe zu Zeile (Strg+G).
+- [x] Einfügen aus der Zwischenablage nur als Klartext (`insertFromMimeData` überschreiben).
+- [x] Tabs für mehrere Dateien; Schließen mit Rückfrage bei ungespeicherten Änderungen; beim Beenden alle prüfen.
 
 ### 1.8 GDScript-Syntaxhervorhebung
 
-- [ ] `QSyntaxHighlighter` mit Regeln für Godot-4-Schlüsselwörter (`func`, `var`, `const`, `if`, `elif`, `else`, `for`, `while`, `match`, `return`, `extends`, `class_name`, `signal`, `enum`, `static`, `await`, `@export`, `@onready` …), eingebaute Typen (`int`, `float`, `Vector2`, `Node2D` …), Zahlen, Strings, `$NodePath`, `%UniqueName`, Kommentare (`#`), Annotationen.
-- [ ] Mehrzeilige Strings (`"""`) über Blockzustände.
-- [ ] Farbschema aus `theme.py`, damit Kontrastmodus greift.
+- [x] `QSyntaxHighlighter` mit Regeln für Godot-4-Schlüsselwörter (`func`, `var`, `const`, `if`, `elif`, `else`, `for`, `while`, `match`, `return`, `extends`, `class_name`, `signal`, `enum`, `static`, `await`, `@export`, `@onready` …), eingebaute Typen (`int`, `float`, `Vector2`, `Node2D` …), Zahlen, Strings, `$NodePath`, `%UniqueName`, Kommentare (`#`), Annotationen.
+- [x] Mehrzeilige Strings (`"""`) über Blockzustände.
+- [x] Farbschema aus `theme.py`, damit Kontrastmodus greift.
 - [ ] Tests: Beispielzeilen liefern erwartete Formatbereiche.
 
 ### 1.9 Hauptfenster-Layout
@@ -230,14 +244,14 @@ ist.
 - [x] `QSplitter`: links Skriptbaum, Mitte Editor-Tabs, rechts Lernbereich (`QTabWidget`:
   LearnAgent · Tutor · Fortschritt), unten einklappbarer Problembereich.
 - [x] Den bisherigen Tab „Aufgabe“ entfernen und durch „LearnAgent“ ersetzen.
-- [ ] Statusleiste: Projektname, Datei, Zeile/Spalte, Verbindungsampel.
-- [ ] Fenstergeometrie und Splitterpositionen in `QSettings` speichern.
+- [x] Statusleiste: Projektname, Datei, Zeile/Spalte, Verbindungsampel.
+- [x] Fenstergeometrie und Splitterpositionen in `QSettings` speichern.
 
 **Fertig, wenn:** Mit dem Beispielprojekt und einem echten Godot-Editor parallel gilt:
 - [ ] In PyQt gespeicherte Änderungen erscheinen in Godot, das Spiel läuft mit dem neuen Code.
 - [ ] In Godot gespeicherte Änderungen werden im Client erkannt (still neu geladen oder Konfliktdialog).
 - [ ] Hartes Beenden des Clients (Task-Manager) verliert höchstens 30 s Arbeit; Wiederherstellung wird angeboten.
-- [ ] Kein Zugriff außerhalb des Projektordners möglich (Tests grün).
+- [x] Kein Zugriff außerhalb des Projektordners möglich (Tests grün).
 
 ---
 
@@ -247,33 +261,33 @@ Damit die Clientarbeit nicht auf den Server warten muss, wird zuerst gegen `Fake
 
 ### 2.1 Gemeinsames Protokollpaket
 
-- [ ] Pydantic-Modelle gemäß [Schnittstelle zum Lernserver](#schnittstelle-zum-lernserver) anlegen; `model_config = ConfigDict(extra="forbid")`.
-- [ ] Feld `protocol_version` in allen Nachrichten; Client lehnt inkompatible Hauptversion mit verständlicher Meldung ab.
-- [ ] Diskriminierte Unions über `type` (Nachrichten) und `kind` (Übungen).
-- [ ] JSON-Schema-Export (`model_json_schema()`) als Datei erzeugen, damit der Server-Teil denselben Vertrag sieht.
-- [ ] Tests: Beispielnachrichten aus den PDFs parsen; Übungen **ohne** Lösungsfeld; unbekannte Felder werden abgelehnt.
+- [x] Pydantic-Modelle gemäß [Schnittstelle zum Lernserver](#schnittstelle-zum-lernserver) anlegen; `model_config = ConfigDict(extra="forbid")`.
+- [x] Feld `protocol_version` in allen Nachrichten; Client lehnt inkompatible Hauptversion mit verständlicher Meldung ab.
+- [x] Diskriminierte Unions über `type` (Nachrichten) und `kind` (Übungen).
+- [x] JSON-Schema-Export (`model_json_schema()`) als Datei erzeugen, damit der Server-Teil denselben Vertrag sieht.
+- [x] Tests: Beispielnachrichten aus den PDFs parsen; Übungen **ohne** Lösungsfeld; unbekannte Felder werden abgelehnt.
 
 ### 2.2 Tutor-Client-Schnittstelle
 
-- [ ] `TutorClient(QObject)` mit Methoden `check_health()`, `start_session(project_id)`, `send_message(StudentMessage)`, `cancel()`, `request_next_hint(task_id)`, `fetch_task(task_id)`, `submit_exercise(Submission)`, `fetch_progress()`.
-- [ ] Signale: `health_changed`, `stream_started`, `stream_chunk(str)`, `stream_finished(LearningResponse)`, `exercise_received(Exercise)`, `review_received(ReviewResult)`, `progress_received(ProgressUpdate)`, `error(ClientError)`.
-- [ ] `FakeTutorClient`: liefert zeitverzögerte, gestreamte Antworten (`QTimer`) inkl. Beispiel-Lückentext aus dem PDF; simuliert auf Wunsch Timeout und Serverausfall.
-- [ ] Auswahl per Einstellung bzw. Startparameter `--fake-server`.
+- [x] `TutorClient(QObject)` mit Methoden `check_health()`, `start_session(project_id)`, `send_message(StudentMessage)`, `cancel()`, `request_next_hint(task_id)`, `fetch_task(task_id)`, `submit_exercise(Submission)`, `fetch_progress()`.
+- [x] Signale: `health_changed`, `stream_started`, `stream_chunk(str)`, `stream_finished(LearningResponse)`, `exercise_received(Exercise)`, `review_received(ReviewResult)`, `progress_received(ProgressUpdate)`, `error(ClientError)`.
+- [x] `FakeTutorClient`: liefert zeitverzögerte, gestreamte Antworten (`QTimer`) inkl. Beispiel-Lückentext aus dem PDF; simuliert auf Wunsch Timeout und Serverausfall.
+- [x] Auswahl per Einstellung bzw. Startparameter `--fake-server`.
 
 ### 2.3 Echte Implementierung
 
-- [ ] `HttpTutorClient` mit `QNetworkAccessManager`; Basis-URL aus `QSettings` (z. B. `http://<tailscale-host>:<port>`), Timeouts pro Anfrage (`setTransferTimeout`).
+- [x] `HttpTutorClient` mit `QNetworkAccessManager`; Basis-URL aus `QSettings` (z. B. `http://<tailscale-host>:<port>`), Timeouts pro Anfrage (`setTransferTimeout`).
 - [ ] Streaming über `QWebSocket`; automatische Wiederverbindung mit Backoff (1 s, 2 s, 5 s, 10 s, max. 30 s).
-- [ ] Jede eingehende Nachricht mit Pydantic validieren; ungültige Nachrichten verwerfen, Diagnose-Eintrag schreiben, Kind sieht nur „Der Lernhelfer hat gerade Schwierigkeiten“.
-- [ ] Größenlimits clientseitig: ausgehender Code-Ausschnitt max. N Zeilen bzw. KB (konfigurierbar, mit Server abstimmen); eingehende Nachrichten max. Größe.
-- [ ] Laufende Anfrage abbrechbar (Schaltfläche „Stopp“ → `cancel()`).
-- [ ] Keine Zugangsdaten im Client speichern; Identität ergibt sich serverseitig aus Tailscale.
+- [x] Jede eingehende Nachricht mit Pydantic validieren; ungültige Nachrichten verwerfen, Diagnose-Eintrag schreiben, Kind sieht nur „Der Lernhelfer hat gerade Schwierigkeiten“.
+- [x] Größenlimits clientseitig: ausgehender Code-Ausschnitt max. N Zeilen bzw. KB (konfigurierbar, mit Server abstimmen); eingehende Nachrichten max. Größe.
+- [x] Laufende Anfrage abbrechbar (Schaltfläche „Stopp“ → `cancel()`).
+- [x] Keine Zugangsdaten im Client speichern; Identität ergibt sich serverseitig aus Tailscale.
 
 ### 2.4 Verbindungsstatus
 
 - [ ] `ConnectionMonitor`: Health-Check alle 15 s (bei Fehler häufiger), drei Zustände je Komponente: Lernserver erreichbar · Modell verfügbar · Sitzung aktiv.
-- [ ] Ampel in der Statusleiste mit kindgerechtem Tooltip („Der Lernhelfer ist da“ / „Der Lernhelfer macht gerade Pause“).
-- [ ] `DiagnosticsPanel` (über Menü „Hilfe → Technische Details“): URL, letzte Fehler, Latenz, Protokollversion, optional Ausgabe von `tailscale status` falls verfügbar.
+- [x] Ampel in der Statusleiste mit kindgerechtem Tooltip („Der Lernhelfer ist da“ / „Der Lernhelfer macht gerade Pause“).
+- [x] `DiagnosticsPanel` (über Menü „Hilfe → Technische Details“): URL, letzte Fehler, Latenz, Protokollversion, optional Ausgabe von `tailscale status` falls verfügbar.
 - [ ] Bei Verbindungsverlust: Tutor- und Übungsbereich deaktivieren, Editor bleibt voll nutzbar, Eingaben im Chatfeld bleiben erhalten.
 
 **Fertig, wenn:** Client arbeitet gegen den Fake vollständig, und gegen den echten Server laufen Health-Check und eine gestreamte Antwort; Server stoppen während einer Antwort führt zu sauberer Meldung ohne Datenverlust.
@@ -307,17 +321,17 @@ Damit die Clientarbeit nicht auf den Server warten muss, wird zuerst gegen `Fake
 ### 3.2 Tutor-Chat
 
 - [ ] Verlauf als `QTextBrowser` (nur lesen), Nachrichten des Kindes und des Tutors klar unterscheidbar, Markdown-Darstellung (`setMarkdown`) mit Bereinigung (keine Links nach außen, keine Bilder, kein HTML).
-- [ ] Codeschnipsel in Tutor-Antworten als schreibgeschützter Block ohne „Übernehmen“-Funktion.
-- [ ] Eingabefeld mehrzeilig, Senden mit Strg+Enter; Zeichenlimit mit Anzeige.
-- [ ] Kontext automatisch mitsenden: aktuelle Aufgabe, Dateiname, **markierter** Code oder Umgebung des Cursors (±N Zeilen), letzte Fehlermeldung aus dem Problembereich. Vor dem Senden sichtbar machen, was mitgeschickt wird („Ich zeige dem Lernhelfer: player.gd, Zeilen 10–24“).
-- [ ] Schaltfläche „Nächster Hinweis“ (fordert die nächste Hinweisstufe an); aktuelle Stufe sichtbar, z. B. als Punkte ●●○○.
-- [ ] Gestreamte Antwort wird live angezeigt; Tippen-Indikator; „Stopp“-Schaltfläche.
-- [ ] Verlauf je Sitzung lokal nur im Speicher; beim Schließen verworfen (Speicherung ist Sache des Servers).
+- [x] Codeschnipsel in Tutor-Antworten als schreibgeschützter Block ohne „Übernehmen“-Funktion.
+- [x] Eingabefeld mehrzeilig, Senden mit Strg+Enter; Zeichenlimit mit Anzeige.
+- [x] Kontext automatisch mitsenden: aktuelle Aufgabe, Dateiname, **markierter** Code oder Umgebung des Cursors (±N Zeilen), letzte Fehlermeldung aus dem Problembereich. Vor dem Senden sichtbar machen, was mitgeschickt wird („Ich zeige dem Lernhelfer: player.gd, Zeilen 10–24“).
+- [x] Schaltfläche „Nächster Hinweis“ (fordert die nächste Hinweisstufe an); aktuelle Stufe sichtbar, z. B. als Punkte ●●○○.
+- [x] Gestreamte Antwort wird live angezeigt; Tippen-Indikator; „Stopp“-Schaltfläche.
+- [x] Verlauf je Sitzung lokal nur im Speicher; beim Schließen verworfen (Speicherung ist Sache des Servers).
 
 ### 3.3 Problembereich und Godot-Fehler
 
-- [ ] Liste mit Einträgen (Datei, Zeile, Meldung, Quelle: Server-Prüfung / Godot / manuell); Doppelklick springt zur Stelle.
-- [ ] Feld „Fehlermeldung aus Godot einfügen“: Kind kopiert Fehler aus dem Godot-Ausgabefenster; Client erkennt `res://pfad.gd:zeile` und verlinkt die Stelle.
+- [x] Liste mit Einträgen (Datei, Zeile, Meldung, Quelle: Server-Prüfung / Godot / manuell); Doppelklick springt zur Stelle.
+- [x] Feld „Fehlermeldung aus Godot einfügen“: Kind kopiert Fehler aus dem Godot-Ausgabefenster; Client erkennt `res://pfad.gd:zeile` und verlinkt die Stelle.
 - [ ] Optional: `godot/syntax_check.py` ruft `godot --headless --path <projekt> --check-only --script <datei>` auf (Godot-Pfad in Einstellungen), parst Ausgabe, Timeout 10 s, läuft per `QProcess` ohne UI-Blockade. Vor Umsetzung mit der festgelegten Godot-Version prüfen.
 - [ ] Optional: `godot/log_reader.py` liest die letzten Fehler aus dem Godot-Laufzeitlog (`%APPDATA%/Godot/app_userdata/<Projektname>/logs/godot.log`), falls Datei-Logging aktiv ist.
 
@@ -329,14 +343,14 @@ Antwort gibt den vollständigen, erklärten Code frei → der Client sichert und
 
 ## Phase 4 – Interaktive Übungen
 
-- [ ] `ExerciseWidget` als Basisklasse: `load(exercise)`, `answers() -> Submission`, `show_result(ReviewResult)`, `reset()`; Signal `submitted`.
-- [ ] `ExerciseFactory` wählt Widget anhand `exercise.kind`; unbekannte Art → freundliche Meldung statt Absturz.
+- [x] `ExerciseWidget` als Basisklasse: `load(exercise)`, `answers() -> Submission`, `show_result(ReviewResult)`, `reset()`; Signal `submitted`.
+- [x] `ExerciseFactory` wählt Widget anhand `exercise.kind`; unbekannte Art → freundliche Meldung statt Absturz.
 - [ ] **Lückentext** (`fill_blanks`): Code schreibgeschützt dargestellt, `{{blank_id}}`-Platzhalter als eingebettete `QComboBox` bzw. `QLineEdit`; Tab springt zur nächsten Lücke.
-- [ ] **Auswahl** (`multiple_choice`): `QRadioButton`/`QCheckBox`-Gruppe, optional mit Codeausschnitt.
-- [ ] **Reihenfolge** (`ordering`): `QListWidget` mit Drag & Drop (`InternalMove`) **und** Tastatursteuerung (Alt+↑/↓).
-- [ ] **Fehler finden** (`find_bug`): schreibgeschützter Code mit Zeilennummern; Kind wählt Zeile(n) aus und kann optional eine Erklärung tippen.
-- [ ] Nach Abgabe: richtige/falsche Teile farblich **und** mit Symbol markieren (nicht nur Farbe), Erklärung vom Server anzeigen, „Nochmal versuchen“ bzw. „Weiter“.
-- [ ] Übungen ändern niemals Projektdateien.
+- [x] **Auswahl** (`multiple_choice`): `QRadioButton`/`QCheckBox`-Gruppe, optional mit Codeausschnitt.
+- [x] **Reihenfolge** (`ordering`): `QListWidget` mit Drag & Drop (`InternalMove`) **und** Tastatursteuerung (Alt+↑/↓).
+- [x] **Fehler finden** (`find_bug`): schreibgeschützter Code mit Zeilennummern; Kind wählt Zeile(n) aus und kann optional eine Erklärung tippen.
+- [x] Nach Abgabe: richtige/falsche Teile farblich **und** mit Symbol markieren (nicht nur Farbe), Erklärung vom Server anzeigen, „Nochmal versuchen“ bzw. „Weiter“.
+- [x] Übungen ändern niemals Projektdateien.
 - [ ] Widget-Tests mit `pytest-qt` für jede Übungsart (Eingabe → erwartete `Submission`).
 
 ---
@@ -345,24 +359,24 @@ Antwort gibt den vollständigen, erklärten Code frei → der Client sichert und
 
 ### 5.1 Fortschrittsanzeige
 
-- [ ] Fähigkeiten (Variablen, Bedingungen, Schleifen, Funktionen, Signale, Godot-Knoten …) mit Stufe 0–3 als Symbolreihe, Beschriftung in Worten („mit Hilfe“, „fast allein“, „sicher“).
-- [ ] Keine Gesamtpunktzahl, keine Ranglisten.
+- [x] Fähigkeiten (Variablen, Bedingungen, Schleifen, Funktionen, Signale, Godot-Knoten …) mit Stufe 0–3 als Symbolreihe, Beschriftung in Worten („mit Hilfe“, „fast allein“, „sicher“).
+- [x] Keine Gesamtpunktzahl, keine Ranglisten.
 - [ ] Daten kommen ausschließlich vom Server (`ProgressUpdate`); Client cached nur für die Anzeige offline.
 
 ### 5.2 Barrierefreiheit und Bedienung
 
-- [ ] Globale Schriftgröße (klein/mittel/groß) wirkt auf alle Bereiche.
-- [ ] Kontrastmodus (hell, dunkel, hoher Kontrast) über `theme.py`.
+- [x] Globale Schriftgröße (klein/mittel/groß) wirkt auf alle Bereiche.
+- [x] Kontrastmodus (hell, dunkel, hoher Kontrast) über `theme.py`.
 - [ ] Vollständige Tastaturbedienung, sinnvolle Tab-Reihenfolge, sichtbarer Fokus, `setAccessibleName` für alle Bedienelemente.
 - [ ] Alle UI-Texte zentral (Vorbereitung für `QTranslator`); Sprache zunächst Deutsch, einfache Sätze.
 - [ ] Kurzanleitung beim ersten Start (3–4 Schritte, überspringbar).
 
 ### 5.3 Verteilung
 
-- [ ] PyInstaller-Spec für Windows (Ordner-Build), Icon, Versionsinfo.
+- [x] PyInstaller-Spec für Windows (Ordner-Build), Icon, Versionsinfo.
 - [ ] Erststart-Dialog: Serveradresse eintragen und testen.
 - [ ] Prüfen, dass der Build auf einem PC ohne Python startet und Projekte öffnen/speichern kann.
-- [ ] Kurze Installationsanleitung `client/README.md`.
+- [x] Kurze Installationsanleitung `client/README.md`.
 
 ---
 
@@ -420,7 +434,7 @@ Diese Punkte erstellst du; der Client ist so gebaut, dass er bis dahin mit dem F
 
 - [ ] GDScript wird in der PyQt-Anwendung bearbeitet und atomisch im Godot-Projekt gespeichert; Godot übernimmt die Änderungen.
 - [ ] Parallele Änderungen in Godot werden erkannt, nichts wird unbemerkt überschrieben.
-- [ ] Kein Dateizugriff außerhalb des Projekts, nur `*.gd`.
+- [x] Kein Dateizugriff außerhalb des Projekts, nur `*.gd`.
 - [ ] Verbindung zum Lernserver über die konfigurierte Tailscale-Adresse; Status sichtbar.
 - [ ] Tutor-Antworten werden gestreamt angezeigt; Hinweise stufenweise abrufbar.
 - [ ] Mindestens Lückentext und Auswahlübung funktionieren mit serverseitiger Prüfung.
@@ -428,4 +442,4 @@ Diese Punkte erstellst du; der Client ist so gebaut, dass er bis dahin mit dem F
   Level-Prüfung schreiben; falsche Antworten und normale Tutor-Nachrichten ändern keine Dateien.
 - [ ] Server-/Netz-/Modellausfall führt zu keinem Codeverlust; Absturz-Wiederherstellung funktioniert.
 - [x] Lokale Profil-Anmeldung erlaubt unterschiedliche Erfahrungsstufen für mehrere Kinder.
-- [ ] Alle Tests (`pytest`) grün, `ruff` ohne Befund.
+- [x] Alle Tests (`pytest`) grün, `ruff` ohne Befund.
