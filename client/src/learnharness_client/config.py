@@ -2,12 +2,21 @@
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
+import secrets
 from pathlib import Path
 
 from PyQt6.QtCore import QSettings, QStandardPaths
 
 from learnharness_client.domain.profile import StudentProfile
+
+_PBKDF2_ITERATIONS = 200_000
+
+
+def _hash_password(password: str, salt: bytes, iterations: int) -> bytes:
+    return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
 
 
 class AppSettings:
@@ -61,6 +70,66 @@ class AppSettings:
     @first_start_done.setter
     def first_start_done(self, value: bool) -> None:
         self._settings.setValue("setup/first_start_done", value)
+
+    @property
+    def autosave(self) -> bool:
+        """Save automatically shortly after typing (for younger children)."""
+        return bool(self._settings.value("editor/autosave", False, type=bool))
+
+    @autosave.setter
+    def autosave(self, value: bool) -> None:
+        self._settings.setValue("editor/autosave", value)
+
+    @property
+    def show_agent_changes(self) -> bool:
+        """Show old and new code side by side after the LearnAgent wrote a file."""
+        return bool(self._settings.value("learning/show_agent_changes", True, type=bool))
+
+    @show_agent_changes.setter
+    def show_agent_changes(self, value: bool) -> None:
+        self._settings.setValue("learning/show_agent_changes", value)
+
+    # Teacher area -------------------------------------------------------------
+
+    def has_teacher_password(self) -> bool:
+        return bool(self._settings.value("teacher/password", ""))
+
+    def set_teacher_password(self, password: str) -> None:
+        salt = secrets.token_bytes(16)
+        digest = _hash_password(password, salt, _PBKDF2_ITERATIONS)
+        self._settings.setValue(
+            "teacher/password", f"{_PBKDF2_ITERATIONS}${salt.hex()}${digest.hex()}"
+        )
+
+    def check_teacher_password(self, password: str) -> bool:
+        stored = str(self._settings.value("teacher/password", ""))
+        try:
+            iterations_text, salt_hex, digest_hex = stored.split("$")
+            expected = bytes.fromhex(digest_hex)
+            actual = _hash_password(password, bytes.fromhex(salt_hex), int(iterations_text))
+        except ValueError:
+            return False
+        return hmac.compare_digest(actual, expected)
+
+    def set_learning_level(self, profile_id: str, level: int) -> int:
+        """Teacher override: may also lower the unlocked level."""
+        value = max(1, min(10, level))
+        self._settings.setValue(f"learning/{profile_id}/max_level", value)
+        return value
+
+    def reset_learning(self, profile_id: str) -> None:
+        for group in ("learning", "progress", "tutorial"):
+            self._settings.remove(f"{group}/{profile_id}")
+
+    def delete_student_profile(self, profile_id: str) -> None:
+        profiles = [item for item in self.student_profiles if item.profile_id != profile_id]
+        self._settings.setValue(
+            "profiles/items",
+            json.dumps([item.to_dict() for item in profiles], ensure_ascii=False),
+        )
+        if self.last_profile_id == profile_id:
+            self._settings.remove("profiles/last_id")
+        self.reset_learning(profile_id)
 
     def tutorial_seen(self, profile_id: str) -> bool:
         return bool(self._settings.value(f"tutorial/{profile_id}/seen", False, type=bool))

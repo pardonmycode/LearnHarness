@@ -19,9 +19,9 @@ from learnharness_protocol import (
     Submission,
     Task,
 )
-from learnharness_protocol.messages import IncomingMessage, StreamChunk
+from learnharness_protocol.messages import ErrorMessage, IncomingMessage, StreamChunk
 from pydantic import TypeAdapter, ValidationError
-from PyQt6.QtCore import QByteArray, QTimer, QUrl
+from PyQt6.QtCore import QByteArray, QObject, QTimer, QUrl
 from PyQt6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from PyQt6.QtWebSockets import QWebSocket
 
@@ -31,6 +31,10 @@ from ..texts import T
 from .tutor_client import ClientError, TutorClient
 
 LOG = logging.getLogger(__name__)
+# mypy cannot express an Annotated discriminated union as ``type[...]``; the adapter type is exact.
+_INCOMING: TypeAdapter[StreamChunk | LearningResponse | ErrorMessage | Task] = TypeAdapter(
+    IncomingMessage  # type: ignore[arg-type]
+)
 
 
 class HttpTutorClient(TutorClient):
@@ -38,8 +42,8 @@ class HttpTutorClient(TutorClient):
     # Reconnect delays after an unexpected WebSocket loss; the last value repeats.
     RECONNECT_BACKOFF_MS = (1_000, 2_000, 5_000, 10_000, 30_000)
 
-    def __init__(self, base_url: str, parent=None) -> None:
-        super().__init__(parent)
+    def __init__(self, base_url: str, parent: QObject | None = None) -> None:
+        super().__init__(parent)  # type: ignore[arg-type]  # see qtcompat
         self.base_url = base_url.rstrip("/")
         self.network = QNetworkAccessManager(self)
         self.socket = QWebSocket(parent=self)
@@ -76,6 +80,7 @@ class HttpTutorClient(TutorClient):
             reply = self.network.get(request)
         else:
             reply = self.network.sendCustomRequest(request, method.encode("ascii"), body)
+        assert reply is not None
         reply.finished.connect(
             lambda current=reply: self._finish_reply(current, handler, on_failure)
         )
@@ -192,7 +197,7 @@ class HttpTutorClient(TutorClient):
             self.error.emit(ClientError(T.NET_RESPONSE_TOO_LARGE, "too_large"))
             return
         try:
-            message = TypeAdapter(IncomingMessage).validate_json(text)
+            message = _INCOMING.validate_json(text)
         except ValidationError as exc:
             LOG.warning("Rejected WebSocket payload: %s", type(exc).__name__)
             self.error.emit(ClientError(T.NET_TROUBLE, "invalid_message"))
@@ -206,7 +211,7 @@ class HttpTutorClient(TutorClient):
         else:
             self.error.emit(ClientError(message.message_for_child, message.code))
 
-    def _on_socket_error(self, _error) -> None:
+    def _on_socket_error(self, _error: object) -> None:
         # Report an outage once; silent reconnect attempts must not flood the chat.
         if not self._outage_reported:
             self._outage_reported = True

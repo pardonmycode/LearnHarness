@@ -14,12 +14,12 @@ class ConnectionMonitor(QObject):
     def __init__(
         self,
         client: TutorClient,
-        parent=None,
+        parent: QObject | None = None,
         *,
         interval_ms: int = 15_000,
         error_interval_ms: int = 5_000,
     ) -> None:
-        super().__init__(parent)
+        super().__init__(parent)  # type: ignore[arg-type]  # see qtcompat
         self.client = client
         self.interval_ms = interval_ms
         self.error_interval_ms = error_interval_ms

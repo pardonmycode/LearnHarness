@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: windows-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ./protocol -e "./client[dev]"
+
+      - name: Ruff
+        run: |
+          ruff check client protocol
+          ruff format --check client protocol
+
+      - name: Mypy (strict, scope in client/pyproject.toml)
+        working-directory: client
+        run: mypy
+
+      - name: Pytest (client and protocol)
+        run: python -m pytest

@@ -12,6 +12,7 @@ from learnharness_client.ui.editor.editor_tabs import EditorTabs
 
 class StubSettings:
     font_size = 14
+    autosave = False
 
 
 def test_generated_file_is_backed_up_and_written_atomically(

@@ -38,5 +38,14 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
-packages = ["learnharness_client.domain", "learnharness_protocol"]
+mypy_path = ["src", "../protocol/src"]
+# Strict for everything without widgets; the PyQt UI layer is covered by tests instead.
+files = [
+    "src/learnharness_client/domain",
+    "src/learnharness_client/net",
+    "src/learnharness_client/godot",
+    "src/learnharness_client/texts.py",
+    "src/learnharness_client/qtcompat.py",
+    "../protocol/src/learnharness_protocol",
+]
 

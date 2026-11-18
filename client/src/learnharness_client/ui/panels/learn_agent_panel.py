@@ -42,8 +42,9 @@ def card(title: str) -> tuple[QFrame, QVBoxLayout]:
 class LearnAgentPanel(QWidget):
     start_requested = pyqtSignal(str, int)
     exercise_submitted = pyqtSignal(object)
+    show_changes_toggled = pyqtSignal(bool)
 
-    def __init__(self, max_unlocked_level: int, parent=None) -> None:
+    def __init__(self, max_unlocked_level: int, parent=None, *, show_changes: bool = True) -> None:
         super().__init__(parent)
         self.max_unlocked_level = max(1, min(10, max_unlocked_level))
         self.exercise_widget: QWidget | None = None
@@ -92,7 +93,14 @@ class LearnAgentPanel(QWidget):
         self.start_button = QPushButton(T.AGENT_START)
         self.start_button.setProperty("primary", "true")
         self.start_button.clicked.connect(self._start)
+        self.changes_toggle = QPushButton(T.CHANGES_TOGGLE)
+        self.changes_toggle.setCheckable(True)
+        self.changes_toggle.setChecked(show_changes)
+        self.changes_toggle.setToolTip(T.CHANGES_TOGGLE_TIP)
+        self.changes_toggle.setAccessibleName(T.CHANGES_TOGGLE)
+        self.changes_toggle.toggled.connect(self.show_changes_toggled)
         button_row = QHBoxLayout()
+        button_row.addWidget(self.changes_toggle)
         button_row.addStretch(1)
         button_row.addWidget(self.start_button)
         wish_layout.addWidget(self.prompt)
@@ -154,6 +162,9 @@ class LearnAgentPanel(QWidget):
                 label = T.AGENT_LEVEL if item.isEnabled() else T.AGENT_LEVEL_LOCKED
                 item.setText(label.format(level=index + 1))
         self.progress.setValue(self.max_unlocked_level)
+        if self.level_choice.currentIndex() + 1 > self.max_unlocked_level:
+            # A teacher lowered the level: jump to the highest level still unlocked.
+            self.level_choice.setCurrentIndex(self.max_unlocked_level - 1)
         self.unlocked_label.setText(T.AGENT_UNLOCKED.format(level=self.max_unlocked_level))
 
     def _level_changed(self) -> None:

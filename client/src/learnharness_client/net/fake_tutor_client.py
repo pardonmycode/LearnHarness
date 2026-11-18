@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from functools import partial
+from typing import Any
 
 from learnharness_protocol import (
     Blank,
@@ -28,14 +30,15 @@ from learnharness_protocol import (
     TextBlank,
     TextBlanksExercise,
 )
-from PyQt6.QtCore import QTimer
+from learnharness_protocol.exercises import Exercise
+from PyQt6.QtCore import QObject, QTimer
 
 from .tutor_client import ClientError, TutorClient
 
 
 class FakeTutorClient(TutorClient):
-    def __init__(self, parent=None, *, delay_ms: int = 90) -> None:
-        super().__init__(parent)
+    def __init__(self, parent: QObject | None = None, *, delay_ms: int = 90) -> None:
+        super().__init__(parent)  # type: ignore[arg-type]  # see qtcompat
         self.delay_ms = delay_ms
         self.session_id = "fake-session-001"
         self.hint_level = 0
@@ -104,7 +107,7 @@ class FakeTutorClient(TutorClient):
             for index, word in enumerate(text.split())
         ]
         for index, word in enumerate(words, start=1):
-            self._later(lambda part=word: self._emit_chunk(part), index)
+            self._later(partial(self._emit_chunk, word), index)
         self._later(
             lambda: self._finish_stream(
                 LearningResponse(
@@ -208,13 +211,14 @@ class FakeTutorClient(TutorClient):
             level = int(submission.exercise_id.rsplit("_", 1)[1])
         except (ValueError, IndexError):
             level = self._learn_level or 1
+        lines = submission.answers.get("lines", [])
         expected: dict[int, bool] = {
             1: submission.answers.get("choice") == "x_axis",
             2: submission.answers.get("axis") == "x",
             3: submission.answers.get("axis") == "x" and submission.answers.get("value") == "speed",
             4: submission.answers.get("axis") == "x" and submission.answers.get("value") == "speed",
             5: submission.answers.get("order") == ["extends", "speed", "process", "move"],
-            6: 4 in submission.answers.get("lines", []),
+            6: isinstance(lines, list) and 4 in lines,
             7: submission.answers.get("axis") == "x" and submission.answers.get("value") == "speed",
             8: submission.answers.get("function") in {"_process", "_physics_process"}
             and submission.answers.get("axis") == "x",
@@ -316,8 +320,8 @@ class FakeTutorClient(TutorClient):
         )
 
     @staticmethod
-    def _exercise_for_level(level: int):
-        common = {
+    def _exercise_for_level(level: int) -> Exercise:
+        common: dict[str, Any] = {
             "id": f"learn_level_{level}",
             "skill": "Bewegung und Koordinaten",
             "difficulty": min(5, max(1, (level + 1) // 2)),

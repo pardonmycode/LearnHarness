@@ -39,7 +39,9 @@ from learnharness_client.net.tutor_client import ClientError, TutorClient
 
 from ..texts import T
 from .dialogs.backup_dialog import BackupDialog
+from .dialogs.changes_dialog import ChangesDialog
 from .dialogs.settings_dialog import SettingsDialog
+from .dialogs.teacher_dialog import TeacherDialog, unlock_teacher_area
 from .dialogs.tutorial_dialog import TutorialDialog
 from .editor.editor_tabs import EditorTabs
 from .panels.diagnostics_panel import DiagnosticsPanel
@@ -82,7 +84,8 @@ class MainWindow(QMainWindow):
         self.script_tree = ScriptTree()
         self.editor_tabs = EditorTabs(settings)
         self.learn_agent_panel = LearnAgentPanel(
-            settings.max_unlocked_learning_level(student_profile.profile_id)
+            settings.max_unlocked_learning_level(student_profile.profile_id),
+            show_changes=settings.show_agent_changes,
         )
         self.tutor_panel = TutorPanel()
         self.progress_panel = ProgressPanel()
@@ -182,6 +185,9 @@ class MainWindow(QMainWindow):
         settings_action.triggered.connect(self.show_settings)
         edit_menu.addSeparator()
         edit_menu.addAction(settings_action)
+        teacher_action = QAction(T.TEACHER_MENU, self)
+        teacher_action.triggered.connect(self.show_teacher_area)
+        edit_menu.addAction(teacher_action)
 
         view_menu = self.menuBar().addMenu(T.MENU_VIEW)
         problems_action = self.problems_dock.toggleViewAction()
@@ -215,6 +221,8 @@ class MainWindow(QMainWindow):
         )
         self.learn_agent_panel.start_requested.connect(self.start_learning_round)
         self.learn_agent_panel.exercise_submitted.connect(self._submit_exercise)
+        self.learn_agent_panel.show_changes_toggled.connect(self._set_show_changes)
+        self.editor_tabs.generated_file_applied.connect(self._generated_file_applied)
         self.tutor_panel.message_submitted.connect(self.send_tutor_message)
         self.tutor_panel.next_hint_requested.connect(
             lambda: self.tutor_client.request_next_hint(self.current_task_id)
@@ -234,7 +242,7 @@ class MainWindow(QMainWindow):
 
     def pick_project(self) -> None:
         start = self.settings.recent_projects[0] if self.settings.recent_projects else ""
-        project = choose_project(self, start)
+        project = choose_project(self, start, recent=self.settings.recent_projects)
         if project:
             self.open_project(project)
 
@@ -457,7 +465,27 @@ class MainWindow(QMainWindow):
     def show_settings(self) -> None:
         dialog = SettingsDialog(self.settings, self)
         if dialog.exec():
+            # Autosave and the changes view apply immediately; the rest after a restart.
+            self.learn_agent_panel.changes_toggle.setChecked(self.settings.show_agent_changes)
             QMessageBox.information(self, T.SETTINGS_SAVED_TITLE, T.SETTINGS_SAVED)
+
+    def _set_show_changes(self, enabled: bool) -> None:
+        self.settings.show_agent_changes = enabled
+
+    def _generated_file_applied(self, file_name: str, old: str, new: str) -> None:
+        if self.settings.show_agent_changes and old != new:
+            ChangesDialog(file_name, old, new, self).exec()
+
+    def show_teacher_area(self) -> None:
+        if not unlock_teacher_area(self.settings, self):
+            return
+        dialog = TeacherDialog(self.settings, self.student_profile.profile_id, self)
+        dialog.level_changed.connect(self._teacher_level_changed)
+        dialog.exec()
+
+    def _teacher_level_changed(self, profile_id: str, level: int) -> None:
+        if profile_id == self.student_profile.profile_id:
+            self.learn_agent_panel.set_max_unlocked(level)
 
     def _progress_received(self, progress: ProgressUpdate) -> None:
         self.progress_panel.set_progress(progress)

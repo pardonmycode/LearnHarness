@@ -54,6 +54,12 @@ class SettingsDialog(QDialog):
         form.addRow(T.SETTINGS_SERVER, self.server_url)
         form.addRow(T.SETTINGS_GODOT, godot_row)
         form.addRow(T.SETTINGS_DEVELOPMENT, self.fake_server)
+        self.autosave = QCheckBox(T.SETTINGS_AUTOSAVE)
+        self.autosave.setChecked(settings.autosave)
+        self.show_changes = QCheckBox(T.SETTINGS_SHOW_CHANGES)
+        self.show_changes.setChecked(settings.show_agent_changes)
+        form.addRow(T.SETTINGS_EDITOR, self.autosave)
+        form.addRow(T.SETTINGS_LEARNING, self.show_changes)
         form.addRow(T.SETTINGS_FONT_SIZE, self.font_size)
         form.addRow(T.SETTINGS_THEME, self.theme)
         layout.addLayout(form)
@@ -72,6 +78,8 @@ class SettingsDialog(QDialog):
         self.settings.font_size = self.font_size.value()
         self.settings.theme = str(self.theme.currentData())
         self.settings.godot_path = self.godot_path.text()
+        self.settings.autosave = self.autosave.isChecked()
+        self.settings.show_agent_changes = self.show_changes.isChecked()
         self.accept()
 
     def _browse_godot(self) -> None:

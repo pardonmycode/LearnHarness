@@ -64,7 +64,10 @@ class T:
     AGENT_NEEDS_FILE = "Öffne zuerst die GDScript-Datei, die der LearnAgent später schreiben soll."
     PROJECT_NOT_OPENED = "Projekt nicht geöffnet"
     SETTINGS_SAVED_TITLE = "Einstellungen gespeichert"
-    SETTINGS_SAVED = "Die neuen Netzwerk- und Anzeigeeinstellungen gelten beim nächsten Start."
+    SETTINGS_SAVED = (
+        "Automatisches Speichern und die Änderungsansicht gelten sofort. "
+        "Netzwerk- und Anzeigeeinstellungen gelten beim nächsten Start."
+    )
     NO_BACKUPS = "Für {file} gibt es noch keine älteren Versionen."
     VERSION_RESTORED = "Ältere Version von {file} in den Editor geholt. Speichern mit Strg+S."
 
@@ -412,6 +415,78 @@ class T:
     GODOT_TIMEOUT = "Godot hat nicht innerhalb von 10 Sekunden geantwortet."
     GODOT_NOT_FOUND = "Das Godot-Programm wurde nicht gefunden."
     GODOT_START_FAILED = "Godot ließ sich nicht starten."
+
+    # Project choice
+    PROJECT_CHOICE_TITLE = "Welches Spiel möchtest du bearbeiten?"
+    PROJECT_CHOICE_INTRO = (
+        "Diese Godot-Projekte habe ich auf deinem Computer gefunden. Wähle eins aus."
+    )
+    PROJECT_CHOICE_LIST_A11Y = "Gefundene Godot-Projekte"
+    PROJECT_CHOICE_RECENT_TAG = "Zuletzt benutzt · {path}"
+    PROJECT_CHOICE_GODOT_TAG = "Aus Godot · {path}"
+    PROJECT_CHOICE_OPEN = "Öffnen"
+    PROJECT_CHOICE_OTHER_FOLDER = "Anderen Ordner wählen …"
+    PROJECT_CHOICE_CANCEL = "Abbrechen"
+
+    # Teacher area
+    TEACHER_MENU = "Lehrkraft-Bereich …"
+    TEACHER_TITLE = "Lehrkraft-Bereich"
+    TEACHER_SET_PASSWORD_INTRO = (
+        "Lege einmalig ein Passwort für den Lehrkraft-Bereich fest. Kinder brauchen es nicht."
+    )
+    TEACHER_PASSWORD = "Passwort:"
+    TEACHER_PASSWORD_REPEAT = "Wiederholen:"
+    TEACHER_PASSWORD_A11Y = "Passwort für den Lehrkraft-Bereich"
+    TEACHER_PASSWORD_TOO_SHORT = "Das Passwort braucht mindestens 6 Zeichen."
+    TEACHER_PASSWORD_MISMATCH = "Die beiden Passwörter stimmen nicht überein."
+    TEACHER_PASSWORD_WRONG = "Das Passwort stimmt nicht."
+    TEACHER_UNLOCK = "Öffnen"
+    TEACHER_INTRO = (
+        "Profile auf diesem Computer verwalten. Änderungen gelten sofort. "
+        "Der Lernfortschritt auf dem Lernserver bleibt davon unberührt."
+    )
+    TEACHER_PROFILES_A11Y = "Lernprofile auf diesem Computer"
+    TEACHER_PROFILE_ROW = "{pseudonym} · Level {level} · {experience}"
+    TEACHER_CURRENT = " (gerade angemeldet)"
+    TEACHER_LEVEL = "Freigeschaltetes Level:"
+    TEACHER_LEVEL_A11Y = "Freigeschaltetes LearnAgent-Level"
+    TEACHER_APPLY_LEVEL = "Level übernehmen"
+    TEACHER_RESET = "Fortschritt zurücksetzen"
+    TEACHER_DELETE = "Profil löschen"
+    TEACHER_CHANGE_PASSWORD = "Passwort ändern …"
+    TEACHER_RESET_CONFIRM = (
+        "Level, gespeicherten Fortschritt und Kurzanleitung von {pseudonym} zurücksetzen?"
+    )
+    TEACHER_DELETE_CONFIRM = "Profil {pseudonym} endgültig von diesem Computer löschen?"
+    TEACHER_CANNOT_DELETE_CURRENT = (
+        "Das gerade angemeldete Profil kann nicht gelöscht werden. Melde dich mit einem "
+        "anderen Profil an oder starte LearnHarness neu."
+    )
+    TEACHER_NO_PROFILES = "Auf diesem Computer gibt es noch keine Profile."
+
+    # Agent changes view and autosave
+    CHANGES_TOGGLE = "Änderungen anzeigen"
+    CHANGES_TOGGLE_TIP = (
+        "Wenn eingeschaltet, siehst du nach dem Schreiben deinen alten und den neuen Code "
+        "nebeneinander."
+    )
+    CHANGES_TITLE = "Das hat sich geändert: {file}"
+    CHANGES_INTRO = (
+        "Links steht dein alter Code, rechts der neue vom LearnAgent. Rot: entfernt. "
+        "Grün: neu. Mit Strg+Z im Editor holst du den alten Code zurück."
+    )
+    CHANGES_OLD = "Vorher"
+    CHANGES_NEW = "Nachher"
+    CHANGES_OLD_A11Y = "Alter Code vor dem LearnAgent"
+    CHANGES_NEW_A11Y = "Neuer Code vom LearnAgent"
+    CHANGES_NEW_FILE = "(Die Datei war vorher leer oder neu.)"
+    CHANGES_SUMMARY = "{added} Zeile(n) neu, {removed} Zeile(n) entfernt"
+    CHANGES_CLOSE = "Verstanden"
+    SETTINGS_EDITOR = "Editor:"
+    SETTINGS_AUTOSAVE = "Automatisch speichern (2 Sekunden nach dem Tippen)"
+    SETTINGS_LEARNING = "LearnAgent:"
+    SETTINGS_SHOW_CHANGES = "Nach dem Schreiben Änderungen anzeigen"
+    AUTOSAVED = "Automatisch gespeichert: {file}"
 
     # Network errors from the learning-server client
     NET_UNREACHABLE = "Der Lernhelfer ist gerade nicht erreichbar."

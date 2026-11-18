@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PyQt6.QtCore import QObject, QProcess, QTimer, pyqtSignal
+from PyQt6.QtCore import QObject, QProcess, QTimer
 
+from ..qtcompat import signal
 from ..texts import T
 from .output_parser import GodotMessage, parse_godot_output
 
@@ -16,11 +17,11 @@ MAX_OUTPUT_BYTES = 256 * 1024
 class SyntaxChecker(QObject):
     """Runs one check at a time; ``finished`` carries the parsed messages."""
 
-    finished = pyqtSignal(object)  # list[GodotMessage]
-    failed = pyqtSignal(str)
+    finished = signal(object)  # list[GodotMessage]
+    failed = signal(str)
 
-    def __init__(self, parent=None) -> None:
-        super().__init__(parent)
+    def __init__(self, parent: QObject | None = None) -> None:
+        super().__init__(parent)  # type: ignore[arg-type]  # see qtcompat
         self.process: QProcess | None = None
         self._output = bytearray()
         self._timer = QTimer(self)
@@ -68,7 +69,7 @@ class SyntaxChecker(QObject):
         if room > 0:
             self._output.extend(chunk[:room])
 
-    def _process_finished(self, *_args) -> None:
+    def _process_finished(self, *_args: object) -> None:
         if self.process is None:
             return
         self._read_output()

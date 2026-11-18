@@ -28,6 +28,8 @@ class EditorTabs(QWidget):
     status_message = pyqtSignal(str)
     current_file_changed = pyqtSignal(str)
     cursor_changed = pyqtSignal(int, int)
+    # file name, old text, new text – emitted after the LearnAgent wrote a file
+    generated_file_applied = pyqtSignal(str, str, str)
 
     def __init__(self, settings: AppSettings, parent=None) -> None:
         super().__init__(parent)
@@ -51,10 +53,20 @@ class EditorTabs(QWidget):
         layout.addWidget(self.tabs)
         self.watcher = QFileSystemWatcher(self)
         self.watcher.fileChanged.connect(self._watcher_changed)
+        self._pending_checks: set[Path] = set()
+        self._watch_timer = QTimer(self)
+        self._watch_timer.setSingleShot(True)
+        self._watch_timer.setInterval(350)
+        self._watch_timer.timeout.connect(self._run_pending_checks)
         self.autosave_timer = QTimer(self)
         self.autosave_timer.setInterval(30_000)
         self.autosave_timer.timeout.connect(self.write_recovery_drafts)
         self.autosave_timer.start()
+        # Optional automatic saving shortly after typing (setting "Automatisch speichern").
+        self.quick_save_timer = QTimer(self)
+        self.quick_save_timer.setSingleShot(True)
+        self.quick_save_timer.setInterval(2_000)
+        self.quick_save_timer.timeout.connect(self.autosave_dirty)
         app = QApplication.instance()
         if app is not None:
             app.applicationStateChanged.connect(lambda _state: self.check_all_external_changes())
@@ -123,6 +135,7 @@ class EditorTabs(QWidget):
                 return False
             self.open_file(document.path)
             self.status_message.emit(T.AGENT_CREATED_FILE.format(file=document.path.name))
+            self.generated_file_applied.emit(document.path.name, "", content)
             return True
 
         editor = self.open_file(path)
@@ -136,11 +149,13 @@ class EditorTabs(QWidget):
                 T.UNSAVED_OWN_CODE,
             )
             return False
+        old_text = editor.toPlainText()
         # One undo step: the child can press Strg+Z to see their previous code again.
         editor.replace_all_text(content)
         if not self.save_editor(editor):
             return False
         self.status_message.emit(T.AGENT_WROTE_FILE.format(file=document.path.name))
+        self.generated_file_applied.emit(document.path.name, old_text, content)
         return True
 
     def backups_for_current(self) -> list[Path]:
@@ -172,6 +187,23 @@ class EditorTabs(QWidget):
             return
         document.update_text(editor.toPlainText())
         self._update_title(editor)
+        if document.dirty and self.settings.autosave:
+            self.quick_save_timer.start()
+
+    def autosave_dirty(self) -> None:
+        """Save quietly; files changed outside are left for the normal conflict check."""
+        if not self.store or not self.settings.autosave:
+            return
+        for editor, document in list(self.documents.items()):
+            if not document.dirty or document.deleted_externally:
+                continue
+            try:
+                if self.store.has_external_change(document):
+                    continue
+            except (OSError, ValueError):
+                continue
+            if self.save_editor(editor, quiet=True):
+                self.status_message.emit(T.AUTOSAVED.format(file=document.path.name))
 
     def _update_title(self, editor: CodeEditor) -> None:
         index = self.tabs.indexOf(editor)
@@ -183,7 +215,7 @@ class EditorTabs(QWidget):
         editor = self.current_editor()
         return self.save_editor(editor) if editor else True
 
-    def save_editor(self, editor: CodeEditor | None) -> bool:
+    def save_editor(self, editor: CodeEditor | None, *, quiet: bool = False) -> bool:
         if not editor or not self.store or not self.project:
             return True
         document = self.documents[editor]
@@ -212,7 +244,8 @@ class EditorTabs(QWidget):
         editor.document().setModified(False)
         self._update_title(editor)
         self._ensure_watched(document.path)
-        self.status_message.emit(T.SAVED.format(file=document.path.name))
+        if not quiet:
+            self.status_message.emit(T.SAVED.format(file=document.path.name))
         return True
 
     def _save_error(self, error: Exception) -> None:
@@ -253,7 +286,14 @@ class EditorTabs(QWidget):
         return True
 
     def _watcher_changed(self, path_text: str) -> None:
-        QTimer.singleShot(350, lambda path=Path(path_text): self._check_path(path))
+        # Debounced via a child timer: it dies with this widget, so no check can run late.
+        self._pending_checks.add(Path(path_text))
+        self._watch_timer.start()
+
+    def _run_pending_checks(self) -> None:
+        pending, self._pending_checks = self._pending_checks, set()
+        for path in pending:
+            self._check_path(path)
 
     def _check_path(self, path: Path) -> None:
         editor = self.paths.get(path)

@@ -5,7 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from learnharness_protocol import CodeSubmission, StudentMessage, Submission
-from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QObject
+
+from ..qtcompat import signal
 
 
 @dataclass(frozen=True, slots=True)
@@ -16,16 +18,16 @@ class ClientError:
 
 
 class TutorClient(QObject):
-    health_changed = pyqtSignal(object)
-    session_started = pyqtSignal(object)
-    task_received = pyqtSignal(object)
-    stream_started = pyqtSignal()
-    stream_chunk = pyqtSignal(str)
-    stream_finished = pyqtSignal(object)
-    exercise_received = pyqtSignal(object)
-    review_received = pyqtSignal(object)
-    progress_received = pyqtSignal(object)
-    error = pyqtSignal(object)
+    health_changed = signal(object)
+    session_started = signal(object)
+    task_received = signal(object)
+    stream_started = signal()
+    stream_chunk = signal(str)
+    stream_finished = signal(object)
+    exercise_received = signal(object)
+    review_received = signal(object)
+    progress_received = signal(object)
+    error = signal(object)
 
     def check_health(self) -> None:
         raise NotImplementedError

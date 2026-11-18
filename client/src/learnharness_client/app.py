@@ -13,11 +13,13 @@ from PyQt6.QtWidgets import QApplication, QDialog, QMessageBox
 
 from learnharness_client.config import AppSettings, app_data_dir
 from learnharness_client.domain.project import GodotProject
+from learnharness_client.godot.project_list import known_godot_projects
 from learnharness_client.net.fake_tutor_client import FakeTutorClient
 from learnharness_client.net.http_tutor_client import HttpTutorClient
 from learnharness_client.ui.dialogs.first_start_dialog import FirstStartDialog
 from learnharness_client.ui.dialogs.login_dialog import LoginDialog
 from learnharness_client.ui.main_window import MainWindow
+from learnharness_client.ui.project_picker import choose_project
 from learnharness_client.ui.theme import apply_theme
 
 from .texts import T
@@ -52,6 +54,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Use the built-in pedagogical fake server",
     )
     return parser
+
+
+def _offer_known_projects(window: MainWindow, known: list[Path]) -> None:
+    project = choose_project(window, recent=window.settings.recent_projects, known=known)
+    if project is not None:
+        window.open_project(project)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -112,5 +120,10 @@ def main(argv: list[str] | None = None) -> int:
             except (OSError, ValueError):
                 continue
     window.show()
+    if window.project is None:
+        known = known_godot_projects()
+        if known:
+            # First start: suggest the projects Godot already knows instead of a folder dialog.
+            QTimer.singleShot(0, lambda: _offer_known_projects(window, known))
     QTimer.singleShot(300, window.show_tutorial_once)
     return app.exec()

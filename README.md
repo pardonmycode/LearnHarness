@@ -34,10 +34,15 @@ diesem Client-Projekt.
 ## Qualität prüfen
 
 ```powershell
-$env:QT_QPA_PLATFORM = "offscreen"
 .\.venv\Scripts\python.exe -m pytest
 .\.venv\Scripts\ruff.exe check client protocol
-.\.venv\Scripts\mypy.exe --strict client\src\learnharness_client\domain protocol\src\learnharness_protocol
+.\.venv\Scripts\ruff.exe format --check client protocol
+cd client; ..\.venv\Scripts\mypy.exe; cd ..
 ```
+
+Die Tests laufen ohne Fenster: `client/tests/conftest.py` setzt `QT_QPA_PLATFORM=offscreen` und
+den Schriftordner. `mypy --strict` prüft alles ohne Widgets (`domain/`, `net/`, `godot/`,
+`protocol/`); der Umfang steht in `client/pyproject.toml`. Dieselben Prüfungen laufen bei jedem
+Push in GitHub Actions (`.github/workflows/ci.yml`).
 
 Weitere Details stehen in [client/README.md](client/README.md).

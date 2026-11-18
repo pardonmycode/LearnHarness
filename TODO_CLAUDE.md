@@ -22,6 +22,14 @@ Abgehakt ist, was im Code umgesetzt und durch Tests oder Ansicht geprüft ist. B
   Python sind erst nach einem manuellen Test abhakbar. Die Godot-Syntaxprüfung (F6) ist gegen
   die echte Godot-Version noch nicht getestet; der Ausgabe-Parser folgt dem Godot-4-Format.
 
+Nach dem Review ergänzt (18.11.2026): Lehrkraft-Bereich mit Passwort (Bearbeiten → Lehrkraft-Bereich:
+Level setzen/senken, Fortschritt zurücksetzen, Profile löschen), Änderungsansicht nach dem
+Schreiben des LearnAgent (Knopf „Änderungen anzeigen“ im LearnAgent-Tab, auch in den Einstellungen),
+Projektauswahl aus Godots Projektliste (`projects.cfg`), optionales automatisches Speichern,
+`mypy --strict` auch für `net/` und `godot/`, GitHub-Actions-CI (Windows), `.gitattributes` (LF).
+Offen, weil vom Lernserver abhängig: Protokollabgleich per `export_schema.py`, Fortschritt
+serverseitig pro Profil.
+
 Beim Review behoben: Schriftgröße wirkte nicht (Stylesheet überschrieb sie), Dunkelmodus unlesbar,
 fehlgeschlagener Health-Check schrieb alle 15 s Fehler in den Chat und brach Lernrunden ab,
 Übungsabgaben ohne `session_id`, Problem-Links bei Unterordnern, LearnAgent-Antworten landeten
