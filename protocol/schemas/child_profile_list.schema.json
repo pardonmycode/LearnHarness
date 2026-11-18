@@ -1,0 +1,85 @@
+{
+  "$defs": {
+    "ChildProfile": {
+      "additionalProperties": false,
+      "description": "A pseudonymous child. Real names are deliberately not part of the protocol.",
+      "properties": {
+        "protocol_version": {
+          "default": "1.1",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "type": {
+          "const": "child_profile",
+          "default": "child_profile",
+          "title": "Type",
+          "type": "string"
+        },
+        "profile_id": {
+          "pattern": "^[0-9a-f]{32}$",
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "pseudonym": {
+          "title": "Pseudonym",
+          "type": "string"
+        },
+        "experience_level": {
+          "maximum": 3,
+          "minimum": 0,
+          "title": "Experience Level",
+          "type": "integer"
+        },
+        "max_level": {
+          "default": 1,
+          "maximum": 10,
+          "minimum": 1,
+          "title": "Max Level",
+          "type": "integer"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Group"
+        }
+      },
+      "required": [
+        "profile_id",
+        "pseudonym",
+        "experience_level"
+      ],
+      "title": "ChildProfile",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "protocol_version": {
+      "default": "1.1",
+      "title": "Protocol Version",
+      "type": "string"
+    },
+    "type": {
+      "const": "child_profile_list",
+      "default": "child_profile_list",
+      "title": "Type",
+      "type": "string"
+    },
+    "profiles": {
+      "items": {
+        "$ref": "#/$defs/ChildProfile"
+      },
+      "title": "Profiles",
+      "type": "array"
+    }
+  },
+  "title": "ChildProfileList",
+  "type": "object"
+}

@@ -30,6 +30,14 @@ Projektauswahl aus Godots Projektliste (`projects.cfg`), optionales automatische
 Offen, weil vom Lernserver abhängig: Protokollabgleich per `export_schema.py`, Fortschritt
 serverseitig pro Profil.
 
+Zentrale Verwaltung (18.11.2026): `server/` mit Django + PostgreSQL. Admin für Gruppen, Kinder
+(Spitzname, Vorkenntnisse, Level, Archivieren), Fähigkeiten und API-Tokens; JSON-API mit den
+neuen Protokollmodellen `ChildProfile`, `ChildProfileList`, `ChildProfileUpdate`, `LevelUnlock`.
+Offen: Der Client nutzt die API noch nicht (Profile, Level und Fortschritt liegen weiter lokal in
+QSettings). Nächster Schritt: Verwaltungs-URL und Token in den Einstellungen, Profilliste vom
+Server, Level-Freischaltung per `unlock/`, lokaler Cache als Offline-Rückfall. Der Lernserver
+schreibt Fortschritt per `PUT children/<id>/progress/`.
+
 Beim Review behoben: Schriftgröße wirkte nicht (Stylesheet überschrieb sie), Dunkelmodus unlesbar,
 fehlgeschlagener Health-Check schrieb alle 15 s Fehler in den Chat und brach Lernrunden ab,
 Übungsabgaben ohne `session_id`, Problem-Links bei Unterordnern, LearnAgent-Antworten landeten

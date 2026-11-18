@@ -1,0 +1,45 @@
+{
+  "additionalProperties": false,
+  "description": "Changes a client may make; the level is changed only via LevelUnlock.",
+  "properties": {
+    "protocol_version": {
+      "default": "1.1",
+      "title": "Protocol Version",
+      "type": "string"
+    },
+    "type": {
+      "const": "child_profile_update",
+      "default": "child_profile_update",
+      "title": "Type",
+      "type": "string"
+    },
+    "pseudonym": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Pseudonym"
+    },
+    "experience_level": {
+      "anyOf": [
+        {
+          "maximum": 3,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Experience Level"
+    }
+  },
+  "title": "ChildProfileUpdate",
+  "type": "object"
+}

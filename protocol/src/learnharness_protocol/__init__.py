@@ -29,11 +29,15 @@ from .messages import (
     StudentMessage,
     Task,
 )
+from .profiles import ChildProfile, ChildProfileList, ChildProfileUpdate, LevelUnlock
 from .progress import ProgressUpdate, Skill, SkillLevel
 
 __all__ = [
     "PROTOCOL_VERSION",
     "Blank",
+    "ChildProfile",
+    "ChildProfileList",
+    "ChildProfileUpdate",
     "Choice",
     "CodeSubmission",
     "ErrorMessage",
@@ -44,6 +48,7 @@ __all__ = [
     "HealthStatus",
     "HintRequest",
     "LearningResponse",
+    "LevelUnlock",
     "MultipleChoiceExercise",
     "OrderItem",
     "OrderingExercise",

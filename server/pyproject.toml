@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "learnharness-server"
+version = "0.1.0"
+description = "Central administration of LearnHarness child profiles (Django + PostgreSQL)"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=5.2,<6",
+    "psycopg[binary]>=3.2,<4",
+    "whitenoise>=6.7,<7",
+    "pydantic>=2.8,<3",
+    "learnharness-protocol>=0.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<9",
+    "pytest-django>=4.9,<5",
+    "ruff>=0.8,<1",
+]
+deploy = ["gunicorn>=23,<24"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["learnharness_server", "children"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "DJ"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "learnharness_server.test_settings"
+pythonpath = [".", "../protocol/src"]
+testpaths = ["tests"]
+addopts = "-ra"

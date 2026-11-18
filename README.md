@@ -28,8 +28,11 @@ Für einen echten Lernserver im Tailscale-Netz:
 ```
 
 Die Server-API ist durch die Pydantic-Modelle in `protocol/` und die erzeugten JSON-Schemas in
-`protocol/schemas/` beschrieben. Der Server und die vLLM-Konfiguration gehören bewusst nicht zu
-diesem Client-Projekt.
+`protocol/schemas/` beschrieben. Der KI-Lernserver und die vLLM-Konfiguration gehören bewusst
+nicht zu diesem Projekt.
+
+Die zentrale Verwaltung der Kinder (Django + PostgreSQL, Admin für Lehrkräfte, JSON-API) liegt
+in `server/`; siehe [server/README.md](server/README.md).
 
 ## Qualität prüfen
 

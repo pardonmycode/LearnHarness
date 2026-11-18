@@ -1,0 +1,28 @@
+{
+  "additionalProperties": false,
+  "description": "Clients may only raise the level; lowering it is reserved for teachers.",
+  "properties": {
+    "protocol_version": {
+      "default": "1.1",
+      "title": "Protocol Version",
+      "type": "string"
+    },
+    "type": {
+      "const": "level_unlock",
+      "default": "level_unlock",
+      "title": "Type",
+      "type": "string"
+    },
+    "level": {
+      "maximum": 10,
+      "minimum": 1,
+      "title": "Level",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "level"
+  ],
+  "title": "LevelUnlock",
+  "type": "object"
+}

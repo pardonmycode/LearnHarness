@@ -24,12 +24,53 @@ jobs:
 
       - name: Ruff
         run: |
-          ruff check client protocol
-          ruff format --check client protocol
+          ruff check client protocol server
+          ruff format --check client protocol server
 
       - name: Mypy (strict, scope in client/pyproject.toml)
         working-directory: client
         run: mypy
 
       - name: Pytest (client and protocol)
+        run: python -m pytest
+
+  server:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: learnharness
+          POSTGRES_USER: learnharness
+          POSTGRES_PASSWORD: ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U learnharness"
+          --health-interval 5s
+          --health-retries 10
+    env:
+      POSTGRES_DB: learnharness
+      POSTGRES_USER: learnharness
+      POSTGRES_PASSWORD: ci-only
+      POSTGRES_HOST: localhost
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install
+        run: python -m pip install -e ./protocol -e "./server[dev]"
+
+      - name: Migrations are up to date
+        working-directory: server
+        env:
+          DJANGO_SETTINGS_MODULE: learnharness_server.test_settings
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Pytest against PostgreSQL
+        working-directory: server
         run: python -m pytest

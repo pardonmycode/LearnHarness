@@ -11,6 +11,7 @@ from pydantic import TypeAdapter
 from .exercises import Exercise, ReviewResult, Submission
 from .health import HealthStatus
 from .messages import LearningResponse, SessionCreate, StudentMessage
+from .profiles import ChildProfile, ChildProfileList, ChildProfileUpdate, LevelUnlock
 from .progress import ProgressUpdate
 
 
@@ -18,9 +19,13 @@ def export_schemas(destination: Path) -> None:
     destination.mkdir(parents=True, exist_ok=True)
     exercise_adapter = TypeAdapter[Exercise](cast(Any, Exercise))
     schemas: dict[str, dict[str, object]] = {
+        "child_profile": ChildProfile.model_json_schema(),
+        "child_profile_list": ChildProfileList.model_json_schema(),
+        "child_profile_update": ChildProfileUpdate.model_json_schema(),
         "exercise": exercise_adapter.json_schema(),
         "health_status": HealthStatus.model_json_schema(),
         "learning_response": LearningResponse.model_json_schema(),
+        "level_unlock": LevelUnlock.model_json_schema(),
         "progress_update": ProgressUpdate.model_json_schema(),
         "review_result": ReviewResult.model_json_schema(),
         "session_create": SessionCreate.model_json_schema(),
