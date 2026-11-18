@@ -5,8 +5,10 @@ from __future__ import annotations
 import secrets
 
 from django.contrib import admin, messages
-from django.db.models import QuerySet
+from django.db.models import Count, Q, QuerySet
 from django.http import HttpRequest
+from django.urls import reverse
+from django.utils.html import format_html
 
 from .models import ApiClient, Child, LearningGroup, SkillProgress, hash_token
 
@@ -27,13 +29,24 @@ class ChildInline(admin.TabularInline):
 
 @admin.register(LearningGroup)
 class LearningGroupAdmin(admin.ModelAdmin):
-    list_display = ["name", "note", "child_count"]
+    list_display = ["name", "note", "child_count", "overview_link"]
     search_fields = ["name"]
     inlines = [ChildInline]
 
-    @admin.display(description="Kinder")
+    def get_queryset(self, request: HttpRequest) -> QuerySet[LearningGroup]:
+        return (
+            super()
+            .get_queryset(request)
+            .annotate(active_children=Count("children", filter=Q(children__active=True)))
+        )
+
+    @admin.display(description="Kinder", ordering="active_children")
     def child_count(self, group: LearningGroup) -> int:
-        return group.children.filter(active=True).count()
+        return group.active_children
+
+    @admin.display(description="Übersicht")
+    def overview_link(self, group: LearningGroup) -> str:
+        return format_html('<a href="{}">Übersicht</a>', reverse("overview-group", args=[group.pk]))
 
 
 @admin.register(Child)

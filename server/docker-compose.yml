@@ -23,5 +23,22 @@ services:
     ports:
       - "8000:8000"
 
+  # Daily pg_dump (custom format) into server/backups/, old dumps are deleted after
+  # BACKUP_KEEP_DAYS. Backup now:  docker compose -f server/docker-compose.yml exec backup sh /usr/local/bin/backup.sh once
+  backup:
+    image: postgres:17
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      BACKUP_DIR: /backups
+      TZ: ${TZ:-Europe/Berlin}
+    entrypoint: ["sh", "/usr/local/bin/backup.sh"]
+    volumes:
+      - ./scripts/backup.sh:/usr/local/bin/backup.sh:ro
+      - ./backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   pgdata:

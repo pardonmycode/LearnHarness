@@ -1,3 +1,4 @@
 .env
 dev.sqlite3
 staticfiles/
+backups/

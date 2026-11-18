@@ -33,6 +33,7 @@ from learnharness_protocol import (
 from learnharness_protocol.exercises import Exercise
 from PyQt6.QtCore import QObject, QTimer
 
+from . import fake_content
 from .tutor_client import ClientError, TutorClient
 
 
@@ -45,6 +46,7 @@ class FakeTutorClient(TutorClient):
         self.experience_level = 0
         self._learn_level: int | None = None
         self._learn_file = "player.gd"
+        self._mission_file = "player.gd"
         self._cancelled = False
         self.simulate_failure = False
 
@@ -90,6 +92,15 @@ class FakeTutorClient(TutorClient):
                 )
             )
             return
+        if message.intent == "explain":
+            self._explain(message)
+            return
+        if message.intent == "mission":
+            self._start_mission(message)
+            return
+        if message.intent == "mission_step":
+            self._mission_step(message)
+            return
         if message.learning_level is not None:
             self._start_learning_round(message)
             return
@@ -119,9 +130,72 @@ class FakeTutorClient(TutorClient):
             len(words) + 1,
         )
 
+    def _stream_text(self, text: str, response: LearningResponse) -> None:
+        self._cancelled = False
+        self.stream_started.emit()
+        words = text.split(" ")
+        for index, word in enumerate(words, start=1):
+            chunk = word + (" " if index < len(words) else "")
+            self._later(partial(self._emit_chunk, chunk), index)
+        self._later(lambda: self._finish_stream(response), len(words) + 1)
+
+    def _explain(self, message: StudentMessage) -> None:
+        key, explanation = fake_content.find_explanation(
+            message.message, message.code_excerpt or ""
+        )
+        response = LearningResponse(
+            mode="explanation",
+            message=explanation.text,
+            exercise=fake_content.explanation_question(key, explanation),
+        )
+        self._stream_text(explanation.text, response)
+
+    def _start_mission(self, message: StudentMessage) -> None:
+        content = fake_content.find_mission(message.message)
+        response = LearningResponse(
+            mode="mission",
+            message=f"Deine Mission: {content.mission.title} {content.mission.goal}",
+            mission=content.mission,
+        )
+        self._later(lambda: self.stream_finished.emit(response))
+
+    def _mission_step(self, message: StudentMessage) -> None:
+        self._mission_file = message.file or self._mission_file
+        content = fake_content.MISSIONS.get(message.mission_id or "")
+        step = content.steps.get(message.mission_step_id or "") if content else None
+        if step is None:
+            self._later(
+                lambda: self.error.emit(
+                    ClientError("Diesen Missionsschritt kenne ich nicht.", "unknown_step", False)
+                )
+            )
+            return
+        response = LearningResponse(
+            mode="exercise" if step.exercise else "explanation",
+            message=step.message,
+            exercise=step.exercise,
+        )
+        self._later(lambda: self.stream_finished.emit(response))
+
     def _start_learning_round(self, message: StudentMessage) -> None:
         self._learn_level = message.learning_level
         self._learn_file = message.file or "player.gd"
+        focus = fake_content.FOCUS_ROUNDS.get(message.skill_focus or "")
+        if focus is not None:
+            exercise: Exercise = focus.exercise.model_copy(
+                update={"id": f"learn_focus_{message.skill_focus}_{message.learning_level}"}
+            )
+            response = LearningResponse(
+                mode="exercise",
+                message=(
+                    f"Level {message.learning_level} mit Schwerpunkt {focus.label}: Hier hast "
+                    "du noch Übung gebraucht. Beantworte die Frage, dann schreibe ich den Code "
+                    "mit Erklärung in dein Projekt."
+                ),
+                exercise=exercise,
+            )
+            self._later(lambda: self.stream_finished.emit(response))
+            return
         exercise = self._exercise_for_level(message.learning_level or 1)
         response = LearningResponse(
             mode="exercise",
@@ -184,6 +258,21 @@ class FakeTutorClient(TutorClient):
         if submission.exercise_id.startswith("learn_level_"):
             self._submit_learning_exercise(submission)
             return
+        if submission.exercise_id.startswith("learn_focus_"):
+            self._submit_focus_exercise(submission)
+            return
+        if submission.exercise_id.startswith("explain_"):
+            correct = submission.answers.get("choice") == "right"
+            self._review(
+                correct,
+                "Genau! Du hast die Erklärung verstanden."
+                if correct
+                else "Noch nicht ganz. Lies die Erklärung noch einmal in Ruhe.",
+            )
+            return
+        if submission.exercise_id.startswith("mission_"):
+            self._submit_mission_exercise(submission)
+            return
         answer = submission.answers.get("blank_1")
         if answer is None:
             selected = submission.answers.get("choice")
@@ -205,6 +294,65 @@ class FakeTutorClient(TutorClient):
             else None,
         )
         self._later(lambda: self.review_received.emit(result))
+
+    def _review(
+        self, correct: bool, feedback: str, generated: list[GeneratedFile] | None = None
+    ) -> None:
+        result = ReviewResult(correct=correct, feedback=feedback, generated_files=generated or [])
+        self._later(lambda: self.review_received.emit(result))
+
+    def _submit_focus_exercise(self, submission: Submission) -> None:
+        skill = submission.exercise_id.removeprefix("learn_focus_").rsplit("_", 1)[0]
+        focus = fake_content.FOCUS_ROUNDS.get(skill)
+        correct = focus is not None and all(
+            submission.answers.get(blank) == answer for blank, answer in focus.answers.items()
+        )
+        if not correct or focus is None:
+            self._review(False, "Das passt noch nicht. Schau dir die Lücken noch einmal an.")
+            return
+        self._review(
+            True,
+            f"Richtig! {focus.label} klappen schon besser. Jetzt schreibt der Agent den Code.",
+            [
+                GeneratedFile(
+                    path=self._learn_file,
+                    content=focus.code,
+                    explanation=f"Die Kommentare im Code erklären dir die {focus.label}.",
+                )
+            ],
+        )
+
+    def _submit_mission_exercise(self, submission: Submission) -> None:
+        for mission_id, content in fake_content.MISSIONS.items():
+            prefix = f"mission_{mission_id}_"
+            if not submission.exercise_id.startswith(prefix):
+                continue
+            step = content.steps.get(submission.exercise_id.removeprefix(prefix))
+            if step is None:
+                break
+            correct = all(
+                submission.answers.get(key) == value for key, value in step.answers.items()
+            )
+            generated = (
+                [
+                    GeneratedFile(
+                        path=self._mission_file,
+                        content=step.code,
+                        explanation="Die Kommentare im Code erklären jeden Schritt der Mission.",
+                    )
+                ]
+                if correct and step.code
+                else []
+            )
+            self._review(
+                correct,
+                "Richtig! Schritt geschafft."
+                if correct
+                else "Noch nicht ganz. Lies den Hinweis und versuche es noch einmal.",
+                generated,
+            )
+            return
+        self._review(False, "Diese Aufgabe kenne ich nicht.")
 
     def _submit_learning_exercise(self, submission: Submission) -> None:
         try:
@@ -273,7 +421,8 @@ class FakeTutorClient(TutorClient):
     def fetch_progress(self) -> None:
         progress = ProgressUpdate(
             skills=[
-                Skill(id="variables", label="Variablen", level=SkillLevel.WITH_HELP),
+                Skill(id="variables", label="Variablen", level=SkillLevel.CONFIDENT),
+                Skill(id="conditions", label="Bedingungen", level=SkillLevel.WITH_HELP),
                 Skill(
                     id="coordinates",
                     label="Koordinaten",

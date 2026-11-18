@@ -1,0 +1,83 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrastyle %}{{ block.super }}
+<style>
+  .lh-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+  .lh-legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; padding: 0; list-style: none; }
+  .lh-legend li { margin: 0; }
+  .lh-table-wrap { overflow-x: auto; }
+  .lh-table th.lh-skill { white-space: normal; min-width: 7em; vertical-align: bottom; }
+  .lh-table td, .lh-table th { vertical-align: middle; }
+  .lh-cell { display: inline-block; padding: 3px 6px; border-radius: 4px; border: 1px solid;
+             font-size: 0.85em; white-space: nowrap; color: #1a1a1a; }
+  .lh-cell .lh-sym { font-weight: bold; margin-right: 3px; }
+  /* Four levels: distinguishable by hue, lightness and symbol, dark text for contrast. */
+  .lh-level-0 { background: #eceff1; border-color: #90a4ae; }
+  .lh-level-1 { background: #ffe0b2; border-color: #e65100; }
+  .lh-level-2 { background: #bbdefb; border-color: #0d47a1; }
+  .lh-level-3 { background: #c8e6c9; border-color: #1b5e20; }
+  .lh-empty { color: var(--body-quiet-color); }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Start</a> › Übersicht{% if selected_group %} › {{ selected_group.name }}{% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <form method="get" action="{% url 'overview' %}" class="lh-toolbar">
+    <label for="lh-group">Gruppe:</label>
+    <select id="lh-group" name="gruppe">
+      <option value="{{ all_value }}"{% if selection == all_value %} selected{% endif %}>Alle Gruppen</option>
+      {% for group in groups %}
+        <option value="{{ group.pk }}"{% if selection == group.pk|stringformat:"s" %} selected{% endif %}>{{ group.name }}</option>
+      {% endfor %}
+      <option value="{{ ungrouped_value }}"{% if selection == ungrouped_value %} selected{% endif %}>Ohne Gruppe</option>
+    </select>
+    <input type="submit" value="Anzeigen">
+  </form>
+
+  <ul class="lh-legend" aria-label="Legende">
+    {% for value, label in levels %}
+      <li><span class="lh-cell lh-level-{{ value }}"><span class="lh-sym" aria-hidden="true">{{ value }}</span>{{ label }}</span></li>
+    {% endfor %}
+    <li><span class="lh-empty">– = noch keine Angabe</span></li>
+  </ul>
+
+  {% if rows %}
+  <div class="lh-table-wrap">
+    <table class="lh-table">
+      <thead>
+        <tr>
+          <th scope="col">Spitzname</th>
+          {% if show_group %}<th scope="col">Gruppe</th>{% endif %}
+          <th scope="col">Level</th>
+          <th scope="col">Zuletzt gesehen</th>
+          {% for column in columns %}
+            <th scope="col" class="lh-skill" title="{{ column.skill_id }}">{{ column.label }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <th scope="row"><a href="{% url 'admin:children_child_change' row.child.pk %}">{{ row.child.pseudonym }}</a></th>
+          {% if show_group %}<td>{{ row.child.group.name|default:"–" }}</td>{% endif %}
+          <td>{{ row.child.max_level }}</td>
+          <td>{% if row.child.last_seen_at %}{{ row.child.last_seen_at|date:"d.m.Y H:i" }}{% else %}<span class="lh-empty">nie</span>{% endif %}</td>
+          {% for cell in row.cells %}
+            <td>{% if cell %}<span class="lh-cell lh-level-{{ cell.level }}"><span class="lh-sym" aria-hidden="true">{{ cell.level }}</span>{{ cell.get_level_display }}</span>{% else %}<span class="lh-empty" title="noch keine Angabe">–</span>{% endif %}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p>Keine aktiven Kinder in dieser Auswahl.</p>
+  {% endif %}
+</div>
+{% endblock %}

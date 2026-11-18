@@ -28,6 +28,7 @@ from PyQt6.QtWidgets import (
     QTabWidget,
 )
 
+from learnharness_client.admin_sync import AdminSync
 from learnharness_client.config import AppSettings
 from learnharness_client.domain.profile import StudentProfile
 from learnharness_client.domain.project import GodotProject
@@ -45,7 +46,9 @@ from .dialogs.teacher_dialog import TeacherDialog, unlock_teacher_area
 from .dialogs.tutorial_dialog import TutorialDialog
 from .editor.editor_tabs import EditorTabs
 from .panels.diagnostics_panel import DiagnosticsPanel
+from .panels.explain_panel import ExplainPanel
 from .panels.learn_agent_panel import LearnAgentPanel
+from .panels.mission_panel import MissionPanel
 from .panels.problems_panel import Problem, ProblemsPanel
 from .panels.progress_panel import ProgressPanel
 from .panels.tutor_panel import TutorPanel
@@ -56,6 +59,14 @@ from .theme import set_state
 LOG = logging.getLogger(__name__)
 
 
+def is_target_file(path: str, target: str | None) -> bool:
+    """Generated code may only go into the file the child chose for this round."""
+    if target is None:
+        return False
+    normalized = PurePosixPath(path.replace("\\", "/")).as_posix().removeprefix("./")
+    return normalized.casefold() == target.casefold()
+
+
 class MainWindow(QMainWindow):
     def __init__(
         self,
@@ -64,6 +75,7 @@ class MainWindow(QMainWindow):
         student_profile: StudentProfile,
         *,
         server_url: str,
+        admin_sync: AdminSync | None = None,
         parent=None,
     ) -> None:
         super().__init__(parent)
@@ -78,6 +90,12 @@ class MainWindow(QMainWindow):
         self._awaiting_learn_response = False
         self._learn_target_file: str | None = None
         self.active_learning_level = 1
+        self.admin_sync = admin_sync
+        # Which panel waits for the next tutor answer / owns the exercise on screen.
+        # None means the tutor chat.
+        self._response_owner: str | None = None
+        self._exercise_owner = "agent"
+        self._mission_target_file: str | None = None
         self.setWindowTitle(T.APP_TITLE)
         self.resize(1380, 840)
 
@@ -89,9 +107,14 @@ class MainWindow(QMainWindow):
         )
         self.tutor_panel = TutorPanel()
         self.progress_panel = ProgressPanel()
+        self.explain_panel = ExplainPanel()
+        self.mission_panel = MissionPanel()
+        self.mission_panel.restore(settings.mission_progress(student_profile.profile_id))
 
         learning_tabs = QTabWidget()
         learning_tabs.addTab(self.learn_agent_panel, T.TAB_AGENT)
+        learning_tabs.addTab(self.mission_panel, T.TAB_MISSIONS)
+        learning_tabs.addTab(self.explain_panel, T.TAB_EXPLAIN)
         learning_tabs.addTab(self.tutor_panel, T.TAB_TUTOR)
         learning_tabs.addTab(self.progress_panel, T.TAB_PROGRESS)
         self.learning_tabs = learning_tabs
@@ -220,7 +243,7 @@ class MainWindow(QMainWindow):
             )
         )
         self.learn_agent_panel.start_requested.connect(self.start_learning_round)
-        self.learn_agent_panel.exercise_submitted.connect(self._submit_exercise)
+        self.learn_agent_panel.exercise_submitted.connect(self._submit_agent_exercise)
         self.learn_agent_panel.show_changes_toggled.connect(self._set_show_changes)
         self.editor_tabs.generated_file_applied.connect(self._generated_file_applied)
         self.tutor_panel.message_submitted.connect(self.send_tutor_message)
@@ -239,6 +262,20 @@ class MainWindow(QMainWindow):
         self.tutor_client.review_received.connect(self._review_received)
         self.tutor_client.progress_received.connect(self._progress_received)
         self.tutor_client.error.connect(self._client_error)
+        self.editor_tabs.explain_requested.connect(self.explain_selection)
+        self.explain_panel.take_selection_requested.connect(self.explain_selection)
+        self.explain_panel.question_asked.connect(self.ask_about_code)
+        self.explain_panel.exercise_submitted.connect(self._submit_explain_exercise)
+        self.mission_panel.mission_requested.connect(self.request_mission)
+        self.mission_panel.step_requested.connect(self.request_mission_step)
+        self.mission_panel.exercise_submitted.connect(self._submit_mission_exercise)
+        self.mission_panel.progress_changed.connect(
+            lambda state: self.settings.save_mission_progress(
+                self.student_profile.profile_id, state
+            )
+        )
+        if self.admin_sync is not None:
+            self.admin_sync.client.progress_received.connect(self._progress_received)
 
     def pick_project(self) -> None:
         start = self.settings.recent_projects[0] if self.settings.recent_projects else ""
@@ -295,6 +332,102 @@ class MainWindow(QMainWindow):
         if session.current_task_id:
             self.current_task_id = session.current_task_id
         self.tutor_client.fetch_progress()
+        if self.admin_sync is not None:
+            # The administration keeps the progress across PCs; it wins when it answers.
+            self.admin_sync.fetch_progress(self.student_profile.profile_id)
+
+    def _relative_current_file(self) -> str | None:
+        document = self.editor_tabs.current_document()
+        if document is None or self.project is None:
+            return None
+        return document.path.relative_to(self.project.root).as_posix()
+
+    # Code explainer ------------------------------------------------------------------
+
+    def explain_selection(self) -> None:
+        editor = self.editor_tabs.current_editor()
+        relative = self._relative_current_file()
+        self.learning_tabs.setCurrentWidget(self.explain_panel)
+        if editor is None or relative is None:
+            self.explain_panel.show_no_code()
+            return
+        code, start_line = editor.selected_or_nearby_text()
+        self.explain_panel.set_code(relative, code[:16_000], start_line)
+
+    def ask_about_code(self, question: str) -> None:
+        if not self.project or not self.session_id:
+            self.explain_panel.show_error(T.WAIT_FOR_SESSION)
+            return
+        self._response_owner = "explain"
+        message = StudentMessage(
+            intent="explain",
+            session_id=self.session_id,
+            project_id=self.project.project_id,
+            experience_level=int(self.student_profile.experience_level),
+            file=self.explain_panel.file,
+            code_excerpt=self.explain_panel.code,
+            excerpt_start_line=self.explain_panel.start_line,
+            message=question,
+        )
+        self.tutor_client.send_message(message)
+
+    def _submit_explain_exercise(self, submission: Submission) -> None:
+        self._exercise_owner = "explain"
+        self._submit_exercise(submission)
+
+    # Missions ---------------------------------------------------------------------------
+
+    def _mission_message(self, intent: str, text: str, **extra: str) -> StudentMessage | None:
+        if not self.project or not self.session_id:
+            self.mission_panel.show_error(T.WAIT_FOR_SESSION)
+            return None
+        relative = self._relative_current_file()
+        if relative is None:
+            self.mission_panel.show_error(T.MISSION_NEEDS_FILE)
+            return None
+        return StudentMessage(
+            intent=intent,  # type: ignore[arg-type]
+            session_id=self.session_id,
+            project_id=self.project.project_id,
+            experience_level=int(self.student_profile.experience_level),
+            learning_level=None,
+            file=relative,
+            message=text,
+            **extra,
+        )
+
+    def request_mission(self, wish: str) -> None:
+        message = self._mission_message("mission", wish)
+        if message is not None:
+            self._response_owner = "mission"
+            self.tutor_client.send_message(message)
+
+    def request_mission_step(self, mission_id: str, step_id: str) -> None:
+        message = self._mission_message(
+            "mission_step", step_id, mission_id=mission_id, mission_step_id=step_id
+        )
+        if message is None:
+            return
+        # Like the LearnAgent: generated code may only go into the file chosen for this step.
+        self._mission_target_file = message.file
+        self._response_owner = "mission"
+        self.tutor_client.send_message(message)
+
+    def _submit_mission_exercise(self, submission: Submission) -> None:
+        self._exercise_owner = "mission"
+        self._submit_exercise(submission)
+
+    def _apply_mission_files(self, review: ReviewResult) -> None:
+        written: list[str] = []
+        for generated in review.generated_files:
+            if not is_target_file(generated.path, self._mission_target_file):
+                LOG.warning("Rejected generated file outside the mission target")
+                continue
+            if self.editor_tabs.apply_generated_file(generated.path, generated.content):
+                written.append(generated.path)
+        if written:
+            self.statusBar().showMessage(T.AGENT_WROTE_FILE.format(file=", ".join(written)))
+        self._mission_target_file = None
 
     def start_learning_round(self, prompt: str, level: int) -> None:
         if not self.project or not self.session_id:
@@ -310,12 +443,14 @@ class MainWindow(QMainWindow):
         relative = document.path.relative_to(self.project.root).as_posix()
         self._learn_target_file = relative
         message = StudentMessage(
+            intent="learn",
             session_id=self.session_id,
             project_id=self.project.project_id,
             experience_level=int(self.student_profile.experience_level),
             learning_level=level,
             current_task=f"learn_level_{level}",
             file=relative,
+            skill_focus=self.learn_agent_panel.current_focus,
             message=prompt,
         )
         self.tutor_client.send_message(message)
@@ -348,6 +483,10 @@ class MainWindow(QMainWindow):
         )
         self.tutor_client.send_message(message)
 
+    def _submit_agent_exercise(self, submission: Submission) -> None:
+        self._exercise_owner = "agent"
+        self._submit_exercise(submission)
+
     def _submit_exercise(self, submission: Submission) -> None:
         # The server needs the session to know which LearnAgent round is being answered.
         if self.session_id and submission.session_id is None:
@@ -355,14 +494,25 @@ class MainWindow(QMainWindow):
         self.tutor_client.submit_exercise(submission)
 
     def _stream_started(self) -> None:
-        if not self._awaiting_learn_response:
+        if self._response_owner == "explain":
+            self.explain_panel.begin_stream()
+        elif not self._awaiting_learn_response and self._response_owner is None:
             self.tutor_panel.begin_stream()
 
     def _stream_chunk(self, text: str) -> None:
-        if not self._awaiting_learn_response:
+        if self._response_owner == "explain":
+            self.explain_panel.append_stream_chunk(text)
+        elif not self._awaiting_learn_response and self._response_owner is None:
             self.tutor_panel.append_stream_chunk(text)
 
     def _learning_response(self, response: LearningResponse) -> None:
+        owner, self._response_owner = self._response_owner, None
+        if owner == "explain":
+            self.explain_panel.show_response(response)
+            return
+        if owner == "mission":
+            self.mission_panel.show_step_response(response)
+            return
         if self._awaiting_learn_response:
             # LearnAgent answers belong in the LearnAgent tab, not in the tutor chat.
             self._awaiting_learn_response = False
@@ -373,10 +523,21 @@ class MainWindow(QMainWindow):
             self._exercise_received(response.exercise)
 
     def _exercise_received(self, exercise) -> None:
+        self._exercise_owner = "agent"
         self.learn_agent_panel.show_exercise(exercise)
         self.learning_tabs.setCurrentWidget(self.learn_agent_panel)
 
     def _review_received(self, review: ReviewResult) -> None:
+        if self._exercise_owner == "explain":
+            if review.generated_files:
+                LOG.warning("Ignored generated files for a code explanation")
+            self.explain_panel.show_review(review)
+            return
+        if self._exercise_owner == "mission":
+            self.mission_panel.show_review(review)
+            if review.correct and review.generated_files:
+                self._apply_mission_files(review)
+            return
         self.learn_agent_panel.show_review(review)
         written_files: list[str] = []
         explanations: list[str] = []
@@ -399,6 +560,12 @@ class MainWindow(QMainWindow):
                     min(10, self.active_learning_level + 1),
                 )
                 self.learn_agent_panel.set_max_unlocked(unlocked)
+                if self.admin_sync is not None:
+                    self.admin_sync.unlock(
+                        self.student_profile.profile_id,
+                        unlocked,
+                        self.learn_agent_panel.set_max_unlocked,
+                    )
             self.learn_round_active = False
         editor = self.editor_tabs.current_editor()
         if editor:
@@ -412,10 +579,7 @@ class MainWindow(QMainWindow):
                 )
 
     def _is_learn_target(self, path: str) -> bool:
-        if self._learn_target_file is None:
-            return False
-        normalized = PurePosixPath(path.replace("\\", "/")).as_posix().removeprefix("./")
-        return normalized.casefold() == self._learn_target_file.casefold()
+        return is_target_file(path, self._learn_target_file)
 
     def _health_changed(self, health: HealthStatus) -> None:
         self._set_online(health.server_ok and health.model_ok)
@@ -429,8 +593,15 @@ class MainWindow(QMainWindow):
         set_state(self.connection_status, state="online" if online else "offline")
         self.tutor_panel.set_available(online)
         self.learn_agent_panel.set_available(online)
+        self.explain_panel.set_available(online)
+        self.mission_panel.set_available(online)
 
     def _client_error(self, error: ClientError) -> None:
+        owner, self._response_owner = self._response_owner, None
+        if owner == "explain":
+            self.explain_panel.show_error(error.message_for_child)
+        elif owner == "mission":
+            self.mission_panel.show_error(error.message_for_child)
         self.tutor_panel.show_error(error.message_for_child)
         if self.learn_round_active:
             self.learn_agent_panel.show_error(error.message_for_child)
@@ -489,6 +660,7 @@ class MainWindow(QMainWindow):
 
     def _progress_received(self, progress: ProgressUpdate) -> None:
         self.progress_panel.set_progress(progress)
+        self.learn_agent_panel.set_skills(progress.skills)
         self.settings.cache_progress(self.student_profile.profile_id, progress.model_dump_json())
 
     def _show_cached_progress(self) -> None:
@@ -501,6 +673,7 @@ class MainWindow(QMainWindow):
             LOG.warning("Ignored invalid cached progress")
             return
         self.progress_panel.set_progress(progress, cached=True)
+        self.learn_agent_panel.set_skills(progress.skills)
 
     def show_older_versions(self) -> None:
         document = self.editor_tabs.current_document()

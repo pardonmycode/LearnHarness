@@ -60,7 +60,8 @@ ROOT_URLCONF = "learnharness_server.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        # Project templates come first: admin/base_site.html adds the "Übersicht" link.
+        "DIRS": [BASE_DIR / "learnharness_server" / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

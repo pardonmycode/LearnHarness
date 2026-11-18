@@ -4,7 +4,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.1",
+          "default": "1.2",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -32,7 +32,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.1",
+          "default": "1.2",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -56,7 +56,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.1",
+          "default": "1.2",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -112,7 +112,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.1",
+          "default": "1.2",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -164,11 +164,111 @@
       "title": "FindBugExercise",
       "type": "object"
     },
+    "Mission": {
+      "additionalProperties": false,
+      "properties": {
+        "protocol_version": {
+          "default": "1.2",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "type": {
+          "const": "mission",
+          "default": "mission",
+          "title": "Type",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "goal": {
+          "title": "Goal",
+          "type": "string"
+        },
+        "skill": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Skill"
+        },
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/MissionStep"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Steps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "goal",
+        "steps"
+      ],
+      "title": "Mission",
+      "type": "object"
+    },
+    "MissionStep": {
+      "additionalProperties": false,
+      "properties": {
+        "protocol_version": {
+          "default": "1.2",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "understand",
+            "learn",
+            "exercise",
+            "try"
+          ],
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "kind"
+      ],
+      "title": "MissionStep",
+      "type": "object"
+    },
     "MultipleChoiceExercise": {
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.1",
+          "default": "1.2",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -236,7 +336,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.1",
+          "default": "1.2",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -260,7 +360,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.1",
+          "default": "1.2",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -311,7 +411,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.1",
+          "default": "1.2",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -335,7 +435,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.1",
+          "default": "1.2",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -391,7 +491,7 @@
   "additionalProperties": false,
   "properties": {
     "protocol_version": {
-      "default": "1.1",
+      "default": "1.2",
       "title": "Protocol Version",
       "type": "string"
     },
@@ -407,7 +507,8 @@
         "hint",
         "exercise",
         "explanation",
-        "review"
+        "review",
+        "mission"
       ],
       "title": "Mode",
       "type": "string"
@@ -467,6 +568,17 @@
       ],
       "default": null,
       "title": "Exercise"
+    },
+    "mission": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Mission"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "code_changes": {
       "items": {

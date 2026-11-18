@@ -1,0 +1,11 @@
+# Used by BuildKit for server/Dockerfile (build context is the repository root).
+# Keeps secrets, local data and database backups out of the image.
+.git
+.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+server/.env
+server/dev.sqlite3
+server/staticfiles
+server/backups

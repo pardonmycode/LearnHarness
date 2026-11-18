@@ -32,6 +32,49 @@ docker compose -f server/docker-compose.yml exec web python manage.py createsupe
 Für HTTPS einen Proxy (z. B. Caddy) davorsetzen und `DJANGO_SECURE=1` sowie
 `DJANGO_CSRF_TRUSTED_ORIGINS=https://…` setzen. Im Tailscale-Netz reicht auch HTTP.
 
+## Übersicht für Lehrkräfte
+
+Unter <http://localhost:8000/uebersicht/> (oben rechts im Admin „Übersicht“, oder in der
+Gruppenliste je Gruppe) steht eine Tabelle: eine Zeile pro aktivem Kind, eine Spalte pro
+Fähigkeit, dazu Level und „Zuletzt gesehen“. Jede Zelle zeigt den Stand als Text und Farbe
+(0 Noch nicht begonnen, 1 Mit Hilfe, 2 Fast selbstständig, 3 Sicher). Oben wählt man die
+Gruppe; `/uebersicht/<gruppen-id>/` zeigt eine Gruppe, `/uebersicht/ohne-gruppe/` Kinder ohne
+Gruppe. Nur mit Admin-Anmeldung (Mitarbeiter-Status) erreichbar.
+
+## Datensicherung (Backups)
+
+Der Dienst `backup` im `docker-compose.yml` sichert die Datenbank einmal täglich um
+`BACKUP_TIME` (Standard 02:30, Zeitzone `TZ`) mit `pg_dump -Fc` nach `server/backups/`
+(Dateien `learnharness_JJJJ-MM-TT_HHMMSS.dump`). Sicherungen, die älter als
+`BACKUP_KEEP_DAYS` Tage sind (Standard 14), werden danach gelöscht. Das Skript dazu ist
+`server/scripts/backup.sh`; es läuft im `postgres:17`-Image, es braucht kein weiteres Image.
+Den Ordner `server/backups/` zusätzlich regelmäßig auf ein anderes Gerät kopieren, sonst
+hilft die Sicherung nicht, wenn die Festplatte ausfällt.
+
+Sofort sichern (z. B. vor einem Update):
+
+```bash
+docker compose -f server/docker-compose.yml exec backup sh /usr/local/bin/backup.sh once
+```
+
+Protokoll ansehen: `docker compose -f server/docker-compose.yml logs backup`.
+
+Wiederherstellen (überschreibt den aktuellen Stand der Datenbank):
+
+```bash
+# 1. Webdienst anhalten, damit niemand während der Wiederherstellung schreibt
+docker compose -f server/docker-compose.yml stop web
+# 2. Sicherung einspielen (Dateiname anpassen); --clean ersetzt vorhandene Tabellen
+docker compose -f server/docker-compose.yml exec backup sh -c \
+  'PGPASSWORD="$POSTGRES_PASSWORD" pg_restore -h db -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+   --clean --if-exists --no-owner /backups/learnharness_2026-01-31_023000.dump'
+# 3. Webdienst wieder starten (führt ggf. ausstehende Migrationen aus)
+docker compose -f server/docker-compose.yml start web
+```
+
+Eine Sicherung lässt sich gefahrlos prüfen, indem man ihren Inhalt auflistet:
+`... exec backup pg_restore --list /backups/<datei>.dump`.
+
 ## Zugänge (Tokens)
 
 Jeder PC und der Lernserver bekommen einen eigenen Token, entweder im Admin unter

@@ -11,6 +11,7 @@ from pathlib import Path
 from PyQt6.QtCore import QCoreApplication, QTimer
 from PyQt6.QtWidgets import QApplication, QDialog, QMessageBox
 
+from learnharness_client.admin_sync import AdminSync, SyncResult
 from learnharness_client.config import AppSettings, app_data_dir
 from learnharness_client.domain.project import GodotProject
 from learnharness_client.godot.project_list import known_godot_projects
@@ -74,10 +75,16 @@ def main(argv: list[str] | None = None) -> int:
     if not settings.first_start_done and not (args.server or args.fake_server):
         FirstStartDialog(settings).exec()
 
+    # Central administration (optional): take over profiles and levels before the login.
+    admin_sync = AdminSync.from_settings(settings)
+    sync_result = admin_sync.sync_at_start() if admin_sync else SyncResult.DISABLED
+
     login = LoginDialog(settings)
     if login.exec() != QDialog.DialogCode.Accepted or login.selected_profile is None:
         return 0
     student_profile = login.selected_profile
+    if admin_sync is not None:
+        admin_sync.register(student_profile)  # harmless if the server already knows it
 
     server_url = args.server or settings.server_url
     use_fake = args.fake_server or (args.server is None and settings.use_fake_server)
@@ -87,6 +94,7 @@ def main(argv: list[str] | None = None) -> int:
         tutor_client,
         student_profile,
         server_url=server_url,
+        admin_sync=admin_sync,
     )
 
     previous_hook = sys.excepthook
@@ -120,6 +128,8 @@ def main(argv: list[str] | None = None) -> int:
             except (OSError, ValueError):
                 continue
     window.show()
+    if sync_result in (SyncResult.OFFLINE, SyncResult.UNAUTHORIZED):
+        window.statusBar().showMessage(T.ADMIN_START_OFFLINE, 15_000)
     if window.project is None:
         known = known_godot_projects()
         if known:

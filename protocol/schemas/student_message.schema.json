@@ -2,7 +2,7 @@
   "additionalProperties": false,
   "properties": {
     "protocol_version": {
-      "default": "1.1",
+      "default": "1.2",
       "title": "Protocol Version",
       "type": "string"
     },
@@ -10,6 +10,18 @@
       "const": "student_message",
       "default": "student_message",
       "title": "Type",
+      "type": "string"
+    },
+    "intent": {
+      "default": "chat",
+      "enum": [
+        "chat",
+        "learn",
+        "explain",
+        "mission",
+        "mission_step"
+      ],
+      "title": "Intent",
       "type": "string"
     },
     "session_id": {
@@ -107,6 +119,45 @@
       ],
       "default": null,
       "title": "Last Error"
+    },
+    "skill_focus": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Skill Focus"
+    },
+    "mission_id": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mission Id"
+    },
+    "mission_step_id": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mission Step Id"
     },
     "message": {
       "maxLength": 4000,

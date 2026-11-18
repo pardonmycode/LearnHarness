@@ -1,0 +1,4 @@
+{% extends "admin/base_site.html" %}
+{# Extends Django's own base_site.html and adds the overview link next to the user links. #}
+
+{% block userlinks %}<a href="{% url 'overview' %}">Übersicht</a> / {{ block.super }}{% endblock %}

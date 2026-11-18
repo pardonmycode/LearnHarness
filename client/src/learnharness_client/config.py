@@ -89,6 +89,82 @@ class AppSettings:
     def show_agent_changes(self, value: bool) -> None:
         self._settings.setValue("learning/show_agent_changes", value)
 
+    # Central administration (Django server in server/) -------------------------
+
+    @property
+    def admin_url(self) -> str:
+        """Base URL of the central administration; empty means purely local profiles."""
+        return str(self._settings.value("admin/url", "")).rstrip("/")
+
+    @admin_url.setter
+    def admin_url(self, value: str) -> None:
+        self._settings.setValue("admin/url", value.strip().rstrip("/"))
+
+    @property
+    def admin_token(self) -> str:
+        return str(self._settings.value("admin/token", ""))
+
+    @admin_token.setter
+    def admin_token(self, value: str) -> None:
+        self._settings.setValue("admin/token", value.strip())
+
+    @property
+    def admin_group(self) -> str:
+        """Optional group (e.g. "AG Montag") so a PC only lists the children of its group."""
+        return str(self._settings.value("admin/group", ""))
+
+    @admin_group.setter
+    def admin_group(self, value: str) -> None:
+        self._settings.setValue("admin/group", value.strip())
+
+    @property
+    def admin_enabled(self) -> bool:
+        return bool(self.admin_url and self.admin_token)
+
+    def _json_value(self, key: str, default: object) -> object:
+        try:
+            return json.loads(str(self._settings.value(key, json.dumps(default))))
+        except json.JSONDecodeError:
+            return default
+
+    @property
+    def synced_profile_ids(self) -> set[str]:
+        value = self._json_value("admin/synced_ids", [])
+        return {str(item) for item in value} if isinstance(value, list) else set()
+
+    def set_synced_profile_ids(self, ids: set[str]) -> None:
+        self._settings.setValue("admin/synced_ids", json.dumps(sorted(ids)))
+
+    @property
+    def pending_unlocks(self) -> dict[str, int]:
+        """Level unlocks that could not reach the server yet (sent at the next sync)."""
+        value = self._json_value("admin/pending_unlocks", {})
+        if not isinstance(value, dict):
+            return {}
+        return {str(key): int(level) for key, level in value.items() if isinstance(level, int)}
+
+    def add_pending_unlock(self, profile_id: str, level: int) -> None:
+        pending = self.pending_unlocks
+        pending[profile_id] = max(level, pending.get(profile_id, 0))
+        self._settings.setValue("admin/pending_unlocks", json.dumps(pending))
+
+    def clear_pending_unlock(self, profile_id: str) -> None:
+        pending = self.pending_unlocks
+        if pending.pop(profile_id, None) is not None:
+            self._settings.setValue("admin/pending_unlocks", json.dumps(pending))
+
+    # Missions -------------------------------------------------------------------
+
+    def mission_progress(self, profile_id: str) -> dict[str, object]:
+        """Last mission (as JSON-ready dict) plus the ids of the finished steps."""
+        value = self._json_value(f"missions/{profile_id}/current", {})
+        return value if isinstance(value, dict) else {}
+
+    def save_mission_progress(self, profile_id: str, data: dict[str, object]) -> None:
+        self._settings.setValue(
+            f"missions/{profile_id}/current", json.dumps(data, ensure_ascii=False)
+        )
+
     # Teacher area -------------------------------------------------------------
 
     def has_teacher_password(self) -> bool:
@@ -118,7 +194,7 @@ class AppSettings:
         return value
 
     def reset_learning(self, profile_id: str) -> None:
-        for group in ("learning", "progress", "tutorial"):
+        for group in ("learning", "progress", "tutorial", "missions"):
             self._settings.remove(f"{group}/{profile_id}")
 
     def delete_student_profile(self, profile_id: str) -> None:
@@ -177,7 +253,7 @@ class AppSettings:
                 continue
         return profiles
 
-    def save_student_profile(self, profile: StudentProfile) -> None:
+    def save_student_profile(self, profile: StudentProfile, *, remember: bool = True) -> None:
         profiles = [
             existing
             for existing in self.student_profiles
@@ -189,7 +265,8 @@ class AppSettings:
             "profiles/items",
             json.dumps([item.to_dict() for item in profiles], ensure_ascii=False),
         )
-        self._settings.setValue("profiles/last_id", profile.profile_id)
+        if remember:
+            self._settings.setValue("profiles/last_id", profile.profile_id)
 
     def max_unlocked_learning_level(self, profile_id: str) -> int:
         value = int(self._settings.value(f"learning/{profile_id}/max_level", 1))

@@ -29,6 +29,7 @@ from .messages import (
     StudentMessage,
     Task,
 )
+from .missions import Mission, MissionStep
 from .profiles import ChildProfile, ChildProfileList, ChildProfileUpdate, LevelUnlock
 from .progress import ProgressUpdate, Skill, SkillLevel
 
@@ -49,6 +50,8 @@ __all__ = [
     "HintRequest",
     "LearningResponse",
     "LevelUnlock",
+    "Mission",
+    "MissionStep",
     "MultipleChoiceExercise",
     "OrderItem",
     "OrderingExercise",

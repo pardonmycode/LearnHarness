@@ -5,6 +5,7 @@ from __future__ import annotations
 from PyQt6.QtCore import QRect, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import (
     QColor,
+    QContextMenuEvent,
     QKeyEvent,
     QPainter,
     QPaintEvent,
@@ -14,6 +15,7 @@ from PyQt6.QtGui import (
 )
 from PyQt6.QtWidgets import QPlainTextEdit, QTextEdit, QWidget
 
+from ...texts import T
 from ..theme import colors, monospace_font
 from .gdscript_highlighter import GDScriptHighlighter
 
@@ -34,6 +36,7 @@ class LineNumberArea(QWidget):
 
 
 class CodeEditor(QPlainTextEdit):
+    explain_requested = pyqtSignal()
     cursor_location_changed = pyqtSignal(int, int)
     font_size_changed = pyqtSignal(int)
 
@@ -205,6 +208,19 @@ class CodeEditor(QPlainTextEdit):
             self.setTextCursor(QTextCursor(block))
             self.centerCursor()
             self.setFocus()
+
+    def contextMenuEvent(self, event: QContextMenuEvent) -> None:  # noqa: N802 - Qt API
+        menu = self.createStandardContextMenu()
+        if menu is None:
+            return
+        explain = menu.addAction(T.EXPLAIN_CONTEXT_ACTION)
+        first = menu.actions()[0]
+        if explain is not None:
+            menu.insertAction(first, explain)
+            menu.insertSeparator(first)
+            explain.triggered.connect(self.explain_requested)
+        menu.exec(event.globalPos())
+        menu.deleteLater()
 
     def selected_or_nearby_text(self, radius: int = 7) -> tuple[str, int]:
         cursor = self.textCursor()

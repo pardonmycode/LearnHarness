@@ -24,6 +24,7 @@ from learnharness_client.domain.profile import StudentProfile
 
 from ...texts import T
 from ..theme import set_state
+from .admin_dialog import AdminDialog
 
 MIN_PASSWORD_LENGTH = 6
 
@@ -118,6 +119,10 @@ class TeacherDialog(QDialog):
         intro.setProperty("role", "muted")
         layout.addWidget(heading)
         layout.addWidget(intro)
+        self.central_notice = QLabel(T.TEACHER_CENTRAL_NOTICE)
+        self.central_notice.setWordWrap(True)
+        self.central_notice.setProperty("callout", "info")
+        layout.addWidget(self.central_notice)
 
         self.profiles = QListWidget()
         self.profiles.setAccessibleName(T.TEACHER_PROFILES_A11Y)
@@ -142,9 +147,11 @@ class TeacherDialog(QDialog):
         self.reset_button = QPushButton(T.TEACHER_RESET)
         self.delete_button = QPushButton(T.TEACHER_DELETE)
         self.password_button = QPushButton(T.TEACHER_CHANGE_PASSWORD)
+        self.admin_button = QPushButton(T.TEACHER_ADMIN)
         actions.addWidget(self.reset_button)
         actions.addWidget(self.delete_button)
         actions.addStretch(1)
+        actions.addWidget(self.admin_button)
         actions.addWidget(self.password_button)
         layout.addLayout(actions)
 
@@ -157,6 +164,7 @@ class TeacherDialog(QDialog):
         self.reset_button.clicked.connect(self._reset)
         self.delete_button.clicked.connect(self._delete)
         self.password_button.clicked.connect(self._change_password)
+        self.admin_button.clicked.connect(self._open_admin)
         self.refresh()
 
     def selected_profile(self) -> StudentProfile | None:
@@ -191,7 +199,10 @@ class TeacherDialog(QDialog):
 
     def _selection_changed(self) -> None:
         profile = self.selected_profile()
-        enabled = profile is not None
+        central = self.settings.admin_enabled
+        self.central_notice.setVisible(central)
+        # With a central administration the server decides; local changes would be undone.
+        enabled = profile is not None and not central
         for widget in (self.level, self.apply_level, self.reset_button, self.delete_button):
             widget.setEnabled(enabled)
         if profile is not None:
@@ -236,6 +247,12 @@ class TeacherDialog(QDialog):
             return
         self.settings.delete_student_profile(profile.profile_id)
         self.refresh()
+
+    def _open_admin(self) -> None:
+        AdminDialog(self.settings, self).exec()
+        self.refresh()
+        profile_id = self.current_profile_id
+        self.level_changed.emit(profile_id, self.settings.max_unlocked_learning_level(profile_id))
 
     def _change_password(self) -> None:
         PasswordDialog(self.settings, create=True, parent=self).exec()

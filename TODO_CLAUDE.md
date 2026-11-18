@@ -33,10 +33,17 @@ serverseitig pro Profil.
 Zentrale Verwaltung (18.11.2026): `server/` mit Django + PostgreSQL. Admin für Gruppen, Kinder
 (Spitzname, Vorkenntnisse, Level, Archivieren), Fähigkeiten und API-Tokens; JSON-API mit den
 neuen Protokollmodellen `ChildProfile`, `ChildProfileList`, `ChildProfileUpdate`, `LevelUnlock`.
-Offen: Der Client nutzt die API noch nicht (Profile, Level und Fortschritt liegen weiter lokal in
-QSettings). Nächster Schritt: Verwaltungs-URL und Token in den Einstellungen, Profilliste vom
-Server, Level-Freischaltung per `unlock/`, lokaler Cache als Offline-Rückfall. Der Lernserver
-schreibt Fortschritt per `PUT children/<id>/progress/`.
+Client angebunden (18.11.2026): Lehrkraft-Bereich → „Zentrale Verwaltung …“ (Adresse, Token,
+optional Gruppe). Beim Start Abgleich vor dem Login (ausstehende Freischaltungen senden, neue
+lokale Profile hochladen, Stand vom Server übernehmen, gelöschte/archivierte Profile entfernen);
+ohne Netz weiter mit dem lokalen Stand. Fortschritt kommt zusätzlich aus der Verwaltung. Dazu
+Gruppenübersicht (`/uebersicht/`) und tägliche `pg_dump`-Sicherung im Docker-Compose.
+Neue Lernfunktionen (Protokoll 1.2): Übungsschwerpunkt im LearnAgent (`skill_focus`,
+automatisch die schwächste Fähigkeit), Tab „Code verstehen“ (Fragen zum markierten Code,
+Rechtsklick „Erklär mir das“, danach eine Verständnisfrage), Tab „Missionen“ (`Mission` mit
+Schritten, Fortschritt pro Profil gespeichert; Code nur nach richtiger Antwort und nur in die
+gewählte Datei). Offen für den Lernserver: `intent` = explain / mission / mission_step und
+`skill_focus` auswerten; Fortschritt per `PUT children/<id>/progress/` in die Verwaltung schreiben.
 
 Beim Review behoben: Schriftgröße wirkte nicht (Stylesheet überschrieb sie), Dunkelmodus unlesbar,
 fehlgeschlagener Health-Check schrieb alle 15 s Fehler in den Chat und brach Lernrunden ab,

@@ -30,6 +30,7 @@ class EditorTabs(QWidget):
     cursor_changed = pyqtSignal(int, int)
     # file name, old text, new text – emitted after the LearnAgent wrote a file
     generated_file_applied = pyqtSignal(str, str, str)
+    explain_requested = pyqtSignal()
 
     def __init__(self, settings: AppSettings, parent=None) -> None:
         super().__init__(parent)
@@ -95,6 +96,7 @@ class EditorTabs(QWidget):
             QMessageBox.warning(self, T.FILE_NOT_OPENED, str(exc))
             return None
         editor = CodeEditor(font_size=self.settings.font_size)
+        editor.explain_requested.connect(self.explain_requested)
         editor.setPlainText(document.text)
         editor.document().setModified(False)
         editor.textChanged.connect(lambda current=editor: self._text_changed(current))

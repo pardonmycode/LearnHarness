@@ -8,10 +8,16 @@ from pydantic import Field
 
 from .base import ProtocolModel
 from .exercises import Exercise
+from .missions import Mission
+
+# chat: tutor chat · learn: LearnAgent round · explain: explain selected code
+# mission: start a mission from a wish · mission_step: work on one mission step
+StudentIntent = Literal["chat", "learn", "explain", "mission", "mission_step"]
 
 
 class StudentMessage(ProtocolModel):
     type: Literal["student_message"] = "student_message"
+    intent: StudentIntent = "chat"
     session_id: str
     project_id: str
     experience_level: int = Field(default=0, ge=0, le=3)
@@ -22,6 +28,11 @@ class StudentMessage(ProtocolModel):
     code_excerpt: str | None = None
     excerpt_start_line: int | None = Field(default=None, ge=1)
     last_error: str | None = None
+    # Skill the child should practise next (e.g. "conditions"). Only a wish: the server
+    # still decides the exercise and still releases code only after a correct answer.
+    skill_focus: str | None = Field(default=None, max_length=64)
+    mission_id: str | None = Field(default=None, max_length=64)
+    mission_step_id: str | None = Field(default=None, max_length=64)
     message: str = Field(min_length=1, max_length=4000)
 
 
@@ -32,11 +43,12 @@ class StreamChunk(ProtocolModel):
 
 class LearningResponse(ProtocolModel):
     type: Literal["learning_response"] = "learning_response"
-    mode: Literal["socratic", "hint", "exercise", "explanation", "review"]
+    mode: Literal["socratic", "hint", "exercise", "explanation", "review", "mission"]
     message: str
     hint_level: int = Field(default=0, ge=0, le=4)
     hints: list[str] = Field(default_factory=list)
     exercise: Exercise | None = None
+    mission: Mission | None = None
     code_changes: list[dict[str, object]] = Field(default_factory=list)
 
 

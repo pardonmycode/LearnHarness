@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from learnharness_protocol import LearningResponse, ReviewResult
+from learnharness_protocol import LearningResponse, ReviewResult, Skill
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QStandardItemModel
 from PyQt6.QtWidgets import (
@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ...domain.learning_focus import practice_candidates, suggest_focus
 from ...texts import T
 from ..exercises.base import ExerciseWidget
 from ..exercises.factory import create_exercise_widget
@@ -84,6 +85,17 @@ class LearnAgentPanel(QWidget):
         level_layout.addWidget(self.progress)
         level_layout.addWidget(self.level_description)
 
+        focus_card, focus_layout = card(T.FOCUS_SECTION)
+        self.focus_choice = QComboBox()
+        self.focus_choice.setAccessibleName(T.FOCUS_A11Y)
+        focus_hint = QLabel(T.FOCUS_HINT)
+        focus_hint.setWordWrap(True)
+        focus_hint.setProperty("role", "small")
+        focus_layout.addWidget(self.focus_choice)
+        focus_layout.addWidget(focus_hint)
+        self._auto_focus: str | None = None
+        self.set_skills([])
+
         wish_card, wish_layout = card(T.AGENT_WISH_SECTION)
         self.prompt = QPlainTextEdit()
         self.prompt.setPlaceholderText(T.AGENT_WISH_PLACEHOLDER)
@@ -117,6 +129,7 @@ class LearnAgentPanel(QWidget):
         layout.addWidget(heading)
         layout.addWidget(intro)
         layout.addWidget(level_card)
+        layout.addWidget(focus_card)
         layout.addWidget(wish_card)
         layout.addWidget(self.feedback)
         layout.addWidget(self.exercise_host)
@@ -147,6 +160,29 @@ class LearnAgentPanel(QWidget):
     def _sync_start_button(self) -> None:
         self.start_button.setEnabled(self._online and not self._busy)
         self.start_button.setToolTip("" if self._online else T.AGENT_OFFLINE_TIP)
+
+    def set_skills(self, skills: list[Skill]) -> None:
+        """Offer the skills that still need practice; "automatic" picks the weakest one."""
+        previous = self.focus_choice.currentData()
+        suggestion = suggest_focus(skills)
+        self._auto_focus = suggestion.id if suggestion else None
+        self.focus_choice.clear()
+        self.focus_choice.addItem(
+            T.FOCUS_AUTO.format(label=suggestion.label) if suggestion else T.FOCUS_AUTO_NONE,
+            None,
+        )
+        for skill in practice_candidates(skills):
+            self.focus_choice.addItem(
+                T.FOCUS_SKILL.format(label=skill.label, level=T.LEVEL_WORDS[int(skill.level)]),
+                skill.id,
+            )
+        index = self.focus_choice.findData(previous) if previous else 0
+        self.focus_choice.setCurrentIndex(max(0, index))
+
+    @property
+    def current_focus(self) -> str | None:
+        chosen = self.focus_choice.currentData()
+        return str(chosen) if chosen else self._auto_focus
 
     @property
     def current_level(self) -> int:

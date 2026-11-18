@@ -488,6 +488,102 @@ class T:
     SETTINGS_SHOW_CHANGES = "Nach dem Schreiben Änderungen anzeigen"
     AUTOSAVED = "Automatisch gespeichert: {file}"
 
+    # Central administration (teacher area)
+    TEACHER_ADMIN = "Zentrale Verwaltung …"
+    TEACHER_CENTRAL_NOTICE = (
+        "Dieser PC ist mit der zentralen Verwaltung verbunden. Level, Zurücksetzen und "
+        "Löschen änderst du dort im Browser; hier siehst du den Stand vom letzten Abgleich."
+    )
+    ADMIN_TITLE = "Zentrale Verwaltung"
+    ADMIN_INTRO = (
+        "Trage die Adresse der Verwaltung und den Zugangs-Token für diesen PC ein. Den Token "
+        "legst du in der Verwaltung unter „API-Zugänge“ an. Ohne Netz arbeitet die App mit "
+        "dem Stand vom letzten Abgleich weiter."
+    )
+    ADMIN_URL = "Adresse:"
+    ADMIN_URL_A11Y = "Adresse der zentralen Verwaltung"
+    ADMIN_URL_PLACEHOLDER = "z. B. http://verwaltung:8000"
+    ADMIN_TOKEN = "Token:"
+    ADMIN_TOKEN_A11Y = "Zugangs-Token für diesen PC"
+    ADMIN_GROUP = "Gruppe:"
+    ADMIN_GROUP_A11Y = "Gruppe dieses PCs"
+    ADMIN_GROUP_PLACEHOLDER = "Optional, z. B. AG Montag – leer: alle Kinder"
+    ADMIN_SAVE_AND_SYNC = "Speichern und abgleichen"
+    ADMIN_DISCONNECT = "Verbindung trennen"
+    ADMIN_SYNC_OK = "Abgleich erfolgreich. Die Profile sind auf dem neuesten Stand."
+    ADMIN_SYNC_OFFLINE = (
+        "Die Verwaltung ist nicht erreichbar. Prüfe die Adresse und das Netz. Die App "
+        "arbeitet mit dem Stand auf diesem PC weiter."
+    )
+    ADMIN_SYNC_UNAUTHORIZED = (
+        "Der Token wurde nicht angenommen. Lege in der Verwaltung einen neuen an."
+    )
+    ADMIN_SYNC_DISABLED = "Dieser PC nutzt nur lokale Profile."
+    ADMIN_START_OFFLINE = (
+        "Die zentrale Verwaltung ist gerade nicht erreichbar. Du kannst trotzdem lernen; "
+        "dein Fortschritt wird später übertragen."
+    )
+
+    # Skill focus in the LearnAgent
+    FOCUS_SECTION = "Was möchtest du üben?"
+    FOCUS_AUTO = "Automatisch: {label}"
+    FOCUS_AUTO_NONE = "Automatisch"
+    FOCUS_SKILL = "{label} · {level}"
+    FOCUS_A11Y = "Übungsschwerpunkt"
+    FOCUS_HINT = (
+        "„Automatisch“ wählt die Fähigkeit, bei der du noch am meisten Übung brauchst. Der "
+        "LearnAgent stellt dir Aufgaben dazu, statt einfach immer schwerer zu werden. Code "
+        "schreibt er trotzdem erst nach einer richtigen Antwort."
+    )
+
+    # Code explainer
+    TAB_EXPLAIN = "Code verstehen"
+    EXPLAIN_HEADING = "Code verstehen"
+    EXPLAIN_INTRO = (
+        "Markiere im Editor ein paar Zeilen und klicke auf „Diesen Code erklären“ – oder "
+        "nutze Rechtsklick → „Erklär mir das“. Dann kannst du Fragen dazu stellen."
+    )
+    EXPLAIN_TAKE_SELECTION = "Diesen Code erklären"
+    EXPLAIN_CONTEXT_ACTION = "Erklär mir das"
+    EXPLAIN_CODE_A11Y = "Code, der erklärt werden soll"
+    EXPLAIN_FILE = "{file}, Zeile {start}–{end}"
+    EXPLAIN_NO_CODE = "Öffne zuerst ein Skript und markiere den Code, den du verstehen möchtest."
+    EXPLAIN_QUESTIONS = "Fragen zu diesem Code"
+    EXPLAIN_OWN_QUESTION = "Eigene Frage stellen …"
+    EXPLAIN_OWN_A11Y = "Eigene Frage zum Code"
+    EXPLAIN_ASK = "Fragen"
+    EXPLAIN_ANSWER = "Erklärung"
+    EXPLAIN_THINKING = "Ich schaue mir den Code an …"
+    EXPLAIN_CHECK = "Hast du es verstanden? Beantworte diese Frage:"
+    EXPLAIN_CORRECT = "Super, du hast es verstanden!"
+    EXPLAIN_NOT_YET = "Noch nicht ganz. Lies die Erklärung noch einmal und versuche es erneut."
+
+    # Missions
+    TAB_MISSIONS = "Missionen"
+    MISSION_HEADING = "Lernmission"
+    MISSION_INTRO = (
+        "Wähle eine Mission oder beschreibe, was du bauen möchtest. Du arbeitest sie Schritt "
+        "für Schritt durch – zum Schluss probierst du alles in Godot aus."
+    )
+    MISSION_SUGGESTIONS = ("Baue einen Doppelsprung!", "Zähle Münzen!")
+    MISSION_WISH_PLACEHOLDER = "Oder eigener Wunsch, z. B. „Meine Figur soll schießen können“"
+    MISSION_WISH_A11Y = "Wunsch für eine eigene Mission"
+    MISSION_START = "Mission starten"
+    MISSION_STARTING = "Ich plane deine Mission …"
+    MISSION_PROGRESS = "Missionsfortschritt: {done} von {total}"
+    MISSION_STEPS_A11Y = "Schritte der Mission"
+    MISSION_DO_STEP = "Schritt starten"
+    MISSION_TRY_DONE = "Ich habe es in Godot ausprobiert"
+    MISSION_TRY_TEXT = (
+        "Speichere dein Skript, starte das Spiel in Godot (F5) und probiere es aus. Klappt "
+        "etwas nicht? Frag im Tab „Tutor“ nach."
+    )
+    MISSION_STEP_DONE = "Schritt geschafft!"
+    MISSION_NOT_YET = "Noch nicht ganz. Versuche es noch einmal."
+    MISSION_COMPLETE = "Mission erfüllt: {title} 🎉"
+    MISSION_NEW = "Neue Mission"
+    MISSION_NEEDS_FILE = "Öffne zuerst das Skript, in dem die Mission gebaut werden soll."
+
     # Network errors from the learning-server client
     NET_UNREACHABLE = "Der Lernhelfer ist gerade nicht erreichbar."
     NET_TROUBLE = "Der Lernhelfer hat gerade Schwierigkeiten."
