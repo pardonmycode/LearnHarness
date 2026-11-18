@@ -6,6 +6,8 @@ import os
 import stat
 from pathlib import Path
 
+from ..texts import T
+
 
 class PathNotAllowed(ValueError):
     """Raised when a path would escape the selected Godot project."""
@@ -23,7 +25,7 @@ class PathGuard:
     ) -> None:
         self.root = project_root.resolve(strict=True)
         if not (self.root / "project.godot").is_file():
-            raise PathNotAllowed("Der gewählte Ordner ist kein Godot-Projekt.")
+            raise PathNotAllowed(T.PATH_NOT_PROJECT)
         self.allowed_suffixes = frozenset(suffix.casefold() for suffix in allowed_suffixes)
         self.include_addons = include_addons
         self._reject_reparse_point(self.root)
@@ -36,7 +38,7 @@ class PathGuard:
         attributes = getattr(info, "st_file_attributes", 0)
         reparse_flag = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
         if stat.S_ISLNK(info.st_mode) or attributes & reparse_flag:
-            raise PathNotAllowed("Verknüpfte Ordner und Dateien sind hier nicht erlaubt.")
+            raise PathNotAllowed(T.PATH_LINKED)
 
     def _check_components(self, resolved: Path) -> None:
         relative = resolved.relative_to(self.root)
@@ -50,15 +52,15 @@ class PathGuard:
         parent_parts = relative.parts[:-1] if resolved.suffix else relative.parts
         folded = {part.casefold() for part in parent_parts}
         if folded & self.EXCLUDED_DIRECTORIES:
-            raise PathNotAllowed("Dieser Projektordner ist geschützt.")
+            raise PathNotAllowed(T.PATH_PROTECTED)
         if not self.include_addons and "addons" in folded:
-            raise PathNotAllowed("Add-ons sind standardmäßig ausgeblendet.")
+            raise PathNotAllowed(T.PATH_ADDONS)
 
         current = self.root
         for part in parent_parts:
             current /= part
             if (current / ".gdignore").exists():
-                raise PathNotAllowed("Dieser Ordner wird von Godot ignoriert.")
+                raise PathNotAllowed(T.PATH_GDIGNORE)
 
     def ensure_allowed(self, path: Path | str, *, must_exist: bool = True) -> Path:
         candidate = Path(path)
@@ -66,22 +68,22 @@ class PathGuard:
             candidate = self.root / candidate
         absolute = candidate.absolute()
         if not absolute.is_relative_to(self.root) or absolute == self.root:
-            raise PathNotAllowed("Die Datei liegt außerhalb des Godot-Projekts.")
+            raise PathNotAllowed(T.PATH_OUTSIDE)
         # Inspect the un-resolved path first. Resolving would otherwise hide a
         # symlink or Windows junction that points back into the project.
         self._check_components(absolute)
         try:
             resolved = absolute.resolve(strict=must_exist)
         except FileNotFoundError as exc:
-            raise PathNotAllowed("Die Skriptdatei wurde nicht gefunden.") from exc
+            raise PathNotAllowed(T.PATH_NOT_FOUND) from exc
         if not resolved.is_relative_to(self.root) or resolved == self.root:
-            raise PathNotAllowed("Die Datei liegt außerhalb des Godot-Projekts.")
+            raise PathNotAllowed(T.PATH_OUTSIDE)
         if resolved.suffix.casefold() not in self.allowed_suffixes:
-            raise PathNotAllowed("Es dürfen nur GDScript-Dateien geöffnet werden.")
+            raise PathNotAllowed(T.PATH_ONLY_GD)
         self._check_components(resolved)
         self._check_exclusions(resolved)
         if must_exist and not resolved.is_file():
-            raise PathNotAllowed("Der Pfad ist keine Skriptdatei.")
+            raise PathNotAllowed(T.PATH_NOT_FILE)
         return resolved
 
     def relative(self, path: Path | str) -> Path:

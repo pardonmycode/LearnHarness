@@ -9,6 +9,8 @@ from PyQt6.QtWidgets import QTreeWidget, QTreeWidgetItem
 
 from learnharness_client.domain.project import GodotProject
 
+from ..texts import T
+
 
 def _is_junction(path: Path) -> bool:
     is_junction = getattr(path, "is_junction", None)
@@ -21,10 +23,10 @@ class ScriptTree(QTreeWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.project: GodotProject | None = None
-        self.setHeaderLabel("Skripte")
+        self.setHeaderLabel(T.SCRIPTS)
         self.setIndentation(14)
         self.setAnimated(True)
-        self.setAccessibleName("Skriptdateien im Godot-Projekt")
+        self.setAccessibleName(T.SCRIPTS_A11Y)
         self.itemActivated.connect(self._open_item)
         # New or deleted scripts (e.g. created in Godot) appear without a manual refresh.
         self.watcher = QFileSystemWatcher(self)

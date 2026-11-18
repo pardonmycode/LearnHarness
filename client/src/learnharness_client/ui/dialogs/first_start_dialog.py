@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
 
 from learnharness_client.config import AppSettings
 
-from ..texts import T
+from ...texts import T
 from ..theme import set_state
 
 
@@ -55,7 +55,7 @@ class FirstStartDialog(QDialog):
         address_row = QHBoxLayout()
         self.address = QLineEdit(settings.server_url)
         self.address.setPlaceholderText("http://lernserver:8765")
-        self.address.setAccessibleName("Adresse des Lernservers")
+        self.address.setAccessibleName(T.FIRST_START_ADDRESS_A11Y)
         self.test_button = QPushButton(T.FIRST_START_TEST)
         address_row.addWidget(self.address, 1)
         address_row.addWidget(self.test_button)

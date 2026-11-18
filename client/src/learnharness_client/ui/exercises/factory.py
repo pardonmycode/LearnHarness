@@ -11,6 +11,7 @@ from learnharness_protocol import (
 )
 from PyQt6.QtWidgets import QLabel, QWidget
 
+from ...texts import T
 from .fill_blanks import FillBlanksWidget
 from .find_bug import FindBugWidget
 from .multiple_choice import MultipleChoiceWidget
@@ -29,4 +30,4 @@ def create_exercise_widget(exercise, parent=None) -> QWidget:
         return FindBugWidget(exercise, parent)
     if isinstance(exercise, TextBlanksExercise):
         return TextBlanksWidget(exercise, parent)
-    return QLabel("Diese Übungsart kann ich noch nicht anzeigen.", parent)
+    return QLabel(T.EXERCISE_UNKNOWN, parent)

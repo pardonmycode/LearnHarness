@@ -5,6 +5,7 @@ from __future__ import annotations
 from learnharness_protocol import Submission, TextBlanksExercise
 from PyQt6.QtWidgets import QLineEdit, QWidget
 
+from ...texts import T
 from ..theme import monospace_font
 from .base import ExerciseWidget, chain_tab_order, inline_blanks_view
 from .fill_blanks import _mark_blanks, numbered_ids
@@ -21,14 +22,14 @@ class TextBlanksWidget(ExerciseWidget):
             field.setPlaceholderText(blanks[blank_id].placeholder)
             field.setMinimumWidth(field.fontMetrics().horizontalAdvance("M") * 10)
             field.setMaxLength(200)
-            field.setAccessibleName(f"Lücke {index}")
-            field.setToolTip(f"Lücke {index}")
+            field.setAccessibleName(T.BLANK.format(index=index))
+            field.setToolTip(T.BLANK.format(index=index))
             self.inputs[blank_id] = field
         self.layout.addWidget(
             inline_blanks_view(
                 exercise.code,
                 dict(self.inputs),
-                accessible_name=f"Code mit freien Textlücken: {_mark_blanks(exercise.code)}",
+                accessible_name=T.TEXT_BLANKS_CODE_A11Y.format(code=_mark_blanks(exercise.code)),
             )
         )
         self.finish_layout()

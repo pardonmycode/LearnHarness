@@ -27,6 +27,7 @@ from PyQt6.QtWebSockets import QWebSocket
 
 from learnharness_client import __version__
 
+from ..texts import T
 from .tutor_client import ClientError, TutorClient
 
 LOG = logging.getLogger(__name__)
@@ -88,7 +89,7 @@ class HttpTutorClient(TutorClient):
         fail = on_failure or self.error.emit
         try:
             if reply.error() != QNetworkReply.NetworkError.NoError:
-                fail(ClientError("Der Lernhelfer ist gerade nicht erreichbar.", "network_error"))
+                fail(ClientError(T.NET_UNREACHABLE, "network_error"))
                 return
             raw = bytes(reply.readAll())
             if len(raw) > self.MAX_MESSAGE_BYTES:
@@ -99,7 +100,7 @@ class HttpTutorClient(TutorClient):
             handler(data)
         except (UnicodeDecodeError, json.JSONDecodeError, ValidationError, ValueError) as exc:
             LOG.warning("Invalid learning-server response: %s", type(exc).__name__)
-            fail(ClientError("Der Lernhelfer hat gerade Schwierigkeiten.", "invalid_response"))
+            fail(ClientError(T.NET_TROUBLE, "invalid_response"))
         finally:
             reply.deleteLater()
 
@@ -138,7 +139,7 @@ class HttpTutorClient(TutorClient):
     def send_message(self, message: StudentMessage) -> None:
         raw = message.model_dump_json().encode("utf-8")
         if len(raw) > self.MAX_MESSAGE_BYTES:
-            self.error.emit(ClientError("Der ausgewählte Codeausschnitt ist zu groß.", "too_large"))
+            self.error.emit(ClientError(T.NET_EXCERPT_TOO_LARGE, "too_large"))
             return
         self._pending_message = message
         self.stream_started.emit()
@@ -188,15 +189,13 @@ class HttpTutorClient(TutorClient):
 
     def _on_socket_text(self, text: str) -> None:
         if len(text.encode("utf-8")) > self.MAX_MESSAGE_BYTES:
-            self.error.emit(ClientError("Die Serverantwort war zu groß.", "too_large"))
+            self.error.emit(ClientError(T.NET_RESPONSE_TOO_LARGE, "too_large"))
             return
         try:
             message = TypeAdapter(IncomingMessage).validate_json(text)
         except ValidationError as exc:
             LOG.warning("Rejected WebSocket payload: %s", type(exc).__name__)
-            self.error.emit(
-                ClientError("Der Lernhelfer hat gerade Schwierigkeiten.", "invalid_message")
-            )
+            self.error.emit(ClientError(T.NET_TROUBLE, "invalid_message"))
             return
         if isinstance(message, StreamChunk):
             self.stream_chunk.emit(message.text)
@@ -211,9 +210,7 @@ class HttpTutorClient(TutorClient):
         # Report an outage once; silent reconnect attempts must not flood the chat.
         if not self._outage_reported:
             self._outage_reported = True
-            self.error.emit(
-                ClientError("Die Verbindung zum Lernhelfer wurde unterbrochen.", "socket")
-            )
+            self.error.emit(ClientError(T.NET_CONNECTION_LOST, "socket"))
         self._schedule_reconnect()
 
     def _on_socket_disconnected(self) -> None:
@@ -229,7 +226,7 @@ class HttpTutorClient(TutorClient):
 
     def request_next_hint(self, task_id: str) -> None:
         if not self.session_id:
-            self.error.emit(ClientError("Es gibt noch keine Lernsitzung.", "no_session"))
+            self.error.emit(ClientError(T.NET_NO_SESSION, "no_session"))
             return
         payload = HintRequest(task_id=task_id).model_dump()
         self._request(

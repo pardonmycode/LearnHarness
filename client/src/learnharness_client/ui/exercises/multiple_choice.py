@@ -5,6 +5,7 @@ from __future__ import annotations
 from learnharness_protocol import MultipleChoiceExercise, Submission
 from PyQt6.QtWidgets import QAbstractButton, QButtonGroup, QCheckBox, QRadioButton, QWidget
 
+from ...texts import T
 from .base import ExerciseWidget, code_view
 
 
@@ -12,7 +13,7 @@ class MultipleChoiceWidget(ExerciseWidget):
     def __init__(self, exercise: MultipleChoiceExercise, parent=None) -> None:
         super().__init__(exercise, parent)
         if exercise.code:
-            self.layout.addWidget(code_view(exercise.code, accessible_name="Code zur Frage"))
+            self.layout.addWidget(code_view(exercise.code, accessible_name=T.CHOICE_CODE_A11Y))
         self.group = QButtonGroup(self)
         self.group.setExclusive(not exercise.multiple)
         self.buttons: dict[str, QAbstractButton] = {}

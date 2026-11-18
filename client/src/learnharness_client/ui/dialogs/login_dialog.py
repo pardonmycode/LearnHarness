@@ -20,6 +20,8 @@ from learnharness_client.domain.profile import (
     StudentProfile,
 )
 
+from ...texts import T
+
 
 class LoginDialog(QDialog):
     NEW_PROFILE = "__new__"
@@ -29,43 +31,37 @@ class LoginDialog(QDialog):
         self.settings = settings
         self.selected_profile: StudentProfile | None = None
         self.profiles = {profile.profile_id: profile for profile in settings.student_profiles}
-        self.setWindowTitle("Wer programmiert heute?")
+        self.setWindowTitle(T.LOGIN_TITLE)
         self.setMinimumWidth(480)
 
         layout = QVBoxLayout(self)
-        heading = QLabel("Willkommen in der Godot-Programmierwerkstatt!")
+        heading = QLabel(T.LOGIN_HEADING)
         heading.setProperty("role", "heading")
-        explanation = QLabel(
-            "Wähle dein Profil oder lege ein neues an. Benutze bitte einen Spitznamen, "
-            "nicht deinen vollständigen Namen. Die Erfahrungsstufe hilft dem Lernhelfer, "
-            "passende Fragen und Hinweise zu geben."
-        )
+        explanation = QLabel(T.LOGIN_INTRO)
         explanation.setWordWrap(True)
         layout.addWidget(heading)
         layout.addWidget(explanation)
 
         form = QFormLayout()
         self.profile_choice = QComboBox()
-        self.profile_choice.setAccessibleName("Gespeichertes Lernprofil")
-        self.profile_choice.addItem("Neues Profil anlegen …", self.NEW_PROFILE)
+        self.profile_choice.setAccessibleName(T.LOGIN_PROFILE_A11Y)
+        self.profile_choice.addItem(T.LOGIN_NEW_PROFILE, self.NEW_PROFILE)
         for profile in sorted(self.profiles.values(), key=lambda item: item.pseudonym.casefold()):
             self.profile_choice.addItem(profile.pseudonym, profile.profile_id)
         self.pseudonym = QLineEdit()
         self.pseudonym.setMaxLength(30)
-        self.pseudonym.setPlaceholderText("Zum Beispiel: CodeFuchs")
-        self.pseudonym.setAccessibleName("Spitzname")
+        self.pseudonym.setPlaceholderText(T.LOGIN_PSEUDONYM_PLACEHOLDER)
+        self.pseudonym.setAccessibleName(T.LOGIN_PSEUDONYM_A11Y)
         self.experience = QComboBox()
-        self.experience.setAccessibleName("Erfahrung beim Programmieren")
+        self.experience.setAccessibleName(T.LOGIN_EXPERIENCE_A11Y)
         for level in ExperienceLevel:
             self.experience.addItem(EXPERIENCE_LABELS[level], int(level))
-        form.addRow("Profil:", self.profile_choice)
-        form.addRow("Spitzname:", self.pseudonym)
-        form.addRow("Meine Erfahrung:", self.experience)
+        form.addRow(T.LOGIN_PROFILE, self.profile_choice)
+        form.addRow(T.LOGIN_PSEUDONYM, self.pseudonym)
+        form.addRow(T.LOGIN_EXPERIENCE, self.experience)
         layout.addLayout(form)
 
-        privacy = QLabel(
-            "Dieses Profil wird nur auf diesem Computer gespeichert. Es ist kein Passwort nötig."
-        )
+        privacy = QLabel(T.LOGIN_PRIVACY)
         privacy.setWordWrap(True)
         privacy.setProperty("role", "muted")
         layout.addWidget(privacy)
@@ -73,7 +69,7 @@ class LoginDialog(QDialog):
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
-        buttons.button(QDialogButtonBox.StandardButton.Ok).setText("Anmelden")
+        buttons.button(QDialogButtonBox.StandardButton.Ok).setText(T.LOGIN_BUTTON)
         buttons.accepted.connect(self._login)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -113,7 +109,7 @@ class LoginDialog(QDialog):
                     self.pseudonym.text(), int(self.experience.currentData())
                 )
         except ValueError as exc:
-            QMessageBox.warning(self, "Profil noch nicht vollständig", str(exc))
+            QMessageBox.warning(self, T.LOGIN_INCOMPLETE, str(exc))
             return
         self.settings.save_student_profile(profile)
         self.selected_profile = profile

@@ -7,6 +7,8 @@ from enum import IntEnum
 from typing import Any
 from uuid import uuid4
 
+from ..texts import T
+
 
 class ExperienceLevel(IntEnum):
     FIRST_STEPS = 0
@@ -16,19 +18,19 @@ class ExperienceLevel(IntEnum):
 
 
 EXPERIENCE_LABELS: dict[ExperienceLevel, str] = {
-    ExperienceLevel.FIRST_STEPS: "Erste Schritte",
-    ExperienceLevel.BASICS: "Ich kenne die Grundlagen",
-    ExperienceLevel.SOME_PROJECTS: "Ich habe schon kleine Projekte gebaut",
-    ExperienceLevel.INDEPENDENT: "Ich programmiere oft selbstständig",
+    ExperienceLevel.FIRST_STEPS: T.EXPERIENCE_FIRST_STEPS,
+    ExperienceLevel.BASICS: T.EXPERIENCE_BASICS,
+    ExperienceLevel.SOME_PROJECTS: T.EXPERIENCE_SOME_PROJECTS,
+    ExperienceLevel.INDEPENDENT: T.EXPERIENCE_INDEPENDENT,
 }
 
 
 def normalize_pseudonym(value: str) -> str:
     normalized = " ".join(value.strip().split())
     if not 2 <= len(normalized) <= 30:
-        raise ValueError("Der Spitzname muss zwischen 2 und 30 Zeichen lang sein.")
+        raise ValueError(T.PSEUDONYM_LENGTH)
     if any(character in normalized for character in "\r\n\t"):
-        raise ValueError("Der Spitzname enthält ungültige Zeichen.")
+        raise ValueError(T.PSEUDONYM_CHARACTERS)
     return normalized
 
 
@@ -50,7 +52,7 @@ class StudentProfile:
     def from_dict(cls, data: dict[str, Any]) -> StudentProfile:
         profile_id = str(data["profile_id"])
         if not profile_id:
-            raise ValueError("Die Profil-ID fehlt.")
+            raise ValueError(T.PROFILE_ID_MISSING)
         return cls(
             profile_id=profile_id,
             pseudonym=normalize_pseudonym(str(data["pseudonym"])),

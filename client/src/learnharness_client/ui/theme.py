@@ -13,11 +13,13 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QFont, QFontDatabase, QGuiApplication, QPalette
 from PyQt6.QtWidgets import QApplication, QStyleFactory, QWidget
 
+from ..texts import T
+
 THEME_CHOICES: list[tuple[str, str]] = [
-    ("system", "Wie Windows"),
-    ("light", "Hell"),
-    ("dark", "Dunkel"),
-    ("high_contrast", "Hoher Kontrast"),
+    ("system", T.THEME_SYSTEM),
+    ("light", T.THEME_LIGHT),
+    ("dark", T.THEME_DARK),
+    ("high_contrast", T.THEME_HIGH_CONTRAST),
 ]
 
 

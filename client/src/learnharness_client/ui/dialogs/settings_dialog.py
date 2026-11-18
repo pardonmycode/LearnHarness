@@ -19,16 +19,18 @@ from PyQt6.QtWidgets import (
 from learnharness_client.config import AppSettings
 from learnharness_client.ui.theme import THEME_CHOICES
 
+from ...texts import T
+
 
 class SettingsDialog(QDialog):
     def __init__(self, settings: AppSettings, parent=None) -> None:
         super().__init__(parent)
         self.settings = settings
-        self.setWindowTitle("Einstellungen")
+        self.setWindowTitle(T.SETTINGS_TITLE)
         layout = QVBoxLayout(self)
         form = QFormLayout()
         self.server_url = QLineEdit(settings.server_url)
-        self.fake_server = QCheckBox("Eingebauten Übungsserver verwenden")
+        self.fake_server = QCheckBox(T.SETTINGS_FAKE_SERVER)
         self.fake_server.setChecked(settings.use_fake_server)
         self.font_size = QSpinBox()
         self.font_size.setRange(11, 28)
@@ -39,21 +41,21 @@ class SettingsDialog(QDialog):
         index = self.theme.findData(settings.theme)
         self.theme.setCurrentIndex(max(0, index))
         self.godot_path = QLineEdit(settings.godot_path)
-        self.godot_path.setPlaceholderText("Optional, z. B. C:\\Godot\\Godot_v4.exe")
-        self.godot_path.setAccessibleName("Pfad zum Godot-Programm")
-        browse = QPushButton("Suchen …")
+        self.godot_path.setPlaceholderText(T.SETTINGS_GODOT_PLACEHOLDER)
+        self.godot_path.setAccessibleName(T.SETTINGS_GODOT_A11Y)
+        browse = QPushButton(T.SETTINGS_BROWSE)
         browse.clicked.connect(self._browse_godot)
         godot_row = QHBoxLayout()
         godot_row.addWidget(self.godot_path, 1)
         godot_row.addWidget(browse)
-        self.server_url.setAccessibleName("Lernserver-Adresse")
-        self.font_size.setAccessibleName("Schriftgröße")
-        self.theme.setAccessibleName("Darstellung")
-        form.addRow("Lernserver-Adresse:", self.server_url)
-        form.addRow("Godot-Programm:", godot_row)
-        form.addRow("Entwicklung:", self.fake_server)
-        form.addRow("Schriftgröße:", self.font_size)
-        form.addRow("Darstellung:", self.theme)
+        self.server_url.setAccessibleName(T.SETTINGS_SERVER_A11Y)
+        self.font_size.setAccessibleName(T.SETTINGS_FONT_SIZE_A11Y)
+        self.theme.setAccessibleName(T.SETTINGS_THEME_A11Y)
+        form.addRow(T.SETTINGS_SERVER, self.server_url)
+        form.addRow(T.SETTINGS_GODOT, godot_row)
+        form.addRow(T.SETTINGS_DEVELOPMENT, self.fake_server)
+        form.addRow(T.SETTINGS_FONT_SIZE, self.font_size)
+        form.addRow(T.SETTINGS_THEME, self.theme)
         layout.addLayout(form)
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
@@ -74,7 +76,7 @@ class SettingsDialog(QDialog):
 
     def _browse_godot(self) -> None:
         path, _filter = QFileDialog.getOpenFileName(
-            self, "Godot-Programm auswählen", self.godot_path.text(), "Programme (*.exe);;Alle (*)"
+            self, T.SETTINGS_CHOOSE_GODOT, self.godot_path.text(), T.SETTINGS_GODOT_FILTER
         )
         if path:
             self.godot_path.setText(path)

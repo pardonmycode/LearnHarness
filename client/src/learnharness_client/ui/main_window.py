@@ -37,6 +37,7 @@ from learnharness_client.godot.syntax_check import SyntaxChecker
 from learnharness_client.net.connection_monitor import ConnectionMonitor
 from learnharness_client.net.tutor_client import ClientError, TutorClient
 
+from ..texts import T
 from .dialogs.backup_dialog import BackupDialog
 from .dialogs.settings_dialog import SettingsDialog
 from .dialogs.tutorial_dialog import TutorialDialog
@@ -48,7 +49,6 @@ from .panels.progress_panel import ProgressPanel
 from .panels.tutor_panel import TutorPanel
 from .project_picker import choose_project
 from .script_tree import ScriptTree
-from .texts import T
 from .theme import set_state
 
 LOG = logging.getLogger(__name__)
@@ -399,7 +399,9 @@ class MainWindow(QMainWindow):
         if document and self.project:
             relative = document.path.relative_to(self.project.root).as_posix()
             for line in review.marked_lines:
-                self.problems_panel.add_problem(Problem(relative, line, review.feedback, "Prüfung"))
+                self.problems_panel.add_problem(
+                    Problem(relative, line, review.feedback, T.SOURCE_REVIEW)
+                )
 
     def _is_learn_target(self, path: str) -> bool:
         if self._learn_target_file is None:
@@ -518,7 +520,7 @@ class MainWindow(QMainWindow):
 
     def _syntax_check_finished(self, messages: list[GodotMessage]) -> None:
         file = self._syntax_check_file
-        self.problems_panel.clear_source("Godot-Prüfung")
+        self.problems_panel.clear_source(T.SOURCE_GODOT_CHECK)
         editor = self.editor_tabs.current_editor()
         if editor:
             editor.set_error_lines(
@@ -527,7 +529,7 @@ class MainWindow(QMainWindow):
         if not messages:
             self.statusBar().showMessage(T.GODOT_CHECK_OK.format(file=file), 8000)
             return
-        self._add_godot_messages(messages, "Godot-Prüfung")
+        self._add_godot_messages(messages, T.SOURCE_GODOT_CHECK)
         self.statusBar().showMessage(T.GODOT_CHECK_ERRORS.format(count=len(messages)), 8000)
 
     def _syntax_check_failed(self, reason: str) -> None:
@@ -546,7 +548,7 @@ class MainWindow(QMainWindow):
         except OSError as exc:
             QMessageBox.warning(self, T.READ_GODOT_LOG, str(exc))
             return
-        added = self._add_godot_messages(messages, "Godot-Log")
+        added = self._add_godot_messages(messages, T.SOURCE_GODOT_LOG)
         text = T.GODOT_LOG_FOUND.format(count=added) if added else T.GODOT_LOG_EMPTY
         self.statusBar().showMessage(text, 8000)
 

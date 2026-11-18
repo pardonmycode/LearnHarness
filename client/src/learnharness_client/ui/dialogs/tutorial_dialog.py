@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ..texts import T
+from ...texts import T
 
 
 class TutorialDialog(QDialog):

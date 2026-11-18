@@ -5,14 +5,9 @@ from __future__ import annotations
 from learnharness_protocol import ProgressUpdate
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
-from ..texts import T
+from ...texts import T
 
-LEVEL_WORDS = {
-    0: "noch nicht begonnen",
-    1: "mit Hilfe",
-    2: "fast allein",
-    3: "sicher",
-}
+LEVEL_WORDS = T.LEVEL_WORDS
 
 
 class ProgressPanel(QWidget):
@@ -21,11 +16,9 @@ class ProgressPanel(QWidget):
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(16, 16, 16, 16)
         self.layout.setSpacing(10)
-        heading = QLabel("Deine Fähigkeiten")
+        heading = QLabel(T.PROGRESS_HEADING)
         heading.setProperty("role", "heading")
-        intro = QLabel(
-            "Hier siehst du, was du schon kannst. Es gibt keine Punkte und keine Rangliste."
-        )
+        intro = QLabel(T.PROGRESS_INTRO)
         intro.setWordWrap(True)
         intro.setProperty("role", "muted")
         self.offline_note = QLabel(T.PROGRESS_OFFLINE)

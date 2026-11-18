@@ -12,9 +12,10 @@ Abgehakt ist, was im Code umgesetzt und durch Tests oder Ansicht geprüft ist. B
 - Skriptbaum nutzt `QTreeWidget` aus `PathGuard.iter_scripts()` statt `QFileSystemModel` – so
   entscheidet allein der PathGuard, was sichtbar ist. Ein `QFileSystemWatcher` auf den Ordnern
   aktualisiert den Baum automatisch, wenn in Godot Skripte angelegt oder gelöscht werden.
-- UI-Texte: `ui/texts.py` enthält die Texte von Hauptfenster, Menüs, Statusleiste, Tutor,
-  LearnAgent-Hinweisen und allen neuen Dialogen. Übungs-Widgets, Editor-Dialoge (Konflikt,
-  Wiederherstellung, Suchen) und Login/Einstellungen nutzen noch eigene Texte → offen.
+- UI-Texte: alle für Kinder sichtbaren Texte stehen in `learnharness_client/texts.py`
+  (auch Fehlermeldungen aus `domain/`, `net/` und `godot/`). Nicht zentral sind nur
+  Log-Meldungen, CLI-Hilfe und die Inhalte des eingebauten Übungsservers – diese
+  simulieren Serverantworten.
 - Barrierefreiheit: Fokusrahmen, Tab-Reihenfolge in Übungen und Accessible Names für die
   Hauptbedienelemente sind da; eine vollständige Prüfung mit Screenreader steht aus → offen.
 - Punkte unter „Fertig, wenn“ mit echtem Godot (Phase 1) und der Build-Test auf einem PC ohne
@@ -376,7 +377,7 @@ Antwort gibt den vollständigen, erklärten Code frei → der Client sichert und
 - [x] Globale Schriftgröße (klein/mittel/groß) wirkt auf alle Bereiche.
 - [x] Kontrastmodus (hell, dunkel, hoher Kontrast) über `theme.py`.
 - [ ] Vollständige Tastaturbedienung, sinnvolle Tab-Reihenfolge, sichtbarer Fokus, `setAccessibleName` für alle Bedienelemente.
-- [ ] Alle UI-Texte zentral (Vorbereitung für `QTranslator`); Sprache zunächst Deutsch, einfache Sätze.
+- [x] Alle UI-Texte zentral (Vorbereitung für `QTranslator`); Sprache zunächst Deutsch, einfache Sätze.
 - [x] Kurzanleitung beim ersten Start (3–4 Schritte, überspringbar).
 
 ### 5.3 Verteilung

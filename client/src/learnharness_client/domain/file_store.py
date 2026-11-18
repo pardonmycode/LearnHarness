@@ -6,6 +6,7 @@ from pathlib import Path
 
 from PyQt6.QtCore import QIODeviceBase, QSaveFile
 
+from ..texts import T
 from .backup import BackupManager
 from .path_guard import PathGuard
 from .script_document import ScriptDocument, sha256_bytes
@@ -41,12 +42,12 @@ class FileStore:
         allowed = self.guard.ensure_allowed(path)
         stat_result = allowed.stat()
         if stat_result.st_size > self.max_bytes:
-            raise FileTooLarge("Diese Datei ist zu groß für den Lerneditor.")
+            raise FileTooLarge(T.FILE_TOO_LARGE)
         try:
             data = allowed.read_bytes()
             return ScriptDocument.from_bytes(allowed, data, stat_result.st_mtime_ns)
         except UnicodeDecodeError as exc:
-            raise FileStoreError("Die Datei ist nicht als UTF-8 gespeichert.") from exc
+            raise FileStoreError(T.FILE_NOT_UTF8) from exc
 
     def disk_hash(self, document: ScriptDocument) -> str | None:
         allowed = self.guard.ensure_allowed(document.path, must_exist=False)
@@ -64,7 +65,7 @@ class FileStore:
         current_hash = sha256_bytes(disk_bytes) if disk_bytes is not None else None
         if not force and current_hash != document.disk_hash:
             raise SaveConflict(
-                "Die Datei wurde seit dem Öffnen in Godot oder einem anderen Programm geändert.",
+                T.FILE_CHANGED_ON_DISK,
                 disk_bytes,
             )
         if disk_bytes is not None:
@@ -74,19 +75,19 @@ class FileStore:
         data = document.to_bytes()
         save_file = QSaveFile(str(allowed))
         if not save_file.open(QIODeviceBase.OpenModeFlag.WriteOnly):
-            raise FileStoreError("Die Datei konnte nicht zum Speichern geöffnet werden.")
+            raise FileStoreError(T.FILE_OPEN_FAILED)
         if save_file.write(data) != len(data):
             save_file.cancelWriting()
-            raise FileStoreError("Die Datei konnte nicht vollständig geschrieben werden.")
+            raise FileStoreError(T.FILE_WRITE_INCOMPLETE)
         if not save_file.commit():
-            raise FileStoreError("Das sichere Speichern konnte nicht abgeschlossen werden.")
+            raise FileStoreError(T.FILE_COMMIT_FAILED)
         document.path = allowed
         document.mark_saved(data, allowed.stat().st_mtime_ns)
 
     def create(self, relative_path: Path | str, text: str = "extends Node\n") -> ScriptDocument:
         allowed = self.guard.ensure_allowed(relative_path, must_exist=False)
         if allowed.exists():
-            raise FileStoreError("Diese Datei gibt es bereits.")
+            raise FileStoreError(T.FILE_EXISTS)
         allowed.parent.mkdir(parents=True, exist_ok=True)
         document = ScriptDocument(allowed, text, None, None, dirty=True)
         self.save(document)

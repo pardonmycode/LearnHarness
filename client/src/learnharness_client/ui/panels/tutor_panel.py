@@ -18,8 +18,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ...texts import T
 from ..markdown import insert_markdown
-from ..texts import T
 from ..theme import colors
 
 LOG = logging.getLogger(__name__)
@@ -57,21 +57,21 @@ class TutorPanel(QWidget):
         self.history = QTextBrowser()
         self.history.setOpenExternalLinks(False)
         self.history.setOpenLinks(False)
-        self.history.setAccessibleName("Gespräch mit dem Lernhelfer")
+        self.history.setAccessibleName(T.TUTOR_HISTORY_A11Y)
         self.input = MessageInput()
-        self.input.setPlaceholderText("Schreibe deine Frage … (Strg+Enter sendet)")
+        self.input.setPlaceholderText(T.TUTOR_INPUT_PLACEHOLDER)
         self.input.setMaximumHeight(110)
-        self.input.setAccessibleName("Frage an den Lernhelfer")
+        self.input.setAccessibleName(T.TUTOR_INPUT_A11Y)
         self.counter = QLabel("0 / 2000")
         self.hint_progress = QProgressBar()
         self.hint_progress.setRange(0, 4)
         self.hint_progress.setValue(0)
-        self.hint_progress.setFormat("Hinweisstufe %v von %m")
+        self.hint_progress.setFormat(T.TUTOR_HINT_PROGRESS)
         buttons = QHBoxLayout()
-        self.send_button = QPushButton("Frage senden")
+        self.send_button = QPushButton(T.TUTOR_SEND)
         self.send_button.setProperty("primary", "true")
-        self.hint_button = QPushButton("Nächster Hinweis")
-        self.stop_button = QPushButton("Stopp")
+        self.hint_button = QPushButton(T.TUTOR_NEXT_HINT)
+        self.stop_button = QPushButton(T.TUTOR_STOP)
         self.stop_button.setEnabled(False)
         buttons.addWidget(self.send_button)
         buttons.addWidget(self.hint_button)

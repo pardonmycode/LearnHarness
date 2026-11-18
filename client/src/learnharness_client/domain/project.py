@@ -7,6 +7,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from ..texts import T
 from .path_guard import PathGuard, PathNotAllowed
 
 _PROJECT_NAME = re.compile(r'^config/name\s*=\s*"((?:[^"\\]|\\.)*)"\s*$', re.MULTILINE)
@@ -24,7 +25,7 @@ class GodotProject:
         candidate = Path(root).resolve(strict=True)
         descriptor = candidate / "project.godot"
         if not descriptor.is_file():
-            raise PathNotAllowed("In diesem Ordner fehlt die Datei project.godot.")
+            raise PathNotAllowed(T.PROJECT_MISSING_DESCRIPTOR)
         text = descriptor.read_text(encoding="utf-8-sig", errors="replace")
         match = _PROJECT_NAME.search(text)
         name = match.group(1).replace(r"\"", '"') if match else candidate.name

@@ -16,6 +16,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ...texts import T
+
 _GODOT_LOCATION = re.compile(r"res://([^:\s]+\.gd):(\d+)", re.IGNORECASE)
 
 
@@ -35,13 +37,13 @@ class ProblemsPanel(QWidget):
         layout = QVBoxLayout(self)
         row = QHBoxLayout()
         self.error_input = QLineEdit()
-        self.error_input.setPlaceholderText("Godot-Fehlermeldung hier einfügen …")
-        self.error_input.setAccessibleName("Godot-Fehlermeldung einfügen")
-        add_button = QPushButton("Fehler hinzufügen")
+        self.error_input.setPlaceholderText(T.PROBLEM_INPUT_PLACEHOLDER)
+        self.error_input.setAccessibleName(T.PROBLEM_INPUT_A11Y)
+        add_button = QPushButton(T.PROBLEM_ADD)
         row.addWidget(self.error_input, 1)
         row.addWidget(add_button)
         self.list = QListWidget()
-        self.list.setAccessibleName("Liste der Probleme")
+        self.list.setAccessibleName(T.PROBLEM_LIST_A11Y)
         layout.addLayout(row)
         layout.addWidget(self.list)
         add_button.clicked.connect(self.add_from_input)
@@ -57,7 +59,7 @@ class ProblemsPanel(QWidget):
             file=match.group(1) if match else "",
             line=int(match.group(2)) if match else 0,
             message=text,
-            source="Godot",
+            source=T.SOURCE_GODOT,
         )
         self.add_problem(problem)
         self.error_input.clear()

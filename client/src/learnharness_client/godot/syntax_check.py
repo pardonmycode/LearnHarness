@@ -6,6 +6,7 @@ from pathlib import Path
 
 from PyQt6.QtCore import QObject, QProcess, QTimer, pyqtSignal
 
+from ..texts import T
 from .output_parser import GodotMessage, parse_godot_output
 
 TIMEOUT_MS = 10_000
@@ -45,7 +46,7 @@ class SyntaxChecker(QObject):
         if self.process is not None:
             return False
         if not godot_executable or not Path(godot_executable).is_file():
-            self.failed.emit("Das Godot-Programm wurde nicht gefunden.")
+            self.failed.emit(T.GODOT_NOT_FOUND)
             return False
         process = QProcess(self)
         process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
@@ -79,7 +80,7 @@ class SyntaxChecker(QObject):
     def _process_error(self, error: QProcess.ProcessError) -> None:
         if error == QProcess.ProcessError.FailedToStart:
             self._cleanup()
-            self.failed.emit("Godot ließ sich nicht starten.")
+            self.failed.emit(T.GODOT_START_FAILED)
 
     def _timed_out(self) -> None:
         if self.process is None:
@@ -87,7 +88,7 @@ class SyntaxChecker(QObject):
         process = self.process
         self._cleanup()
         process.kill()
-        self.failed.emit("Godot hat nicht innerhalb von 10 Sekunden geantwortet.")
+        self.failed.emit(T.GODOT_TIMEOUT)
 
     def _cleanup(self) -> None:
         self._timer.stop()

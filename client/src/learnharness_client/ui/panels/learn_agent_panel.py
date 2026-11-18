@@ -18,23 +18,12 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ...texts import T
 from ..exercises.base import ExerciseWidget
 from ..exercises.factory import create_exercise_widget
-from ..texts import T
 from ..theme import set_state
 
-LEVEL_DESCRIPTIONS = {
-    1: "Einfache Verständnisfragen. Erst nach einer richtigen Antwort schreibt der Agent den Code.",
-    2: "Einfache Code-Lücken mit einem Dropdown-Menü.",
-    3: "Schwierigere Code-Lücken mit mehreren Dropdown-Menüs.",
-    4: "Code-Lücken ohne Auswahl: Du trägst kurze Begriffe selbst ein.",
-    5: "Bringe fertige Code-Bausteine in die richtige Reihenfolge.",
-    6: "Finde einen Fehler in einem kurzen Code-Beispiel.",
-    7: "Ergänze wichtige Ausdrücke mit kleinen Hinweisen.",
-    8: "Plane eine Funktion und ergänze mehrere zusammenhängende Teile.",
-    9: "Entscheide selbst über den Lösungsweg und begründe ihn.",
-    10: "Beschreibe ein eigenes Spielfeature und prüfe den Plan des Agenten.",
-}
+LEVEL_DESCRIPTIONS = T.LEVEL_DESCRIPTIONS
 
 
 def card(title: str) -> tuple[QFrame, QVBoxLayout]:
@@ -66,23 +55,19 @@ class LearnAgentPanel(QWidget):
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(12)
 
-        heading = QLabel("LearnAgent")
+        heading = QLabel(T.AGENT_HEADING)
         heading.setProperty("role", "heading")
-        intro = QLabel(
-            "Beschreibe, was dein Spiel können soll. Der Agent erklärt zuerst das Thema und "
-            "stellt dir eine Lernfrage. Erst wenn deine Antwort richtig ist, schreibt er den "
-            "Code in dein Projekt."
-        )
+        intro = QLabel(T.AGENT_INTRO)
         intro.setWordWrap(True)
         intro.setProperty("role", "muted")
 
-        level_card, level_layout = card("DEIN LEVEL")
+        level_card, level_layout = card(T.AGENT_LEVEL_SECTION)
         level_row = QHBoxLayout()
         self.level_choice = QComboBox()
-        self.level_choice.setAccessibleName("LearnAgent-Level")
+        self.level_choice.setAccessibleName(T.AGENT_LEVEL_A11Y)
         self.level_choice.setMinimumWidth(150)
         for level in range(1, 11):
-            self.level_choice.addItem(f"Level {level}", level)
+            self.level_choice.addItem(T.AGENT_LEVEL.format(level=level), level)
         self.unlocked_label = QLabel()
         self.unlocked_label.setProperty("role", "small")
         level_row.addWidget(self.level_choice)
@@ -91,20 +76,20 @@ class LearnAgentPanel(QWidget):
         self.progress = QProgressBar()
         self.progress.setRange(0, 10)
         self.progress.setTextVisible(False)
-        self.progress.setAccessibleName("Freigeschaltete Level")
+        self.progress.setAccessibleName(T.AGENT_UNLOCKED_A11Y)
         self.level_description = QLabel()
         self.level_description.setWordWrap(True)
         level_layout.addLayout(level_row)
         level_layout.addWidget(self.progress)
         level_layout.addWidget(self.level_description)
 
-        wish_card, wish_layout = card("WAS SOLL DEIN SPIEL KÖNNEN?")
+        wish_card, wish_layout = card(T.AGENT_WISH_SECTION)
         self.prompt = QPlainTextEdit()
-        self.prompt.setPlaceholderText("Zum Beispiel: Meine Figur soll nach rechts laufen.")
+        self.prompt.setPlaceholderText(T.AGENT_WISH_PLACEHOLDER)
         self.prompt.setFixedHeight(90)
-        self.prompt.setAccessibleName("Wunsch an den LearnAgent")
+        self.prompt.setAccessibleName(T.AGENT_WISH_A11Y)
         self.prompt.setTabChangesFocus(True)
-        self.start_button = QPushButton("Lernrunde starten  →")
+        self.start_button = QPushButton(T.AGENT_START)
         self.start_button.setProperty("primary", "true")
         self.start_button.clicked.connect(self._start)
         button_row = QHBoxLayout()
@@ -166,10 +151,10 @@ class LearnAgentPanel(QWidget):
             for index in range(self.level_choice.count()):
                 item = model.item(index)
                 item.setEnabled(index + 1 <= self.max_unlocked_level)
-                suffix = "" if item.isEnabled() else "  🔒"
-                item.setText(f"Level {index + 1}{suffix}")
+                label = T.AGENT_LEVEL if item.isEnabled() else T.AGENT_LEVEL_LOCKED
+                item.setText(label.format(level=index + 1))
         self.progress.setValue(self.max_unlocked_level)
-        self.unlocked_label.setText(f"{self.max_unlocked_level} von 10 freigeschaltet")
+        self.unlocked_label.setText(T.AGENT_UNLOCKED.format(level=self.max_unlocked_level))
 
     def _level_changed(self) -> None:
         level = self.current_level
@@ -188,11 +173,11 @@ class LearnAgentPanel(QWidget):
     def _start(self) -> None:
         prompt = self.prompt.toPlainText().strip()
         if not prompt:
-            self._set_feedback("Beschreibe zuerst kurz deinen Spielwunsch.", "error")
+            self._set_feedback(T.AGENT_WISH_EMPTY, "error")
             return
         self._set_busy(True)
         self.clear_exercise()
-        self._set_feedback("Der LearnAgent bereitet eine passende Lernfrage vor …", "neutral")
+        self._set_feedback(T.AGENT_PREPARING, "neutral")
         self.start_requested.emit(prompt, self.current_level)
 
     def show_response(self, response: LearningResponse) -> None:
@@ -214,33 +199,19 @@ class LearnAgentPanel(QWidget):
         if isinstance(self.exercise_widget, ExerciseWidget):
             self.exercise_widget.show_result(review)
         if review.correct:
-            self._set_feedback(
-                "✓  Richtig! Jetzt darf der LearnAgent den vollständigen Code schreiben.",
-                "success",
-            )
+            self._set_feedback(T.AGENT_CORRECT, "success")
         else:
-            self._set_feedback(
-                "Noch nicht ganz – dein Projekt wurde nicht verändert. "
-                "Lies den Hinweis unten und versuche es noch einmal.",
-                "error",
-            )
+            self._set_feedback(T.AGENT_NOT_YET, "error")
 
     def show_code_result(self, written_files: list[str], explanations: list[str]) -> None:
         if written_files:
             names = ", ".join(written_files)
             explanation = "\n\n".join(explanations)
             self._set_feedback(
-                f"✓  Geschafft! Der LearnAgent hat den Code in {names} geschrieben. "
-                "Vorher wurde eine Sicherung angelegt – mit Strg+Z im Editor siehst du deinen "
-                f"alten Code wieder.\n\nSo funktioniert der Code:\n{explanation}",
-                "success",
+                T.AGENT_CODE_WRITTEN.format(files=names, explanation=explanation), "success"
             )
         else:
-            self._set_feedback(
-                "Die Antwort war richtig, aber der Code konnte nicht geschrieben werden. "
-                "Dein bisheriger Inhalt wurde nicht überschrieben.",
-                "error",
-            )
+            self._set_feedback(T.AGENT_CODE_FAILED, "error")
 
     def show_error(self, message: str) -> None:
         self._set_busy(False)

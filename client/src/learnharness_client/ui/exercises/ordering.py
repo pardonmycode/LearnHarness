@@ -7,6 +7,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QAbstractItemView, QListWidget, QListWidgetItem
 
+from ...texts import T
 from .base import ExerciseWidget
 
 
@@ -31,7 +32,7 @@ class OrderingWidget(ExerciseWidget):
         super().__init__(exercise, parent)
         self.items = OrderList()
         self.items.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
-        self.items.setAccessibleName("Elemente in die richtige Reihenfolge bringen")
+        self.items.setAccessibleName(T.ORDERING_A11Y)
         for item in exercise.items:
             widget_item = QListWidgetItem(item.text)
             widget_item.setData(Qt.ItemDataRole.UserRole, item.id)

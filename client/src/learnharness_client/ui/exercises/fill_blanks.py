@@ -5,6 +5,7 @@ from __future__ import annotations
 from learnharness_protocol import FillBlanksExercise, Submission
 from PyQt6.QtWidgets import QComboBox, QWidget
 
+from ...texts import T
 from .base import ExerciseWidget, blank_order, chain_tab_order, inline_blanks_view
 
 
@@ -33,18 +34,18 @@ class FillBlanksWidget(ExerciseWidget):
         self.inputs: dict[str, QComboBox] = {}
         for index, blank_id in enumerate(numbered_ids(exercise.code, list(blanks)), start=1):
             combo = QComboBox()
-            combo.addItem(f"{index}: wählen …", None)
+            combo.addItem(T.BLANK_CHOOSE.format(index=index), None)
             for option in blanks[blank_id].options:
                 combo.addItem(option, option)
             combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
-            combo.setAccessibleName(f"Lücke {index}")
-            combo.setToolTip(f"Lücke {index}")
+            combo.setAccessibleName(T.BLANK.format(index=index))
+            combo.setToolTip(T.BLANK.format(index=index))
             self.inputs[blank_id] = combo
         self.layout.addWidget(
             inline_blanks_view(
                 exercise.code,
                 dict(self.inputs),
-                accessible_name=f"Code mit Lücken: {_mark_blanks(exercise.code)}",
+                accessible_name=T.BLANKS_CODE_A11Y.format(code=_mark_blanks(exercise.code)),
             )
         )
         self.finish_layout()

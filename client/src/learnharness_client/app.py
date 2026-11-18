@@ -20,6 +20,8 @@ from learnharness_client.ui.dialogs.login_dialog import LoginDialog
 from learnharness_client.ui.main_window import MainWindow
 from learnharness_client.ui.theme import apply_theme
 
+from .texts import T
+
 LOG = logging.getLogger(__name__)
 
 
@@ -89,9 +91,8 @@ def main(argv: list[str] | None = None) -> int:
             window.editor_tabs.write_recovery_drafts()
             QMessageBox.critical(
                 window,
-                "Etwas ist schiefgegangen",
-                "Dein ungespeicherter Text wurde als Entwurf gesichert. "
-                "Bitte starte LearnHarness neu.",
+                T.CRASH_TITLE,
+                T.CRASH,
             )
         finally:
             previous_hook(exc_type, exc_value, traceback)
@@ -101,7 +102,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             window.open_project(GodotProject.open(args.project))
         except (OSError, ValueError) as exc:
-            QMessageBox.warning(window, "Projekt nicht geöffnet", str(exc))
+            QMessageBox.warning(window, T.PROJECT_NOT_OPENED, str(exc))
     else:
         # Children should land directly in their game; the last project opens automatically.
         for recent in settings.recent_projects:

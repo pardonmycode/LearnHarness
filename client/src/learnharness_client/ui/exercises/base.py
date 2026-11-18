@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ...texts import T
 from ..editor.gdscript_highlighter import GDScriptHighlighter
 from ..theme import colors, monospace_font, set_state
 
@@ -102,7 +103,7 @@ def inline_blanks_view(
     missing = [blank_id for blank_id in inputs if blank_id not in used]
     if missing:
         row = QHBoxLayout()
-        row.addWidget(_code_label("# weitere Lücken:"))
+        row.addWidget(_code_label(T.EXERCISE_MORE_BLANKS))
         for blank_id in missing:
             row.addWidget(inputs[blank_id])
         row.addStretch(1)
@@ -127,7 +128,7 @@ class ExerciseWidget(QFrame):
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(16, 14, 16, 14)
         self.layout.setSpacing(10)
-        tag = QLabel(f"Übung · {exercise.skill}")
+        tag = QLabel(T.EXERCISE_TAG.format(skill=exercise.skill))
         tag.setProperty("role", "section")
         self.layout.addWidget(tag)
         self.prompt = QLabel(exercise.prompt)
@@ -137,9 +138,9 @@ class ExerciseWidget(QFrame):
         self.result_label = QLabel()
         self.result_label.setWordWrap(True)
         self.result_label.hide()
-        self.submit_button = QPushButton("Antwort prüfen")
+        self.submit_button = QPushButton(T.EXERCISE_SUBMIT)
         self.submit_button.setProperty("primary", "true")
-        self.submit_button.setAccessibleName("Antwort prüfen")
+        self.submit_button.setAccessibleName(T.EXERCISE_SUBMIT)
         self.submit_button.clicked.connect(self._submit)
 
     def finish_layout(self) -> None:
@@ -158,7 +159,7 @@ class ExerciseWidget(QFrame):
 
     def _submit(self) -> None:
         self.submit_button.setEnabled(False)
-        self.submit_button.setText("Wird geprüft …")
+        self.submit_button.setText(T.EXERCISE_CHECKING)
         self.submitted.emit(self.answers())
 
     def show_result(self, result: ReviewResult) -> None:
@@ -170,7 +171,7 @@ class ExerciseWidget(QFrame):
             symbol, state = "ℹ", "info"
         text = f"{symbol}  {result.feedback}"
         if result.follow_up_question:
-            text += f"\n\nWeiterdenken: {result.follow_up_question}"
+            text += T.EXERCISE_FOLLOW_UP.format(question=result.follow_up_question)
         self.result_label.setText(text)
         set_state(self.result_label, callout=state)
         self.result_label.show()
@@ -184,21 +185,21 @@ class ExerciseWidget(QFrame):
                     widget.setToolTip(item.feedback)
 
         if result.correct:
-            self.submit_button.setText("✓ Geschafft")
+            self.submit_button.setText(T.EXERCISE_DONE)
             self.submit_button.setEnabled(False)
         else:
-            self.submit_button.setText("Nochmal prüfen")
+            self.submit_button.setText(T.EXERCISE_RETRY)
             self.submit_button.setEnabled(True)
 
     def submission_failed(self) -> None:
         """The check did not reach the server; let the child try again."""
-        self.submit_button.setText("Antwort prüfen")
+        self.submit_button.setText(T.EXERCISE_SUBMIT)
         self.submit_button.setEnabled(True)
 
     def reset(self) -> None:
         self.result_label.clear()
         self.result_label.hide()
-        self.submit_button.setText("Antwort prüfen")
+        self.submit_button.setText(T.EXERCISE_SUBMIT)
         self.submit_button.setEnabled(True)
         for widget in self.item_widgets().values():
             set_state(widget, mark="")

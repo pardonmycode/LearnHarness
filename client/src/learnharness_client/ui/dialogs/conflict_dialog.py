@@ -6,6 +6,8 @@ import difflib
 
 from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QLabel, QPlainTextEdit, QVBoxLayout
 
+from ...texts import T
+
 
 class ConflictDialog(QDialog):
     KEEP_MINE = 2
@@ -15,34 +17,25 @@ class ConflictDialog(QDialog):
     def __init__(self, mine: str, disk: str, parent=None) -> None:
         super().__init__(parent)
         self.choice = self.CANCEL
-        self.setWindowTitle("Die Datei wurde auch in Godot geändert")
+        self.setWindowTitle(T.CONFLICT_TITLE)
         self.resize(760, 520)
         layout = QVBoxLayout(self)
-        layout.addWidget(
-            QLabel(
-                "Deine Version und die Version auf der Festplatte sind verschieden. "
-                "Wähle bewusst, welche Version du behalten möchtest."
-            )
-        )
+        layout.addWidget(QLabel(T.CONFLICT_INTRO))
         diff = "".join(
             difflib.unified_diff(
                 disk.splitlines(keepends=True),
                 mine.splitlines(keepends=True),
-                fromfile="Version aus Godot",
-                tofile="Meine Version",
+                fromfile=T.CONFLICT_DISK_VERSION,
+                tofile=T.CONFLICT_MY_VERSION,
             )
         )
-        view = QPlainTextEdit(diff or "Die Texte sehen gleich aus.")
+        view = QPlainTextEdit(diff or T.CONFLICT_SAME)
         view.setReadOnly(True)
         layout.addWidget(view)
         buttons = QDialogButtonBox()
-        keep = buttons.addButton("Meine Version behalten", QDialogButtonBox.ButtonRole.AcceptRole)
-        load = buttons.addButton(
-            "Version aus Godot laden", QDialogButtonBox.ButtonRole.DestructiveRole
-        )
-        cancel = buttons.addButton(
-            "Erst einmal nichts ändern", QDialogButtonBox.ButtonRole.RejectRole
-        )
+        keep = buttons.addButton(T.CONFLICT_KEEP_MINE, QDialogButtonBox.ButtonRole.AcceptRole)
+        load = buttons.addButton(T.CONFLICT_LOAD_DISK, QDialogButtonBox.ButtonRole.DestructiveRole)
+        cancel = buttons.addButton(T.CONFLICT_CANCEL, QDialogButtonBox.ButtonRole.RejectRole)
         keep.clicked.connect(lambda: self._finish(self.KEEP_MINE))
         load.clicked.connect(lambda: self._finish(self.LOAD_DISK))
         cancel.clicked.connect(lambda: self._finish(self.CANCEL))

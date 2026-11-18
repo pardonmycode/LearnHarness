@@ -5,6 +5,7 @@ from __future__ import annotations
 from PyQt6.QtGui import QTextCursor
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QPushButton, QWidget
 
+from ...texts import T
 from .code_editor import CodeEditor
 
 
@@ -15,13 +16,13 @@ class FindBar(QWidget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(4, 2, 4, 2)
         self.find_edit = QLineEdit()
-        self.find_edit.setPlaceholderText("Suchen")
+        self.find_edit.setPlaceholderText(T.FIND_PLACEHOLDER)
         self.replace_edit = QLineEdit()
-        self.replace_edit.setPlaceholderText("Ersetzen")
-        next_button = QPushButton("Weiter")
-        replace_button = QPushButton("Ersetzen")
-        close_button = QPushButton("Schließen")
-        layout.addWidget(QLabel("Suchen:"))
+        self.replace_edit.setPlaceholderText(T.REPLACE_PLACEHOLDER)
+        next_button = QPushButton(T.FIND_NEXT)
+        replace_button = QPushButton(T.REPLACE_BUTTON)
+        close_button = QPushButton(T.CLOSE)
+        layout.addWidget(QLabel(T.FIND_LABEL))
         layout.addWidget(self.find_edit)
         layout.addWidget(self.replace_edit)
         layout.addWidget(next_button)

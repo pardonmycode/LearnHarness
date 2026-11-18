@@ -12,13 +12,13 @@ from pytestqt.qtbot import QtBot
 from learnharness_client.godot.log_reader import default_log_path, read_recent_errors
 from learnharness_client.godot.output_parser import GodotMessage, parse_godot_output
 from learnharness_client.godot.syntax_check import SyntaxChecker
+from learnharness_client.texts import T
 from learnharness_client.ui.dialogs.backup_dialog import BackupDialog, backup_label
 from learnharness_client.ui.dialogs.first_start_dialog import normalize_server_url
 from learnharness_client.ui.dialogs.tutorial_dialog import TutorialDialog
 from learnharness_client.ui.markdown import has_links, insert_markdown, sanitize_markdown
 from learnharness_client.ui.panels.problems_panel import Problem, ProblemsPanel
 from learnharness_client.ui.panels.tutor_panel import TutorPanel
-from learnharness_client.ui.texts import T
 
 GODOT_OUTPUT = """\
 Godot Engine v4.3.stable.official

@@ -15,6 +15,7 @@ from learnharness_client.domain.project import GodotProject
 from learnharness_client.domain.recovery import RecoveryManager
 from learnharness_client.domain.script_document import ScriptDocument, sha256_bytes
 
+from ...texts import T
 from ..dialogs.conflict_dialog import ConflictDialog
 from ..dialogs.recovery_dialog import RecoveryDialog
 from .code_editor import CodeEditor
@@ -79,7 +80,7 @@ class EditorTabs(QWidget):
                 return editor
             document = self.store.load(allowed)
         except (OSError, ValueError) as exc:
-            QMessageBox.warning(self, "Datei nicht geöffnet", str(exc))
+            QMessageBox.warning(self, T.FILE_NOT_OPENED, str(exc))
             return None
         editor = CodeEditor(font_size=self.settings.font_size)
         editor.setPlainText(document.text)
@@ -101,7 +102,7 @@ class EditorTabs(QWidget):
         try:
             document = self.store.create(relative_path)
         except (OSError, ValueError) as exc:
-            QMessageBox.warning(self, "Datei nicht angelegt", str(exc))
+            QMessageBox.warning(self, T.FILE_NOT_CREATED, str(exc))
             return None
         return self.open_file(document.path)
 
@@ -112,16 +113,16 @@ class EditorTabs(QWidget):
         try:
             path = self.project.guard.ensure_allowed(relative_path, must_exist=False)
         except ValueError as exc:
-            QMessageBox.warning(self, "Agenten-Code nicht geschrieben", str(exc))
+            QMessageBox.warning(self, T.AGENT_CODE_NOT_WRITTEN, str(exc))
             return False
         if not path.exists():
             try:
                 document = self.store.create(relative_path, content)
             except (OSError, ValueError) as exc:
-                QMessageBox.warning(self, "Agenten-Code nicht geschrieben", str(exc))
+                QMessageBox.warning(self, T.AGENT_CODE_NOT_WRITTEN, str(exc))
                 return False
             self.open_file(document.path)
-            self.status_message.emit(f"LearnAgent hat {document.path.name} angelegt.")
+            self.status_message.emit(T.AGENT_CREATED_FILE.format(file=document.path.name))
             return True
 
         editor = self.open_file(path)
@@ -131,16 +132,15 @@ class EditorTabs(QWidget):
         if document.dirty:
             QMessageBox.warning(
                 self,
-                "Ungespeicherter eigener Code",
-                "Der LearnAgent überschreibt keine ungespeicherten Änderungen. "
-                "Speichere oder verwerfe sie und versuche es danach erneut.",
+                T.UNSAVED_OWN_CODE_TITLE,
+                T.UNSAVED_OWN_CODE,
             )
             return False
         # One undo step: the child can press Strg+Z to see their previous code again.
         editor.replace_all_text(content)
         if not self.save_editor(editor):
             return False
-        self.status_message.emit(f"LearnAgent hat {document.path.name} vollständig geschrieben.")
+        self.status_message.emit(T.AGENT_WROTE_FILE.format(file=document.path.name))
         return True
 
     def backups_for_current(self) -> list[Path]:
@@ -191,7 +191,7 @@ class EditorTabs(QWidget):
         try:
             self.store.save(document)
         except SaveConflict as conflict:
-            disk_text = "(Die Datei wurde gelöscht.)"
+            disk_text = T.CONFLICT_DELETED
             if conflict.disk_bytes is not None:
                 disk_text = conflict.disk_bytes.decode("utf-8-sig", errors="replace")
             choice = ConflictDialog.choose(document.text, disk_text, self)
@@ -212,15 +212,15 @@ class EditorTabs(QWidget):
         editor.document().setModified(False)
         self._update_title(editor)
         self._ensure_watched(document.path)
-        self.status_message.emit(f"Gespeichert: {document.path.name}")
+        self.status_message.emit(T.SAVED.format(file=document.path.name))
         return True
 
     def _save_error(self, error: Exception) -> None:
         self.write_recovery_drafts()
         QMessageBox.critical(
             self,
-            "Speichern nicht möglich",
-            f"Dein Text bleibt im Editor und wurde als Entwurf gesichert.\n\n{error}",
+            T.SAVE_FAILED_TITLE,
+            T.SAVE_FAILED.format(error=error),
         )
 
     def _reload(self, editor: CodeEditor, *, discard_local: bool) -> bool:
@@ -249,7 +249,7 @@ class EditorTabs(QWidget):
         self.documents[editor] = fresh
         self._update_title(editor)
         self._ensure_watched(fresh.path)
-        self.status_message.emit(f"Neu aus Godot geladen: {fresh.path.name}")
+        self.status_message.emit(T.RELOADED_FROM_GODOT.format(file=fresh.path.name))
         return True
 
     def _watcher_changed(self, path_text: str) -> None:
@@ -262,9 +262,7 @@ class EditorTabs(QWidget):
         document = self.documents[editor]
         if not path.exists():
             document.deleted_externally = True
-            self.status_message.emit(
-                f"{path.name} wurde außerhalb des Editors gelöscht. Dein Text bleibt geöffnet."
-            )
+            self.status_message.emit(T.DELETED_EXTERNALLY.format(file=path.name))
             return
         self._ensure_watched(path)
         if not self.store.has_external_change(document):
@@ -280,9 +278,7 @@ class EditorTabs(QWidget):
         elif choice == ConflictDialog.KEEP_MINE:
             document.disk_hash = sha256_bytes(disk_bytes)
             document.disk_mtime_ns = path.stat().st_mtime_ns
-            self.status_message.emit(
-                "Deine Version bleibt im Editor. Speichere sie bewusst mit Strg+S."
-            )
+            self.status_message.emit(T.KEEPING_MY_VERSION)
 
     def _ensure_watched(self, path: Path) -> None:
         if path.exists() and str(path) not in self.watcher.files():
@@ -329,8 +325,8 @@ class EditorTabs(QWidget):
         if document.dirty:
             answer = QMessageBox.question(
                 self,
-                "Ungespeicherte Änderungen",
-                f"Möchtest du {document.path.name} vor dem Schließen speichern?",
+                T.UNSAVED_CHANGES_TITLE,
+                T.UNSAVED_CHANGES.format(file=document.path.name),
                 QMessageBox.StandardButton.Save
                 | QMessageBox.StandardButton.Discard
                 | QMessageBox.StandardButton.Cancel,
@@ -358,7 +354,7 @@ class EditorTabs(QWidget):
         editor = self.current_editor()
         self.find_bar.attach(editor)
         document = self.current_document()
-        self.current_file_changed.emit(document.path.name if document else "Keine Datei")
+        self.current_file_changed.emit(document.path.name if document else T.NO_FILE)
 
     def open_find(self, replace: bool = False) -> None:
         self.find_bar.attach(self.current_editor())

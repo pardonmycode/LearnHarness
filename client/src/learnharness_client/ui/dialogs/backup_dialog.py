@@ -19,8 +19,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
+from ...texts import T
 from ..editor.gdscript_highlighter import GDScriptHighlighter
-from ..texts import T
 from ..theme import monospace_font
 
 
@@ -33,8 +33,8 @@ def backup_label(path: Path) -> str:
     local = stamp.astimezone()
     today = datetime.now().astimezone().date()
     if local.date() == today:
-        return f"Heute, {local:%H:%M:%S} Uhr"
-    return f"{local:%d.%m.%Y, %H:%M} Uhr"
+        return T.BACKUP_TODAY.format(time=f"{local:%H:%M:%S}")
+    return T.BACKUP_DATE.format(date=f"{local:%d.%m.%Y, %H:%M}")
 
 
 class BackupDialog(QDialog):
@@ -53,7 +53,7 @@ class BackupDialog(QDialog):
 
         row = QHBoxLayout()
         self.versions = QListWidget()
-        self.versions.setAccessibleName("Liste der älteren Versionen")
+        self.versions.setAccessibleName(T.BACKUP_LIST_A11Y)
         self.versions.setMaximumWidth(230)
         for path in backups:
             item = QListWidgetItem(backup_label(path))
@@ -65,7 +65,7 @@ class BackupDialog(QDialog):
         self.preview.setObjectName("codeView")
         self.preview.setFont(monospace_font())
         self.preview.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
-        self.preview.setAccessibleName("Inhalt der ausgewählten älteren Version")
+        self.preview.setAccessibleName(T.BACKUP_PREVIEW_A11Y)
         self._highlighter = GDScriptHighlighter(self.preview.document())
         row.addWidget(self.versions)
         row.addWidget(self.preview, 1)
@@ -95,7 +95,7 @@ class BackupDialog(QDialog):
             data = Path(str(item.data(Qt.ItemDataRole.UserRole))).read_bytes()
             text = data.decode("utf-8-sig", errors="replace")
         except OSError as exc:
-            text = f"(Diese Sicherung kann nicht gelesen werden: {exc})"
+            text = T.BACKUP_UNREADABLE.format(error=exc)
             self.restore_button.setEnabled(False)
         else:
             self.restore_button.setEnabled(True)
