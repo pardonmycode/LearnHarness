@@ -47,6 +47,7 @@ class FakeTutorClient(TutorClient):
         self._learn_level: int | None = None
         self._learn_file = "player.gd"
         self._mission_file = "player.gd"
+        self._generic_mission_steps: dict[str, fake_content.MissionStepContent] = {}
         self._cancelled = False
         self.simulate_failure = False
 
@@ -163,6 +164,10 @@ class FakeTutorClient(TutorClient):
         self._mission_file = message.file or self._mission_file
         content = fake_content.MISSIONS.get(message.mission_id or "")
         step = content.steps.get(message.mission_step_id or "") if content else None
+        if content is None and message.mission_id and message.mission_step_id:
+            step = fake_content.generic_mission_step(message.mission_id, message.mission_step_id)
+            if step.exercise is not None:
+                self._generic_mission_steps[step.exercise.id] = step
         if step is None:
             self._later(
                 lambda: self.error.emit(
@@ -323,6 +328,16 @@ class FakeTutorClient(TutorClient):
         )
 
     def _submit_mission_exercise(self, submission: Submission) -> None:
+        generic = self._generic_mission_steps.get(submission.exercise_id)
+        if generic is not None:
+            correct = all(
+                submission.answers.get(key) == value for key, value in generic.answers.items()
+            )
+            self._review(
+                correct,
+                "Richtig! Schritt geschafft." if correct else "Noch nicht ganz. Überleg noch mal.",
+            )
+            return
         for mission_id, content in fake_content.MISSIONS.items():
             prefix = f"mission_{mission_id}_"
             if not submission.exercise_id.startswith(prefix):

@@ -1,0 +1,137 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrastyle %}{{ block.super }}
+<style>
+  .lh-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-bottom: 16px; }
+  .lh-toolbar label { display: block; font-size: 0.85em; }
+  .lh-facts { display: flex; flex-wrap: wrap; gap: 4px 24px; margin: 0 0 16px; padding: 0; list-style: none; }
+  .lh-facts li { margin: 0; }
+  .lh-section { margin: 24px 0; }
+  .lh-section h2 { margin-bottom: 8px; }
+  .lh-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .lh-arrow { color: var(--body-quiet-color); }
+  .lh-when { display: block; font-size: 0.75em; color: var(--body-quiet-color); }
+  .lh-step { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+  .lh-empty { color: var(--body-quiet-color); }
+  .lh-print-head { display: none; }
+  {% include "children/_levels.css" %}
+  @media print {
+    #header, .breadcrumbs, #nav-sidebar, #toggle-nav-sidebar, .lh-noprint, #footer { display: none !important; }
+    .main, #main, #content { margin: 0 !important; padding: 0 !important; }
+    .lh-print-head { display: block; margin-bottom: 12px; }
+    .lh-cell { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .lh-section { break-inside: avoid; }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Start</a>
+  › <a href="{% if child.group %}{% url 'overview-group' child.group.pk %}{% else %}{% url 'overview' %}{% endif %}">Übersicht</a>
+  › {{ child.pseudonym }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <div class="lh-print-head">
+    <strong>Lernverlauf von {{ child.pseudonym }}</strong> – Stand {{ today|date:"d.m.Y" }}
+    {% if period.start or period.end %}, Zeitraum {{ period.start|date:"d.m.Y"|default:"Anfang" }} bis {{ period.end|date:"d.m.Y"|default:"heute" }}{% endif %}
+  </div>
+
+  <ul class="lh-facts">
+    <li><strong>Gruppe:</strong> {{ child.group.name|default:"–" }}</li>
+    <li><strong>Freigeschaltetes Level:</strong> {{ child.max_level }}</li>
+    <li><strong>Zuletzt gesehen:</strong> {% if child.last_seen_at %}{{ child.last_seen_at|date:"d.m.Y H:i" }}{% else %}nie{% endif %}</li>
+    {% if not child.active %}<li><strong>Archiviert</strong></li>{% endif %}
+  </ul>
+
+  <form method="get" class="lh-toolbar lh-noprint">
+    <div><label for="lh-von">Von</label><input type="date" id="lh-von" name="von" value="{{ period.start|date:'Y-m-d' }}"></div>
+    <div><label for="lh-bis">Bis</label><input type="date" id="lh-bis" name="bis" value="{{ period.end|date:'Y-m-d' }}"></div>
+    <input type="submit" value="Zeitraum anzeigen">
+    {% if period.start or period.end %}<a href="{% url 'child-history' child.pk %}">Alles anzeigen</a>{% endif %}
+    <button type="button" onclick="window.print()">Drucken / als PDF speichern</button>
+    <a class="button" href="{% url 'child-history-csv' child.pk %}{% if period.query %}?{{ period.query }}{% endif %}">Als CSV exportieren</a>
+    <a href="{% url 'admin:children_child_change' child.pk %}">Kind bearbeiten</a>
+  </form>
+
+  <section class="lh-section" aria-labelledby="lh-now">
+    <h2 id="lh-now">Aktueller Stand</h2>
+    {% if skills %}
+      <div class="lh-chips">
+        {% for skill in skills %}
+          <span class="lh-cell lh-level-{{ skill.level }}"><span class="lh-sym" aria-hidden="true">{{ skill.level }}</span>{{ skill.label }}: {{ skill.get_level_display }}</span>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="lh-empty">Noch keine Fähigkeiten eingetragen.</p>
+    {% endif %}
+  </section>
+
+  <section class="lh-section" aria-labelledby="lh-dev">
+    <h2 id="lh-dev">Entwicklung der Fähigkeiten</h2>
+    {% if histories %}
+    <table>
+      <thead><tr><th scope="col">Fähigkeit</th><th scope="col">Verlauf (älteste zuerst)</th></tr></thead>
+      <tbody>
+        {% for history in histories %}
+        <tr>
+          <th scope="row">{{ history.label }}</th>
+          <td><div class="lh-chips">
+            {% for step in history.steps %}
+              {% if not forloop.first %}<span class="lh-arrow" aria-hidden="true">→</span>{% endif %}
+              <span class="lh-step"><span class="lh-cell lh-level-{{ step.value }}"><span class="lh-sym" aria-hidden="true">{{ step.value }}</span>{{ step.text }}</span><span class="lh-when">{{ step.when|date:"d.m.Y" }}</span></span>
+            {% endfor %}
+          </div></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="lh-empty">Keine Änderungen in diesem Zeitraum.</p>
+    {% endif %}
+  </section>
+
+  <section class="lh-section" aria-labelledby="lh-missions">
+    <h2 id="lh-missions">Abgeschlossene Missionen</h2>
+    {% if missions_done %}
+      <ul>{% for event in missions_done %}<li>{{ event.label }} <span class="lh-empty">({{ event.recorded_at|date:"d.m.Y" }})</span></li>{% endfor %}</ul>
+    {% else %}
+      <p class="lh-empty">Keine in diesem Zeitraum.</p>
+    {% endif %}
+  </section>
+
+  <section class="lh-section" aria-labelledby="lh-levels">
+    <h2 id="lh-levels">Level</h2>
+    {% if levels_over_time %}
+      <div class="lh-chips">
+        {% for event in levels_over_time %}
+          {% if not forloop.first %}<span class="lh-arrow" aria-hidden="true">→</span>{% endif %}
+          <span class="lh-step"><strong>Level {{ event.value }}</strong><span class="lh-when">{{ event.recorded_at|date:"d.m.Y" }}</span></span>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="lh-empty">Keine Änderung in diesem Zeitraum.</p>
+    {% endif %}
+  </section>
+
+  <section class="lh-section lh-noprint" aria-labelledby="lh-all">
+    <h2 id="lh-all">Alle Einträge</h2>
+    {% if events %}
+    <table>
+      <thead><tr><th scope="col">Zeitpunkt</th><th scope="col">Art</th><th scope="col">Eintrag</th></tr></thead>
+      <tbody>
+        {% for event in events %}
+          <tr><td>{{ event.recorded_at|date:"d.m.Y H:i" }}</td><td>{{ event.get_kind_display }}</td><td>{{ event.describe }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="lh-empty">Keine Einträge in diesem Zeitraum.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

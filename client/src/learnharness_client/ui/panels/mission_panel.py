@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
-from learnharness_protocol import LearningResponse, Mission, MissionStep, ReviewResult
+from learnharness_protocol import (
+    LearningResponse,
+    Mission,
+    MissionList,
+    MissionStep,
+    ReviewResult,
+)
 from pydantic import ValidationError
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -28,6 +34,7 @@ class MissionPanel(QWidget):
     step_requested = pyqtSignal(str, str)  # mission id, step id
     exercise_submitted = pyqtSignal(object)
     progress_changed = pyqtSignal(dict)  # JSON-ready state for saving
+    mission_completed = pyqtSignal(str)  # mission id
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -47,7 +54,14 @@ class MissionPanel(QWidget):
         intro.setWordWrap(True)
         intro.setProperty("role", "muted")
 
-        self.choose_card, choose_layout = card(T.MISSION_HEADING)
+        self.assigned: list[Mission] = []
+        self.completed_ids: set[str] = set()
+        self.assigned_card, assigned_layout = card(T.MISSION_ASSIGNED_HEADING)
+        self.assigned_buttons = QVBoxLayout()
+        assigned_layout.addLayout(self.assigned_buttons)
+        self.assigned_card.hide()
+
+        self.choose_card, choose_layout = card(T.MISSION_OWN_HEADING)
         for suggestion in T.MISSION_SUGGESTIONS:
             button = QPushButton(suggestion)
             button.clicked.connect(lambda _=False, text=suggestion: self.request_mission(text))
@@ -100,6 +114,7 @@ class MissionPanel(QWidget):
 
         layout.addWidget(heading)
         layout.addWidget(intro)
+        layout.addWidget(self.assigned_card)
         layout.addWidget(self.choose_card)
         layout.addWidget(self.mission_card)
         layout.addWidget(self.message)
@@ -124,6 +139,42 @@ class MissionPanel(QWidget):
         self._set_busy(True)
         self._set_message(T.MISSION_STARTING, "neutral")
         self.mission_requested.emit(wish)
+
+    def set_assigned(self, listing: MissionList) -> None:
+        """Missions from the teacher; finished ones stay visible with a check mark."""
+        self.assigned = list(listing.missions)
+        self.completed_ids |= set(listing.completed)
+        while self.assigned_buttons.count():
+            item = self.assigned_buttons.takeAt(0)
+            if item is not None and item.widget() is not None:
+                item.widget().deleteLater()  # type: ignore[union-attr]
+        for mission in self.assigned:
+            done = mission.id in self.completed_ids
+            button = QPushButton(
+                T.MISSION_ASSIGNED_DONE.format(title=mission.title) if done else mission.title
+            )
+            button.setToolTip(mission.goal)
+            if done:
+                button.setAccessibleName(T.MISSION_ASSIGNED_A11Y_DONE.format(title=mission.title))
+            button.clicked.connect(lambda _=False, chosen=mission: self.start_assigned(chosen))
+            self.assigned_buttons.addWidget(button)
+        self._render()
+
+    def assigned_titles(self) -> list[str]:
+        texts = []
+        for index in range(self.assigned_buttons.count()):
+            item = self.assigned_buttons.itemAt(index)
+            widget = item.widget() if item else None
+            if isinstance(widget, QPushButton):
+                texts.append(widget.text())
+        return texts
+
+    def start_assigned(self, mission: Mission) -> None:
+        """The teacher's missions are known already: no server round trip to start them."""
+        if self._busy:
+            return
+        self.show_mission(mission)
+        self._set_message(T.MISSION_ASSIGNED_START.format(goal=mission.goal), "info")
 
     def show_mission(self, mission: Mission, done: set[str] | None = None) -> None:
         self._set_busy(False)
@@ -176,6 +227,7 @@ class MissionPanel(QWidget):
 
     def _render(self) -> None:
         self.choose_card.setVisible(self.mission is None)
+        self.assigned_card.setVisible(self.mission is None and bool(self.assigned))
         self.mission_card.setVisible(self.mission is not None)
         while self.steps_box.count():
             item = self.steps_box.takeAt(0)
@@ -258,6 +310,11 @@ class MissionPanel(QWidget):
                 text += "\n\n" + T.MISSION_TRY_TEXT
             self._set_message(text, "success")
         self._emit_progress()
+        if following is None and self.mission is not None:
+            self.completed_ids.add(self.mission.id)
+            if any(mission.id == self.mission.id for mission in self.assigned):
+                self.set_assigned(MissionList(missions=self.assigned))  # shows the check mark
+            self.mission_completed.emit(self.mission.id)
 
     def show_error(self, message: str) -> None:
         self._set_busy(False)

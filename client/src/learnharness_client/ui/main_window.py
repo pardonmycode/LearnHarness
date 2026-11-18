@@ -274,8 +274,13 @@ class MainWindow(QMainWindow):
                 self.student_profile.profile_id, state
             )
         )
+        self.mission_panel.mission_completed.connect(self._mission_completed)
         if self.admin_sync is not None:
             self.admin_sync.client.progress_received.connect(self._progress_received)
+            # The copy on this PC first (offline), then the current list from the server.
+            profile_id = self.student_profile.profile_id
+            self.mission_panel.set_assigned(self.admin_sync.cached_missions(profile_id))
+            self.admin_sync.fetch_missions(profile_id, self.mission_panel.set_assigned)
 
     def pick_project(self) -> None:
         start = self.settings.recent_projects[0] if self.settings.recent_projects else ""
@@ -412,6 +417,16 @@ class MainWindow(QMainWindow):
         self._mission_target_file = message.file
         self._response_owner = "mission"
         self.tutor_client.send_message(message)
+
+    def _mission_completed(self, mission_id: str) -> None:
+        """Report missions the teacher assigned; free-wish missions stay on this PC."""
+        if self.admin_sync is None:
+            return
+        if not any(mission.id == mission_id for mission in self.mission_panel.assigned):
+            return
+        self.admin_sync.report_mission_done(
+            self.student_profile.profile_id, mission_id, self.mission_panel.set_assigned
+        )
 
     def _submit_mission_exercise(self, submission: Submission) -> None:
         self._exercise_owner = "mission"

@@ -11,7 +11,7 @@ from pydantic import TypeAdapter
 from .exercises import Exercise, ReviewResult, Submission
 from .health import HealthStatus
 from .messages import LearningResponse, SessionCreate, StudentMessage
-from .missions import Mission
+from .missions import Mission, MissionList
 from .profiles import ChildProfile, ChildProfileList, ChildProfileUpdate, LevelUnlock
 from .progress import ProgressUpdate
 
@@ -27,6 +27,7 @@ def export_schemas(destination: Path) -> None:
         "health_status": HealthStatus.model_json_schema(),
         "learning_response": LearningResponse.model_json_schema(),
         "mission": Mission.model_json_schema(),
+        "mission_list": MissionList.model_json_schema(),
         "level_unlock": LevelUnlock.model_json_schema(),
         "progress_update": ProgressUpdate.model_json_schema(),
         "review_result": ReviewResult.model_json_schema(),

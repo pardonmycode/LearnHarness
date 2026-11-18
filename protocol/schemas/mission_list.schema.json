@@ -1,0 +1,148 @@
+{
+  "$defs": {
+    "Mission": {
+      "additionalProperties": false,
+      "properties": {
+        "protocol_version": {
+          "default": "1.3",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "type": {
+          "const": "mission",
+          "default": "mission",
+          "title": "Type",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "goal": {
+          "title": "Goal",
+          "type": "string"
+        },
+        "skill": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Skill"
+        },
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/MissionStep"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Steps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "goal",
+        "steps"
+      ],
+      "title": "Mission",
+      "type": "object"
+    },
+    "MissionStep": {
+      "additionalProperties": false,
+      "properties": {
+        "protocol_version": {
+          "default": "1.3",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "understand",
+            "learn",
+            "exercise",
+            "try"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "kind"
+      ],
+      "title": "MissionStep",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Missions the teacher assigned to a child plus the ids the child already finished.",
+  "properties": {
+    "protocol_version": {
+      "default": "1.3",
+      "title": "Protocol Version",
+      "type": "string"
+    },
+    "type": {
+      "const": "mission_list",
+      "default": "mission_list",
+      "title": "Type",
+      "type": "string"
+    },
+    "missions": {
+      "items": {
+        "$ref": "#/$defs/Mission"
+      },
+      "title": "Missions",
+      "type": "array"
+    },
+    "completed": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Completed",
+      "type": "array"
+    }
+  },
+  "title": "MissionList",
+  "type": "object"
+}

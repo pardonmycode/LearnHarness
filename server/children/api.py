@@ -21,11 +21,12 @@ from learnharness_protocol import (
     ChildProfileUpdate,
     ErrorMessage,
     LevelUnlock,
+    MissionList,
     ProgressUpdate,
 )
 from pydantic import BaseModel, ValidationError
 
-from .models import ApiClient, Child, LearningGroup, SkillProgress, hash_token
+from .models import ApiClient, Child, LearningGroup, LearningMission, hash_token
 
 Kind = ApiClient.Kind
 ALL_KINDS = frozenset({Kind.CLIENT, Kind.LEARNSERVER})
@@ -69,6 +70,8 @@ def api_view(methods: set[str], kinds: frozenset[str] = ALL_KINDS) -> Callable[[
                 return _error(400, "invalid_request", "Die Anfrage war nicht gültig.")
             except Child.DoesNotExist:
                 return _error(404, "unknown_child", "Dieses Profil gibt es auf dem Server nicht.")
+            except LearningMission.DoesNotExist:
+                return _error(404, "unknown_mission", "Diese Mission gibt es nicht (mehr).")
 
         return wrapper
 
@@ -140,9 +143,40 @@ def child_progress(request: HttpRequest, client: ApiClient, profile_id: str) -> 
         update = ProgressUpdate.model_validate_json(request.body)
         with transaction.atomic():
             for skill in update.skills:
-                SkillProgress.objects.update_or_create(
-                    child=child,
-                    skill_id=skill.id,
-                    defaults={"label": skill.label, "level": int(skill.level)},
-                )
+                child.set_skill(skill.id, skill.label, int(skill.level))
     return _json(child.progress())
+
+
+@api_view({"GET"})
+def child_missions(request: HttpRequest, client: ApiClient, profile_id: str) -> JsonResponse:
+    """Missions assigned to this child's group (or to everyone), without teacher notes."""
+    return _json(_active_child(profile_id).missions())
+
+
+@api_view({"POST"})
+def child_mission_done(
+    request: HttpRequest, client: ApiClient, profile_id: str, mission_id: str
+) -> JsonResponse:
+    """Idempotent: the app may report the same finished mission again after being offline."""
+    child = _active_child(profile_id)
+    mission = LearningMission.objects.get(mission_id=mission_id)
+    child.complete_mission(mission)
+    return _json(child.missions())
+
+
+def _all_missions() -> list[LearningMission]:
+    return list(LearningMission.objects.filter(active=True).prefetch_related("steps"))
+
+
+@api_view({"GET"}, frozenset({Kind.LEARNSERVER}))
+def missions(request: HttpRequest, client: ApiClient) -> JsonResponse:
+    """For the learning server: every active mission including the teacher's notes."""
+    return _json(
+        MissionList(missions=[mission.to_protocol(with_notes=True) for mission in _all_missions()])
+    )
+
+
+@api_view({"GET"}, frozenset({Kind.LEARNSERVER}))
+def mission_detail(request: HttpRequest, client: ApiClient, mission_id: str) -> JsonResponse:
+    mission = LearningMission.objects.prefetch_related("steps").get(mission_id=mission_id)
+    return _json(mission.to_protocol(with_notes=True))

@@ -39,7 +39,26 @@ Gruppenliste je Gruppe) steht eine Tabelle: eine Zeile pro aktivem Kind, eine Sp
 Fähigkeit, dazu Level und „Zuletzt gesehen“. Jede Zelle zeigt den Stand als Text und Farbe
 (0 Noch nicht begonnen, 1 Mit Hilfe, 2 Fast selbstständig, 3 Sicher). Oben wählt man die
 Gruppe; `/uebersicht/<gruppen-id>/` zeigt eine Gruppe, `/uebersicht/ohne-gruppe/` Kinder ohne
-Gruppe. Nur mit Admin-Anmeldung (Mitarbeiter-Status) erreichbar.
+Gruppe. Nur mit Admin-Anmeldung (Mitarbeiter-Status) erreichbar. „Als CSV exportieren“ lädt
+die angezeigte Tabelle herunter (Semikolon, UTF-8 – öffnet sich direkt in Excel).
+
+Ein Klick auf den Spitznamen öffnet den **Verlauf** des Kindes (`/uebersicht/kind/<id>/`):
+aktueller Stand, Entwicklung jeder Fähigkeit mit Datum, Level-Verlauf und abgeschlossene
+Missionen, wahlweise für einen Zeitraum (von/bis). „Drucken / als PDF speichern“ druckt eine
+aufgeräumte Fassung ohne Admin-Menü (z. B. fürs Elterngespräch), „Als CSV exportieren“ lädt
+alle Einträge. Der Verlauf entsteht automatisch: jede Änderung einer Fähigkeit (vom
+Lernserver), jede Level-Änderung (App oder Admin) und jede abgeschlossene Mission wird mit
+Zeitpunkt gespeichert. „Fortschritt zurücksetzen“ löscht auch den Verlauf.
+
+## Missionen
+
+Im Admin unter „Missionen“ legt die Lehrkraft Missionen an: Titel, Ziel für das Kind, eine feste
+Kennung (z. B. `doppelsprung`) und 1–8 Schritte. Jeder Schritt hat eine Art (Verstehen, Lernen,
+Üben, In Godot ausprobieren) und optional einen **Hinweis für den Lernserver** (z. B. welche
+Übung, was betont werden soll) – den sieht das Kind nicht. Ohne ausgewählte Gruppen gilt die
+Mission für alle, sonst nur für die gewählten Gruppen. Die App zeigt die Missionen im Tab
+„Missionen“ unter „Von deiner Lehrkraft“ (auch offline aus der letzten Kopie) und meldet
+abgeschlossene Missionen zurück; die Liste zeigt, wie viele Kinder sie geschafft haben.
 
 ## Datensicherung (Backups)
 
@@ -91,7 +110,8 @@ Admin mit „Neuen Token erzeugen“ ersetzt.
 ## API (`/api/v1/`, Header `Authorization: Bearer <token>`)
 
 Die Inhalte sind die Pydantic-Modelle aus `protocol/` (`ChildProfile`, `ChildProfileList`,
-`ChildProfileUpdate`, `LevelUnlock`, `ProgressUpdate`, Fehler als `ErrorMessage`).
+`ChildProfileUpdate`, `LevelUnlock`, `ProgressUpdate`, `MissionList`, `Mission`, Fehler als
+`ErrorMessage`).
 
 | Methode | Pfad | Wer | Zweck |
 |---|---|---|---|
@@ -100,7 +120,10 @@ Die Inhalte sind die Pydantic-Modelle aus `protocol/` (`ChildProfile`, `ChildPro
 | GET, PATCH | `children/<id>/` | App, Lernserver | Profil lesen, Spitzname/Vorkenntnisse ändern |
 | POST | `children/<id>/unlock/` | App, Lernserver | Level erhöhen (nie senken) |
 | GET | `children/<id>/progress/` | App, Lernserver | Stand pro Fähigkeit |
-| PUT | `children/<id>/progress/` | nur Lernserver | Stand pro Fähigkeit eintragen |
+| PUT | `children/<id>/progress/` | nur Lernserver | Stand pro Fähigkeit eintragen (Änderungen landen im Verlauf) |
+| GET | `children/<id>/missions/` | App, Lernserver | Missionen für die Gruppe des Kindes + erledigte IDs (ohne Hinweise) |
+| POST | `children/<id>/missions/<mission-id>/done/` | App, Lernserver | Mission als abgeschlossen melden (mehrfach harmlos) |
+| GET | `missions/`, `missions/<mission-id>/` | nur Lernserver | aktive Missionen mit Lehrkraft-Hinweisen je Schritt |
 
 Level senken, Fortschritt zurücksetzen und archivieren geht nur im Admin durch die Lehrkraft.
 

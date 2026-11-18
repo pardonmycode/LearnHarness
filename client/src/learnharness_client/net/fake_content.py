@@ -385,6 +385,25 @@ MISSIONS: dict[str, MissionContent] = {
 }
 
 
+def generic_mission_step(mission_id: str, step_id: str) -> MissionStepContent:
+    """For missions a teacher created in the administration: the fake server cannot know
+    their content, so it asks one general question (a real learning server uses the notes)."""
+    return MissionStepContent(
+        message=(
+            "Diese Mission hat deine Lehrkraft angelegt. Der Übungsserver kennt ihren Inhalt "
+            "nicht genau – der echte Lernserver erklärt dir hier den Schritt."
+        ),
+        exercise=_choice(
+            mission_id,
+            step_id,
+            "Wie gehst du bei einem neuen Schritt am besten vor?",
+            "In kleinen Teilen bauen und nach jedem Teil ausprobieren",
+            "Alles auf einmal schreiben und erst am Ende testen",
+        ),
+        answers={"choice": "right"},
+    )
+
+
 def find_mission(wish: str) -> MissionContent:
     lowered = wish.casefold()
     for content in MISSIONS.values():

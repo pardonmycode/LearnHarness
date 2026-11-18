@@ -45,6 +45,13 @@ Schritten, Fortschritt pro Profil gespeichert; Code nur nach richtiger Antwort u
 gewählte Datei). Offen für den Lernserver: `intent` = explain / mission / mission_step und
 `skill_focus` auswerten; Fortschritt per `PUT children/<id>/progress/` in die Verwaltung schreiben.
 
+Protokoll 1.3: Missionen pflegt die Lehrkraft im Django-Admin (Schritte mit Hinweis für den
+Lernserver, Zuweisung an Gruppen); die App lädt sie pro Kind, startet sie ohne Serveranfrage und
+meldet Abschlüsse zurück (offline gemerkt, beim nächsten Abgleich gesendet). Verlauf pro Kind
+(`ProgressEvent`) mit Seite `/uebersicht/kind/<id>/`, Zeitraumfilter, Druckansicht und CSV;
+CSV-Export auch für die Gruppenübersicht. Offen für den Lernserver: bei `mission_step` mit
+unbekannter Mission die Schritte samt Hinweisen über `GET /api/v1/missions/<id>/` holen.
+
 Beim Review behoben: Schriftgröße wirkte nicht (Stylesheet überschrieb sie), Dunkelmodus unlesbar,
 fehlgeschlagener Health-Check schrieb alle 15 s Fehler in den Chat und brach Lernrunden ab,
 Übungsabgaben ohne `session_id`, Problem-Links bei Unterordnern, LearnAgent-Antworten landeten

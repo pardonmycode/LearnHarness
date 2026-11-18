@@ -583,6 +583,11 @@ class T:
     MISSION_COMPLETE = "Mission erfüllt: {title} 🎉"
     MISSION_NEW = "Neue Mission"
     MISSION_NEEDS_FILE = "Öffne zuerst das Skript, in dem die Mission gebaut werden soll."
+    MISSION_ASSIGNED_HEADING = "Von deiner Lehrkraft"
+    MISSION_ASSIGNED_DONE = "✓ {title} (geschafft)"
+    MISSION_ASSIGNED_A11Y_DONE = "{title}, schon geschafft"
+    MISSION_ASSIGNED_START = "Deine Lehrkraft hat diese Mission ausgesucht: {goal}"
+    MISSION_OWN_HEADING = "Eigene Mission"
 
     # Network errors from the learning-server client
     NET_UNREACHABLE = "Der Lernhelfer ist gerade nicht erreichbar."

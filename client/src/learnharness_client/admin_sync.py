@@ -11,7 +11,7 @@ from collections.abc import Callable
 from enum import Enum
 from urllib.parse import quote
 
-from learnharness_protocol import ChildProfile, ChildProfileList, LevelUnlock
+from learnharness_protocol import ChildProfile, ChildProfileList, LevelUnlock, MissionList
 from pydantic import ValidationError
 
 from .config import AppSettings
@@ -60,7 +60,13 @@ class AdminSync:
 
     def sync_at_start(self) -> SyncResult:
         """Send what is pending, register new local profiles, then take over the server state."""
-        for step in (self._send_pending_unlocks, self._register_local_profiles, self._pull):
+        steps = (
+            self._send_pending_unlocks,
+            self._register_local_profiles,
+            self._send_pending_missions,
+            self._pull,
+        )
+        for step in steps:
             result = step()
             if result is not None:
                 LOG.info("Profile sync stopped: %s", result.value)
@@ -75,6 +81,15 @@ class AdminSync:
             if (failure := _failure(response)) is not None:
                 return failure
             self.settings.clear_pending_unlock(profile_id)
+        return None
+
+    def _send_pending_missions(self) -> SyncResult | None:
+        for profile_id, mission_id in sorted(self.settings.pending_mission_reports):
+            response = self.client.request_blocking("POST", self._done_path(profile_id, mission_id))
+            if (failure := _failure(response)) is not None:
+                return failure
+            # Sent, or the mission/child no longer exists (404): nothing left to retry.
+            self.settings.clear_pending_mission_report(profile_id, mission_id)
         return None
 
     def _register_local_profiles(self) -> SyncResult | None:
@@ -175,3 +190,59 @@ class AdminSync:
 
     def fetch_progress(self, profile_id: str) -> None:
         self.client.fetch_progress(profile_id)
+
+    # Missions assigned by the teacher ---------------------------------------------------
+
+    @staticmethod
+    def _done_path(profile_id: str, mission_id: str) -> str:
+        return AdminClient.child_path(profile_id, f"missions/{quote(mission_id, safe='')}/done/")
+
+    def cached_missions(self, profile_id: str) -> MissionList:
+        return cached_missions(self.settings, profile_id)
+
+    def _take_missions(self, profile_id: str, response: AdminResponse) -> MissionList | None:
+        if not response.ok:
+            return None
+        try:
+            listing = MissionList.model_validate(response.data)
+        except ValidationError:
+            LOG.warning("Ignored an invalid mission list from the administration")
+            return None
+        self.settings.save_assigned_missions(profile_id, listing.model_dump(mode="json"))
+        return listing
+
+    def fetch_missions(self, profile_id: str, on_missions: Callable[[MissionList], None]) -> None:
+        """Load the missions for this child; keeps the copy on this PC for offline use."""
+
+        def done(response: AdminResponse) -> None:
+            listing = self._take_missions(profile_id, response)
+            if listing is not None:
+                on_missions(listing)
+
+        self.client.request("GET", AdminClient.child_path(profile_id, "missions/"), on_done=done)
+
+    def report_mission_done(
+        self,
+        profile_id: str,
+        mission_id: str,
+        on_missions: Callable[[MissionList], None] | None = None,
+    ) -> None:
+        """Remembered first, so a missing network connection only delays the report."""
+        self.settings.add_pending_mission_report(profile_id, mission_id)
+
+        def done(response: AdminResponse) -> None:
+            if response.status == 0:
+                return
+            self.settings.clear_pending_mission_report(profile_id, mission_id)
+            listing = self._take_missions(profile_id, response)
+            if listing is not None and on_missions is not None:
+                on_missions(listing)
+
+        self.client.request("POST", self._done_path(profile_id, mission_id), on_done=done)
+
+
+def cached_missions(settings: AppSettings, profile_id: str) -> MissionList:
+    try:
+        return MissionList.model_validate(settings.assigned_missions(profile_id))
+    except ValidationError:
+        return MissionList()

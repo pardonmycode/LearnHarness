@@ -1,0 +1,8 @@
+/* Skill levels: distinguishable by hue, lightness and symbol; dark text for contrast. */
+  .lh-cell { display: inline-block; padding: 3px 6px; border-radius: 4px; border: 1px solid;
+             font-size: 0.85em; white-space: nowrap; color: #1a1a1a; }
+  .lh-cell .lh-sym { font-weight: bold; margin-right: 3px; }
+  .lh-level-0 { background: #eceff1; border-color: #90a4ae; }
+  .lh-level-1 { background: #ffe0b2; border-color: #e65100; }
+  .lh-level-2 { background: #bbdefb; border-color: #0d47a1; }
+  .lh-level-3 { background: #c8e6c9; border-color: #1b5e20; }

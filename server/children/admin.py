@@ -1,4 +1,4 @@
-"""Teacher administration: groups, children, skills and API access tokens."""
+"""Teacher administration: groups, children, skills, missions and API access tokens."""
 
 from __future__ import annotations
 
@@ -10,7 +10,16 @@ from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
 
-from .models import ApiClient, Child, LearningGroup, SkillProgress, hash_token
+from .models import (
+    ApiClient,
+    Child,
+    LearningGroup,
+    LearningMission,
+    LearningMissionStep,
+    ProgressEvent,
+    SkillProgress,
+    hash_token,
+)
 
 
 class SkillProgressInline(admin.TabularInline):
@@ -58,17 +67,38 @@ class ChildAdmin(admin.ModelAdmin):
         "max_level",
         "active",
         "last_seen_at",
+        "history_link",
     ]
     list_editable = ["max_level", "group"]
     list_filter = ["active", "group", "experience_level", "max_level"]
     search_fields = ["pseudonym", "profile_id"]
-    readonly_fields = ["profile_id", "created_at", "updated_at", "last_seen_at"]
+    readonly_fields = ["profile_id", "created_at", "updated_at", "last_seen_at", "history_link"]
     fieldsets = [
-        (None, {"fields": ["pseudonym", "group", "experience_level", "max_level", "active"]}),
+        (
+            None,
+            {
+                "fields": [
+                    "pseudonym",
+                    "group",
+                    "experience_level",
+                    "max_level",
+                    "active",
+                    "history_link",
+                ]
+            },
+        ),
         ("Technisch", {"fields": ["profile_id", "created_at", "updated_at", "last_seen_at"]}),
     ]
     inlines = [SkillProgressInline]
     actions = ["unlock_next_level", "reset_learning", "archive", "reactivate"]
+
+    @admin.display(description="Verlauf")
+    def history_link(self, child: Child) -> str:
+        if child.pk is None or child._state.adding:
+            return "–"
+        return format_html(
+            '<a href="{}">Verlauf und Export</a>', reverse("child-history", args=[child.pk])
+        )
 
     @admin.action(description="Nächstes Level freischalten")
     def unlock_next_level(self, request: HttpRequest, queryset: QuerySet[Child]) -> None:
@@ -76,7 +106,7 @@ class ChildAdmin(admin.ModelAdmin):
             child.unlock(child.max_level + 1)
         self.message_user(request, f"{queryset.count()} Kind(er): nächstes Level freigeschaltet.")
 
-    @admin.action(description="Fortschritt zurücksetzen (Level 1, Fähigkeiten löschen)")
+    @admin.action(description="Fortschritt zurücksetzen (Level 1, Fähigkeiten und Verlauf löschen)")
     def reset_learning(self, request: HttpRequest, queryset: QuerySet[Child]) -> None:
         for child in queryset:
             child.reset_learning()
@@ -91,6 +121,52 @@ class ChildAdmin(admin.ModelAdmin):
     def reactivate(self, request: HttpRequest, queryset: QuerySet[Child]) -> None:
         count = queryset.update(active=True)
         self.message_user(request, f"{count} Kind(er) wieder aktiv.")
+
+
+class LearningMissionStepInline(admin.TabularInline):
+    model = LearningMissionStep
+    extra = 0
+    min_num = 1
+    max_num = 8  # the protocol allows at most 8 steps
+    validate_min = True
+    validate_max = True
+    fields = ["position", "step_id", "title", "kind", "note"]
+    ordering = ["position", "pk"]
+
+
+@admin.register(LearningMission)
+class LearningMissionAdmin(admin.ModelAdmin):
+    list_display = ["title", "mission_id", "group_list", "step_count", "completed_count", "active"]
+    list_editable = ["active"]
+    list_filter = ["active", "groups"]
+    search_fields = ["title", "mission_id", "goal"]
+    filter_horizontal = ["groups"]
+    fields = ["title", "mission_id", "goal", "skill", "groups", "position", "active"]
+    inlines = [LearningMissionStepInline]
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[LearningMission]:
+        return (
+            super()
+            .get_queryset(request)
+            .prefetch_related("groups")
+            .annotate(steps_total=Count("steps", distinct=True))
+        )
+
+    @admin.display(description="Gruppen")
+    def group_list(self, mission: LearningMission) -> str:
+        names = [group.name for group in mission.groups.all()]
+        return ", ".join(names) if names else "alle"
+
+    @admin.display(description="Schritte", ordering="steps_total")
+    def step_count(self, mission: LearningMission) -> int:
+        return mission.steps_total  # type: ignore[attr-defined, no-any-return]
+
+    @admin.display(description="Abgeschlossen von")
+    def completed_count(self, mission: LearningMission) -> str:
+        count = ProgressEvent.objects.filter(
+            kind=ProgressEvent.Kind.MISSION, item_id=mission.mission_id, child__active=True
+        ).count()
+        return f"{count} Kind(ern)"
 
 
 @admin.register(ApiClient)

@@ -8,15 +8,9 @@
   .lh-table-wrap { overflow-x: auto; }
   .lh-table th.lh-skill { white-space: normal; min-width: 7em; vertical-align: bottom; }
   .lh-table td, .lh-table th { vertical-align: middle; }
-  .lh-cell { display: inline-block; padding: 3px 6px; border-radius: 4px; border: 1px solid;
-             font-size: 0.85em; white-space: nowrap; color: #1a1a1a; }
-  .lh-cell .lh-sym { font-weight: bold; margin-right: 3px; }
-  /* Four levels: distinguishable by hue, lightness and symbol, dark text for contrast. */
-  .lh-level-0 { background: #eceff1; border-color: #90a4ae; }
-  .lh-level-1 { background: #ffe0b2; border-color: #e65100; }
-  .lh-level-2 { background: #bbdefb; border-color: #0d47a1; }
-  .lh-level-3 { background: #c8e6c9; border-color: #1b5e20; }
+  {% include "children/_levels.css" %}
   .lh-empty { color: var(--body-quiet-color); }
+  .lh-edit { font-weight: normal; font-size: 0.8em; margin-left: 6px; }
 </style>
 {% endblock %}
 
@@ -38,6 +32,7 @@
       <option value="{{ ungrouped_value }}"{% if selection == ungrouped_value %} selected{% endif %}>Ohne Gruppe</option>
     </select>
     <input type="submit" value="Anzeigen">
+    <a class="button" href="{% url 'overview-csv' selection %}">Als CSV exportieren</a>
   </form>
 
   <ul class="lh-legend" aria-label="Legende">
@@ -64,7 +59,8 @@
       <tbody>
         {% for row in rows %}
         <tr>
-          <th scope="row"><a href="{% url 'admin:children_child_change' row.child.pk %}">{{ row.child.pseudonym }}</a></th>
+          <th scope="row"><a href="{% url 'child-history' row.child.pk %}" title="Verlauf anzeigen">{{ row.child.pseudonym }}</a>
+            <a class="lh-edit" href="{% url 'admin:children_child_change' row.child.pk %}" aria-label="{{ row.child.pseudonym }} bearbeiten">bearbeiten</a></th>
           {% if show_group %}<td>{{ row.child.group.name|default:"–" }}</td>{% endif %}
           <td>{{ row.child.max_level }}</td>
           <td>{% if row.child.last_seen_at %}{{ row.child.last_seen_at|date:"d.m.Y H:i" }}{% else %}<span class="lh-empty">nie</span>{% endif %}</td>
