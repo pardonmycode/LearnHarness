@@ -1,0 +1,69 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrastyle %}{{ block.super }}
+<style>
+  .lh-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+  .lh-prompt { white-space: pre-wrap; font-family: ui-monospace, Consolas, monospace; font-size: 0.85em;
+               background: var(--darkened-bg); border: 1px solid var(--hairline-color);
+               padding: 10px; border-radius: 4px; max-height: 32em; overflow: auto; }
+  .lh-section { margin: 20px 0; }
+  .lh-facts li { margin: 2px 0; }
+  details summary { cursor: pointer; font-weight: bold; margin: 6px 0; }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Start</a> › <a href="{% url 'admin:tutor_aisettings_change' 1 %}">KI-Einstellungen</a> › Prompt-Übersicht
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <p>So sieht aus, was der Lernserver an die KI schickt. Die festen Regeln stehen im Code
+  (<code>server/tutor/harness.py</code>); eigene Ergänzungen tragen Sie in den
+  <a href="{% url 'admin:tutor_aisettings_change' 1 %}">KI-Einstellungen</a> ein. Was tatsächlich
+  hinausging, steht im <a href="{% url 'admin:tutor_aicall_changelist' %}">KI-Protokoll</a>.</p>
+
+  <section class="lh-section">
+    <h2>Schutz durch den Harness</h2>
+    <ul class="lh-facts">
+      <li><strong>Aktiv:</strong> {{ settings.get_provider_display }} – {{ settings.active_model|default:"kein Modell eingetragen" }}</li>
+      <li><strong>Code in Tutor-Antworten:</strong> höchstens {{ settings.max_code_lines_in_chat }} Zeilen am Stück. Längere Codeblöcke (auch ohne ```) werden noch während des Streamens ersetzt durch: „{{ replacement }}“</li>
+      <li><strong>Übungen:</strong> Die KI liefert Aufgabe und Lösung getrennt; das Kind bekommt nur die Aufgabe. Ob die Antwort stimmt, prüft der Server selbst.</li>
+      <li><strong>Code nach richtiger Antwort:</strong> höchstens {{ settings.max_changed_lines }} geänderte Zeilen, nur in die geöffnete Datei, mit erklärenden Kommentaren. Mehr wird abgelehnt (ein zweiter Versuch, dann ohne Code).</li>
+      <li><strong>Anfragen:</strong> höchstens {{ settings.requests_per_minute }} pro Kind und Minute.</li>
+      <li><strong>Eingaben der Kinder</strong> stehen in &lt;kind&gt;…&lt;/kind&gt; und gelten für die KI als Inhalt, nicht als Anweisung.</li>
+    </ul>
+  </section>
+
+  <form method="get" class="lh-toolbar">
+    <label for="lh-stufe">Lernstufe:</label>
+    <select id="lh-stufe" name="stufe">{% for value in levels %}<option value="{{ value }}"{% if value == level %} selected{% endif %}>{{ value }}</option>{% endfor %}</select>
+    <label for="lh-erfahrung">Vorkenntnisse:</label>
+    <select id="lh-erfahrung" name="erfahrung">{% for value, label in experiences %}<option value="{{ value }}"{% if value == experience %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+    <input type="submit" value="Anzeigen">
+  </form>
+
+  {% for intent in intents %}
+  <section class="lh-section">
+    <h2>{{ intent.label }} <small>({{ intent.key }})</small></h2>
+    <details{% if forloop.first %} open{% endif %}>
+      <summary>System-Prompt</summary>
+      <div class="lh-prompt">{{ intent.system }}</div>
+    </details>
+    {% if intent.schema %}
+    <details>
+      <summary>Verlangtes Antwortformat (JSON-Schema)</summary>
+      <div class="lh-prompt">{{ intent.schema }}</div>
+    </details>
+    {% endif %}
+  </section>
+  {% endfor %}
+
+  <section class="lh-section">
+    <h2>Beispiel: Nachricht an die KI (LearnAgent-Runde)</h2>
+    <div class="lh-prompt">{{ example_user }}</div>
+  </section>
+</div>
+{% endblock %}

@@ -1,8 +1,10 @@
-# LearnHarness-Verwaltung (Django + PostgreSQL)
+# LearnHarness-Verwaltung und Lernserver (Django + PostgreSQL)
 
-Zentrale Verwaltung aller Kinder, die die LearnHarness-App benutzen. Sie läuft **neben** dem
-KI-Lernserver: Die Lehrkraft pflegt hier Gruppen, Spitznamen und Level. Die Lern-App und der
-Lernserver lesen und schreiben über eine kleine JSON-API.
+Zentrale Verwaltung aller Kinder, die die LearnHarness-App benutzen, und eingebauter
+**Lernserver mit KI-Harness**: Die Lehrkraft pflegt hier Gruppen, Spitznamen, Level und Missionen
+und wählt, welche KI antwortet (lokales Modell über vLLM, Claude oder ChatGPT). Die Lern-App
+spricht mit demselben Server. Ein eigener, externer Lernserver kann weiterhin über die JSON-API
+angebunden werden.
 
 **Datenschutz:** Gespeichert werden nur Spitznamen, Vorkenntnisse, Level und der Stand pro
 Fähigkeit, keine echten Namen. Welches Kind hinter welchem Spitznamen steckt, weiß nur die
@@ -31,6 +33,51 @@ docker compose -f server/docker-compose.yml exec web python manage.py createsupe
 
 Für HTTPS einen Proxy (z. B. Caddy) davorsetzen und `DJANGO_SECURE=1` sowie
 `DJANGO_CSRF_TRUSTED_ORIGINS=https://…` setzen. Im Tailscale-Netz reicht auch HTTP.
+
+## Lernserver und KI-Anbieter
+
+Im Admin unter **Lernserver (KI) › KI-Einstellungen** wählt die Lehrkraft den aktiven Anbieter:
+
+| Anbieter | Einstellungen | Schlüssel in `server/.env` |
+|---|---|---|
+| Lokales Modell (vLLM) | Adresse (z. B. `http://ki-pc:8001/v1`) und Modellname wie beim Start von vLLM | `VLLM_API_KEY` nur bei `--api-key` |
+| Claude (Anthropic) | Modell (Standard `claude-opus-5-5`), Denkaufwand | `ANTHROPIC_API_KEY` |
+| ChatGPT (OpenAI) | Modellname | `OPENAI_API_KEY` |
+
+Umschalten wirkt sofort, ohne Neustart und ohne Änderung an der App. „Verbindung testen“ prüft
+die gespeicherten Einstellungen (vorher speichern). Bei Claude-Modellen, die es unterstützen, ist
+die serverseitige Ausweichlösung bei Ablehnungen eingeschaltet (`fallbacks: "default"`).
+
+**Harness** (`tutor/harness.py`), damit die Kinder keine fertigen Lösungen bekommen:
+
+- Feste Regeln im System-Prompt (kurz, kindgerecht, keine fertigen Lösungen, keine persönlichen
+  Daten); Text der Kinder steht in `<kind>…</kind>` und gilt als Inhalt, nicht als Anweisung.
+  Eigene Ergänzungen der Lehrkraft werden angehängt, ersetzen die Regeln aber nicht.
+- Tutor-Antworten werden beim Streamen zeilenweise geprüft: Code mit mehr als N Zeilen am Stück
+  (mit oder ohne ```-Block) wird ersetzt, bevor das Kind ihn sieht (N einstellbar, Standard 3).
+- Übungen liefert die KI als JSON mit Aufgabe und Lösung getrennt; das Kind bekommt nur die
+  Aufgabe, die Antwort prüft der Server selbst.
+- Code nach einer richtigen Antwort (LearnAgent, Missionsschritte „Üben“) bleibt bis dahin auf dem
+  Server, darf höchstens N Zeilen der geöffneten Datei ändern (Standard 12) und wird nur in diese
+  Datei geschrieben. Bei Verstoß fragt der Server die KI ein zweites Mal, sonst gibt es keinen Code.
+- Höchstens N Anfragen pro Kind und Minute (Kostenbremse, Standard 12).
+
+**Überblick über die Prompts:**
+
+- `/ki/prompts/` zeigt die System-Prompts für jeden Zweck (Chat, Hinweis, Code verstehen,
+  LearnAgent, Mission, Missionsschritt, Code-Prüfung) bei wählbarer Lernstufe, das verlangte
+  JSON-Format und eine Beispielnachricht.
+- **KI-Protokoll** im Admin zeigt jede Anfrage: System-Prompt, Nachrichten, Rohantwort der KI, was
+  beim Kind ankam, Eingriffe des Harness, Tokens und Dauer. Filter „Harness hat eingegriffen“
+  zeigt, wo Lösungen abgefangen wurden.
+- Das Protokoll enthält, was die Kinder schreiben. Es wird nach 30 Tagen gelöscht (einstellbar)
+  und lässt sich ganz abschalten; Tokens und Dauer werden dann weiter gezählt.
+
+Die App verbindet sich mit diesem Server, wenn in ihren Einstellungen dieselbe Adresse als
+Lernserver und unter „Zentrale Verwaltung“ eingetragen ist; dann schickt sie ihren Gerätetoken
+mit. Ohne gültigen Token antwortet der Lernserver nicht (`TUTOR_REQUIRE_TOKEN=0` schaltet das ab).
+Gestartet wird mit `daphne` (HTTP und WebSocket), im Docker-Image automatisch; lokal reicht
+`python manage.py runserver`.
 
 ## Übersicht für Lehrkräfte
 
@@ -126,6 +173,10 @@ Die Inhalte sind die Pydantic-Modelle aus `protocol/` (`ChildProfile`, `ChildPro
 | GET | `missions/`, `missions/<mission-id>/` | nur Lernserver | aktive Missionen mit Lehrkraft-Hinweisen je Schritt |
 
 Level senken, Fortschritt zurücksetzen und archivieren geht nur im Admin durch die Lehrkraft.
+
+Lernserver-Protokoll für die App (gleicher Token): `GET health`, `POST sessions`,
+`WS sessions/<id>/stream`, `POST sessions/<id>/hints`, `GET tasks/<id>`,
+`POST tasks/<id>/submissions`, `POST exercises/<id>/submissions`, `GET progress?session_id=…`.
 
 ## Tests
 

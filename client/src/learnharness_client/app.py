@@ -16,7 +16,7 @@ from learnharness_client.config import AppSettings, app_data_dir
 from learnharness_client.domain.project import GodotProject
 from learnharness_client.godot.project_list import known_godot_projects
 from learnharness_client.net.fake_tutor_client import FakeTutorClient
-from learnharness_client.net.http_tutor_client import HttpTutorClient
+from learnharness_client.net.http_tutor_client import HttpTutorClient, same_server
 from learnharness_client.ui.dialogs.first_start_dialog import FirstStartDialog
 from learnharness_client.ui.dialogs.login_dialog import LoginDialog
 from learnharness_client.ui.main_window import MainWindow
@@ -88,7 +88,9 @@ def main(argv: list[str] | None = None) -> int:
 
     server_url = args.server or settings.server_url
     use_fake = args.fake_server or (args.server is None and settings.use_fake_server)
-    tutor_client = FakeTutorClient() if use_fake else HttpTutorClient(server_url)
+    # The built-in learning server of the administration needs the device token as well.
+    token = settings.admin_token if same_server(server_url, settings.admin_url) else ""
+    tutor_client = FakeTutorClient() if use_fake else HttpTutorClient(server_url, token=token)
     window = MainWindow(
         settings,
         tutor_client,

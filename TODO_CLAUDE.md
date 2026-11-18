@@ -52,6 +52,14 @@ meldet Abschlüsse zurück (offline gemerkt, beim nächsten Abgleich gesendet). 
 CSV-Export auch für die Gruppenübersicht. Offen für den Lernserver: bei `mission_step` mit
 unbekannter Mission die Schritte samt Hinweisen über `GET /api/v1/missions/<id>/` holen.
 
+Eingebauter Lernserver (`server/tutor/`): Anbieter vLLM / Claude / ChatGPT im Admin umschaltbar
+(Schlüssel nur in `.env`), Harness mit festen Regeln, Code-Filter beim Streamen, Übungen mit
+serverseitigen Lösungen, Grenze für freigegebenen Code, Anfragebremse; Prompt-Übersicht
+`/ki/prompts/` und KI-Protokoll im Admin. Die App schickt ihren Gerätetoken, wenn Lernserver und
+Verwaltung dieselbe Adresse haben, und bei LearnAgent/Missionen den Dateiinhalt mit.
+Offen: mit echtem vLLM-Modell und echten Kindern testen, ob die Übungen (JSON) zuverlässig und
+kindgerecht sind; Aufgabenliste (bisher nur „Spieler nach rechts bewegen“) im Admin pflegbar machen.
+
 Beim Review behoben: Schriftgröße wirkte nicht (Stylesheet überschrieb sie), Dunkelmodus unlesbar,
 fehlgeschlagener Health-Check schrieb alle 15 s Fehler in den Chat und brach Lernrunden ab,
 Übungsabgaben ohne `session_id`, Problem-Links bei Unterordnern, LearnAgent-Antworten landeten

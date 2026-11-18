@@ -1,0 +1,8 @@
+{% extends "admin/change_form.html" %}
+
+{% block content %}
+{{ block.super }}
+{% if lh_test_url %}
+<form id="lh-test" method="post" action="{{ lh_test_url }}">{% csrf_token %}</form>
+{% endif %}
+{% endblock %}

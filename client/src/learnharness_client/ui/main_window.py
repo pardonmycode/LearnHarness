@@ -57,6 +57,7 @@ from .script_tree import ScriptTree
 from .theme import set_state
 
 LOG = logging.getLogger(__name__)
+MAX_FILE_CONTEXT = 16_000  # characters of the open script sent along with learn rounds
 
 
 def is_target_file(path: str, target: str | None) -> bool:
@@ -341,6 +342,11 @@ class MainWindow(QMainWindow):
             # The administration keeps the progress across PCs; it wins when it answers.
             self.admin_sync.fetch_progress(self.student_profile.profile_id)
 
+    def _current_file_text(self) -> str | None:
+        editor = self.editor_tabs.current_editor()
+        text = editor.toPlainText() if editor is not None else ""
+        return text[:MAX_FILE_CONTEXT] if text.strip() else None
+
     def _relative_current_file(self) -> str | None:
         document = self.editor_tabs.current_document()
         if document is None or self.project is None:
@@ -397,6 +403,8 @@ class MainWindow(QMainWindow):
             experience_level=int(self.student_profile.experience_level),
             learning_level=None,
             file=relative,
+            code_excerpt=self._current_file_text(),
+            excerpt_start_line=1,
             message=text,
             **extra,
         )
@@ -465,6 +473,9 @@ class MainWindow(QMainWindow):
             learning_level=level,
             current_task=f"learn_level_{level}",
             file=relative,
+            # The whole file, so the server can release a small, explained change of it.
+            code_excerpt=self._current_file_text(),
+            excerpt_start_line=1,
             skill_focus=self.learn_agent_panel.current_focus,
             message=prompt,
         )

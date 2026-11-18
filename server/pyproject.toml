@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "learnharness-server"
 version = "0.1.0"
-description = "Central administration of LearnHarness child profiles (Django + PostgreSQL)"
+description = "LearnHarness administration and learning server (Django + PostgreSQL + AI harness)"
 requires-python = ">=3.12"
 dependencies = [
     "django>=5.2,<6",
@@ -13,6 +13,10 @@ dependencies = [
     "whitenoise>=6.7,<7",
     "pydantic>=2.8,<3",
     "learnharness-protocol>=0.2.0",
+    "channels>=4.2,<5",
+    "daphne>=4.1,<5",
+    "anthropic>=1,<2",
+    "openai>=1.50,<3",
 ]
 
 [project.optional-dependencies]
@@ -21,10 +25,9 @@ dev = [
     "pytest-django>=4.9,<5",
     "ruff>=0.8,<1",
 ]
-deploy = ["gunicorn>=23,<24"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["learnharness_server", "children"]
+packages = ["learnharness_server", "children", "tutor"]
 
 [tool.ruff]
 target-version = "py312"

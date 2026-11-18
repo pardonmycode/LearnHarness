@@ -42,9 +42,12 @@ class HttpTutorClient(TutorClient):
     # Reconnect delays after an unexpected WebSocket loss; the last value repeats.
     RECONNECT_BACKOFF_MS = (1_000, 2_000, 5_000, 10_000, 30_000)
 
-    def __init__(self, base_url: str, parent: QObject | None = None) -> None:
+    def __init__(self, base_url: str, parent: QObject | None = None, token: str = "") -> None:
         super().__init__(parent)  # type: ignore[arg-type]  # see qtcompat
         self.base_url = base_url.rstrip("/")
+        # Device token of the central administration; only sent when this learning server
+        # is the administration itself (see same_server()).
+        self.token = token.strip()
         self.network = QNetworkAccessManager(self)
         self.socket = QWebSocket(parent=self)
         self.session_id: str | None = None
@@ -64,6 +67,11 @@ class HttpTutorClient(TutorClient):
     def _url(self, path: str) -> QUrl:
         return QUrl(f"{self.base_url}/api/v1{path}")
 
+    def _authorize(self, request: QNetworkRequest) -> QNetworkRequest:
+        if self.token:
+            request.setRawHeader(b"Authorization", f"Bearer {self.token}".encode())
+        return request
+
     def _request(
         self,
         method: str,
@@ -72,7 +80,7 @@ class HttpTutorClient(TutorClient):
         handler: Callable[[dict[str, object]], None],
         on_failure: Callable[[ClientError], None] | None = None,
     ) -> None:
-        request = QNetworkRequest(self._url(path))
+        request = self._authorize(QNetworkRequest(self._url(path)))
         request.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader, "application/json")
         request.setTransferTimeout(10_000)
         body = QByteArray(json.dumps(payload or {}, ensure_ascii=False).encode("utf-8"))
@@ -158,7 +166,7 @@ class HttpTutorClient(TutorClient):
         self._stream_url = http_url
         self._reconnect_timer.stop()
         self._closing = False
-        self.socket.open(http_url)
+        self.socket.open(self._authorize(QNetworkRequest(http_url)))
 
     @classmethod
     def reconnect_delay_ms(cls, attempt: int) -> int:
@@ -185,7 +193,7 @@ class HttpTutorClient(TutorClient):
     def _reconnect(self) -> None:
         if self._closing or self._stream_url is None:
             return
-        self.socket.open(self._stream_url)
+        self.socket.open(self._authorize(QNetworkRequest(self._stream_url)))
 
     def _send_pending_message(self) -> None:
         if self._pending_message is not None:
@@ -266,9 +274,21 @@ class HttpTutorClient(TutorClient):
         )
 
     def fetch_progress(self) -> None:
+        query = f"?session_id={self.session_id}" if self.session_id else ""
         self._request(
             "GET",
-            "/progress",
+            f"/progress{query}",
             None,
             lambda data: self.progress_received.emit(ProgressUpdate.model_validate(data)),
         )
+
+
+def same_server(first: str, second: str) -> bool:
+    """True when both addresses point to the same scheme, host and port."""
+    a, b = QUrl(first.strip()), QUrl(second.strip())
+    return (
+        bool(a.host())
+        and a.scheme() == b.scheme()
+        and a.host().casefold() == b.host().casefold()
+        and a.port(-1) == b.port(-1)
+    )

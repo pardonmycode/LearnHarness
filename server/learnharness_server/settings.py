@@ -34,13 +34,16 @@ ALLOWED_HOSTS = _env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
 CSRF_TRUSTED_ORIGINS = _env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
 
 INSTALLED_APPS = [
+    "daphne",  # ASGI server; also makes runserver speak WebSocket
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "channels",
     "children",
+    "tutor",
 ]
 
 MIDDLEWARE = [
@@ -74,6 +77,11 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "learnharness_server.wsgi.application"
+ASGI_APPLICATION = "learnharness_server.asgi.application"
+
+# Built-in learning server: requests need a device token unless set to 0 (e.g. a closed lab
+# network without the administration). AI keys: ANTHROPIC_API_KEY, OPENAI_API_KEY, VLLM_API_KEY.
+TUTOR_REQUIRE_TOKEN = _env_bool("TUTOR_REQUIRE_TOKEN", True)
 
 if os.environ.get("POSTGRES_DB"):
     DATABASES = {
