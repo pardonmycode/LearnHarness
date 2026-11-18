@@ -8,13 +8,14 @@ import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtCore import QCoreApplication, QTimer
 from PyQt6.QtWidgets import QApplication, QDialog, QMessageBox
 
 from learnharness_client.config import AppSettings, app_data_dir
 from learnharness_client.domain.project import GodotProject
 from learnharness_client.net.fake_tutor_client import FakeTutorClient
 from learnharness_client.net.http_tutor_client import HttpTutorClient
+from learnharness_client.ui.dialogs.first_start_dialog import FirstStartDialog
 from learnharness_client.ui.dialogs.login_dialog import LoginDialog
 from learnharness_client.ui.main_window import MainWindow
 from learnharness_client.ui.theme import apply_theme
@@ -59,6 +60,9 @@ def main(argv: list[str] | None = None) -> int:
     settings = AppSettings()
     apply_theme(app, settings.font_size, settings.theme)
     configure_logging()
+
+    if not settings.first_start_done and not (args.server or args.fake_server):
+        FirstStartDialog(settings).exec()
 
     login = LoginDialog(settings)
     if login.exec() != QDialog.DialogCode.Accepted or login.selected_profile is None:
@@ -107,4 +111,5 @@ def main(argv: list[str] | None = None) -> int:
             except (OSError, ValueError):
                 continue
     window.show()
+    QTimer.singleShot(300, window.show_tutorial_once)
     return app.exec()

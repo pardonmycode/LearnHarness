@@ -6,7 +6,7 @@ import logging
 
 from learnharness_protocol import LearningResponse
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QKeyEvent, QTextCharFormat, QTextCursor
+from PyQt6.QtGui import QColor, QKeyEvent, QTextBlockFormat, QTextCharFormat, QTextCursor
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -18,6 +18,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ..markdown import insert_markdown
+from ..texts import T
 from ..theme import colors
 
 LOG = logging.getLogger(__name__)
@@ -46,10 +48,10 @@ class TutorPanel(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(10)
-        heading = QLabel("Lernhelfer")
+        heading = QLabel(T.TUTOR_NAME)
         heading.setProperty("role", "heading")
         layout.addWidget(heading)
-        self.context_label = QLabel("Dem Lernhelfer wird nur ein kleiner Codeausschnitt gezeigt.")
+        self.context_label = QLabel(T.TUTOR_CONTEXT_DEFAULT)
         self.context_label.setWordWrap(True)
         self.context_label.setProperty("role", "small")
         self.history = QTextBrowser()
@@ -87,6 +89,8 @@ class TutorPanel(QWidget):
         self.stop_button.clicked.connect(self.cancel_requested)
         self.input.textChanged.connect(self._update_counter)
         self._stream_cursor: QTextCursor | None = None
+        self._stream_start = 0
+        self._stream_text = ""
         self._online = True
         self._streaming = False
 
@@ -100,7 +104,7 @@ class TutorPanel(QWidget):
         self.send_button.setEnabled(can_send)
         self.hint_button.setEnabled(can_send)
         self.stop_button.setEnabled(self._streaming)
-        tip = "" if self._online else "Der Lernhelfer macht Pause. Deine Frage bleibt hier stehen."
+        tip = "" if self._online else T.TUTOR_OFFLINE_TIP
         self.send_button.setToolTip(tip)
         self.hint_button.setToolTip(tip)
 
@@ -118,59 +122,72 @@ class TutorPanel(QWidget):
         text = self.input.toPlainText().strip()
         if not text or not self.send_button.isEnabled():
             return
-        self.append_message("Du", text, QColor(colors().accent))
+        self.append_message(T.CHILD_NAME, text, QColor(colors().accent), markdown=False)
         self.input.clear()
         self.message_submitted.emit(text)
 
-    def append_message(self, sender: str, text: str, color: QColor) -> None:
+    def _begin_message(self, sender: str, color: QColor) -> QTextCursor:
         cursor = self.history.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)
         if not self.history.document().isEmpty():
-            cursor.insertText("\n\n")
+            cursor.insertBlock(QTextBlockFormat())
+            cursor.insertBlock(QTextBlockFormat())
         sender_format = QTextCharFormat()
         sender_format.setForeground(color)
         sender_format.setFontWeight(700)
-        cursor.insertText(f"{sender}: ", sender_format)
-        cursor.insertText(text)
+        cursor.insertText(sender, sender_format)
+        cursor.insertBlock(QTextBlockFormat(), QTextCharFormat())
+        return cursor
+
+    def append_message(
+        self, sender: str, text: str, color: QColor, *, markdown: bool = True
+    ) -> None:
+        cursor = self._begin_message(sender, color)
+        if markdown:
+            insert_markdown(cursor, text)
+        else:
+            # The child's own text is shown exactly as typed.
+            cursor.insertText(text)
         self.history.setTextCursor(cursor)
         self.history.ensureCursorVisible()
 
     def begin_stream(self) -> None:
         self._streaming = True
         self._sync_buttons()
-        cursor = self.history.textCursor()
-        cursor.movePosition(QTextCursor.MoveOperation.End)
-        if not self.history.document().isEmpty():
-            cursor.insertText("\n\n")
-        teacher_format = QTextCharFormat()
-        teacher_format.setForeground(QColor(colors().success))
-        teacher_format.setFontWeight(700)
-        cursor.insertText("Lernhelfer: ", teacher_format)
+        cursor = self._begin_message(T.TUTOR_NAME, QColor(colors().success))
+        self._stream_start = cursor.position()
+        self._stream_text = ""
         self._stream_cursor = cursor
 
     def append_stream_chunk(self, text: str) -> None:
         if self._stream_cursor is None:
             self.begin_stream()
         assert self._stream_cursor is not None
-        self._stream_cursor.insertText(text)
-        self.history.setTextCursor(self._stream_cursor)
+        self._stream_text += text
+        # Re-render the growing answer so Markdown (lists, code) appears while streaming.
+        cursor = self._stream_cursor
+        cursor.setPosition(self._stream_start)
+        cursor.movePosition(QTextCursor.MoveOperation.End, QTextCursor.MoveMode.KeepAnchor)
+        cursor.removeSelectedText()
+        insert_markdown(cursor, self._stream_text)
+        self.history.setTextCursor(cursor)
         self.history.ensureCursorVisible()
 
     def finish_stream(self, response: LearningResponse) -> None:
         if response.code_changes:
             LOG.warning("Ignored forbidden code_changes in learning response")
         if self._stream_cursor is None:
-            self.append_message("Lernhelfer", response.message, QColor(colors().success))
+            self.append_message(T.TUTOR_NAME, response.message, QColor(colors().success))
         self._stream_cursor = None
         self._streaming = False
         self._sync_buttons()
         self.hint_progress.setValue(response.hint_level)
 
     def show_error(self, message: str) -> None:
-        self.append_message("Hinweis", message, QColor(colors().danger))
+        self.append_message(T.NOTICE_NAME, message, QColor(colors().danger), markdown=False)
         self._stream_cursor = None
         self._streaming = False
         self._sync_buttons()
 
     def set_context_description(self, filename: str, start: int, end: int) -> None:
-        self.context_label.setText(f"Ich zeige dem Lernhelfer: {filename}, Zeilen {start}–{end}.")
+        self.context_label.setText(T.TUTOR_CONTEXT.format(file=filename, start=start, end=end))

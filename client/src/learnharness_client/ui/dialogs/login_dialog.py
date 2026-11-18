@@ -34,7 +34,7 @@ class LoginDialog(QDialog):
 
         layout = QVBoxLayout(self)
         heading = QLabel("Willkommen in der Godot-Programmierwerkstatt!")
-        heading.setStyleSheet("font-size: 18px; font-weight: bold;")
+        heading.setProperty("role", "heading")
         explanation = QLabel(
             "Wähle dein Profil oder lege ein neues an. Benutze bitte einen Spitznamen, "
             "nicht deinen vollständigen Namen. Die Erfahrungsstufe hilft dem Lernhelfer, "
@@ -67,7 +67,7 @@ class LoginDialog(QDialog):
             "Dieses Profil wird nur auf diesem Computer gespeichert. Es ist kein Passwort nötig."
         )
         privacy.setWordWrap(True)
-        privacy.setStyleSheet("color: #475569;")
+        privacy.setProperty("role", "muted")
         layout.addWidget(privacy)
 
         buttons = QDialogButtonBox(

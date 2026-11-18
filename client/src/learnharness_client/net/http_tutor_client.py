@@ -21,7 +21,7 @@ from learnharness_protocol import (
 )
 from learnharness_protocol.messages import IncomingMessage, StreamChunk
 from pydantic import TypeAdapter, ValidationError
-from PyQt6.QtCore import QByteArray, QUrl
+from PyQt6.QtCore import QByteArray, QTimer, QUrl
 from PyQt6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from PyQt6.QtWebSockets import QWebSocket
 
@@ -34,6 +34,8 @@ LOG = logging.getLogger(__name__)
 
 class HttpTutorClient(TutorClient):
     MAX_MESSAGE_BYTES = 256 * 1024
+    # Reconnect delays after an unexpected WebSocket loss; the last value repeats.
+    RECONNECT_BACKOFF_MS = (1_000, 2_000, 5_000, 10_000, 30_000)
 
     def __init__(self, base_url: str, parent=None) -> None:
         super().__init__(parent)
@@ -42,7 +44,14 @@ class HttpTutorClient(TutorClient):
         self.socket = QWebSocket(parent=self)
         self.session_id: str | None = None
         self._pending_message: StudentMessage | None = None
-        self.socket.connected.connect(self._send_pending_message)
+        self._stream_url: QUrl | None = None
+        self._closing = False
+        self._reconnect_attempt = 0
+        self._outage_reported = False
+        self._reconnect_timer = QTimer(self)
+        self._reconnect_timer.setSingleShot(True)
+        self._reconnect_timer.timeout.connect(self._reconnect)
+        self.socket.connected.connect(self._on_socket_connected)
         self.socket.textMessageReceived.connect(self._on_socket_text)
         self.socket.errorOccurred.connect(self._on_socket_error)
         self.socket.disconnected.connect(self._on_socket_disconnected)
@@ -140,7 +149,37 @@ class HttpTutorClient(TutorClient):
         scheme = "wss" if http_url.scheme() == "https" else "ws"
         http_url.setScheme(scheme)
         http_url.setPath(f"/api/v1/sessions/{message.session_id}/stream")
+        self._stream_url = http_url
+        self._reconnect_timer.stop()
+        self._closing = False
         self.socket.open(http_url)
+
+    @classmethod
+    def reconnect_delay_ms(cls, attempt: int) -> int:
+        """Delay before reconnect attempt number ``attempt`` (0-based): 1, 2, 5, 10, 30 s."""
+        backoff = cls.RECONNECT_BACKOFF_MS
+        return backoff[min(max(0, attempt), len(backoff) - 1)]
+
+    def _on_socket_connected(self) -> None:
+        self._reconnect_attempt = 0
+        self._outage_reported = False
+        self._reconnect_timer.stop()
+        self._send_pending_message()
+
+    def _schedule_reconnect(self) -> None:
+        if self._closing or self._stream_url is None or not self.session_id:
+            return
+        if self._reconnect_timer.isActive():
+            return
+        delay = self.reconnect_delay_ms(self._reconnect_attempt)
+        self._reconnect_attempt += 1
+        LOG.info("WebSocket reconnect in %d ms", delay)
+        self._reconnect_timer.start(delay)
+
+    def _reconnect(self) -> None:
+        if self._closing or self._stream_url is None:
+            return
+        self.socket.open(self._stream_url)
 
     def _send_pending_message(self) -> None:
         if self._pending_message is not None:
@@ -169,13 +208,23 @@ class HttpTutorClient(TutorClient):
             self.error.emit(ClientError(message.message_for_child, message.code))
 
     def _on_socket_error(self, _error) -> None:
-        self.error.emit(ClientError("Die Verbindung zum Lernhelfer wurde unterbrochen.", "socket"))
+        # Report an outage once; silent reconnect attempts must not flood the chat.
+        if not self._outage_reported:
+            self._outage_reported = True
+            self.error.emit(
+                ClientError("Die Verbindung zum Lernhelfer wurde unterbrochen.", "socket")
+            )
+        self._schedule_reconnect()
 
     def _on_socket_disconnected(self) -> None:
+        # A question that could not be delivered is dropped; the child already saw the error.
         self._pending_message = None
+        self._schedule_reconnect()
 
     def cancel(self) -> None:
         self._pending_message = None
+        self._closing = True
+        self._reconnect_timer.stop()
         self.socket.close()
 
     def request_next_hint(self, task_id: str) -> None:

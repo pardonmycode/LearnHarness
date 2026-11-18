@@ -14,6 +14,7 @@ class DiagnosticsPanel(QWidget):
         self.protocol = QLabel(PROTOCOL_VERSION)
         self.server = QLabel("Noch nicht geprüft")
         self.model = QLabel("Noch nicht geprüft")
+        self.session = QLabel("keine Sitzung")
         self.latency = QLabel("–")
         self.last_error = QLabel("–")
         self.last_error.setWordWrap(True)
@@ -21,6 +22,7 @@ class DiagnosticsPanel(QWidget):
         layout.addRow("Protokoll:", self.protocol)
         layout.addRow("Server:", self.server)
         layout.addRow("Modell:", self.model)
+        layout.addRow("Sitzung:", self.session)
         layout.addRow("Latenz:", self.latency)
         layout.addRow("Letzter Fehler:", self.last_error)
 
@@ -28,6 +30,9 @@ class DiagnosticsPanel(QWidget):
         self.server.setText("erreichbar" if health.server_ok else "nicht erreichbar")
         self.model.setText("bereit" if health.model_ok else "nicht bereit")
         self.latency.setText(f"{health.latency_ms} ms" if health.latency_ms is not None else "–")
+
+    def set_session(self, session_id: str | None) -> None:
+        self.session.setText(f"aktiv ({session_id[:8]})" if session_id else "keine Sitzung")
 
     def set_error(self, code: str) -> None:
         self.last_error.setText(code)

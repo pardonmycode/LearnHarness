@@ -1,11 +1,11 @@
-"""Fill-in-the-blank exercise."""
+"""Fill-in-the-blank exercise with the choices embedded directly in the code."""
 
 from __future__ import annotations
 
 from learnharness_protocol import FillBlanksExercise, Submission
-from PyQt6.QtWidgets import QComboBox, QFormLayout, QLabel, QWidget
+from PyQt6.QtWidgets import QComboBox, QWidget
 
-from .base import ExerciseWidget, code_view
+from .base import ExerciseWidget, blank_order, chain_tab_order, inline_blanks_view
 
 
 def _mark_blanks(code: str) -> str:
@@ -20,24 +20,35 @@ def _mark_blanks(code: str) -> str:
     return result
 
 
+def numbered_ids(code: str, blank_ids: list[str]) -> list[str]:
+    """Blank ids in reading order; blanks missing from the code come last."""
+    in_code = [blank_id for blank_id in blank_order(code) if blank_id in blank_ids]
+    return in_code + [blank_id for blank_id in blank_ids if blank_id not in in_code]
+
+
 class FillBlanksWidget(ExerciseWidget):
     def __init__(self, exercise: FillBlanksExercise, parent=None) -> None:
         super().__init__(exercise, parent)
-        self.layout.addWidget(
-            code_view(_mark_blanks(exercise.code), accessible_name="Code mit Lücken")
-        )
-        form = QFormLayout()
+        blanks = {blank.id: blank for blank in exercise.blanks}
         self.inputs: dict[str, QComboBox] = {}
-        for index, blank in enumerate(exercise.blanks, start=1):
+        for index, blank_id in enumerate(numbered_ids(exercise.code, list(blanks)), start=1):
             combo = QComboBox()
-            combo.addItem("Bitte auswählen …", None)
-            for option in blank.options:
+            combo.addItem(f"{index}: wählen …", None)
+            for option in blanks[blank_id].options:
                 combo.addItem(option, option)
-            combo.setAccessibleName(f"Antwort für Lücke {index}")
-            self.inputs[blank.id] = combo
-            form.addRow(QLabel(f"Lücke {index}"), combo)
-        self.layout.addLayout(form)
+            combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+            combo.setAccessibleName(f"Lücke {index}")
+            combo.setToolTip(f"Lücke {index}")
+            self.inputs[blank_id] = combo
+        self.layout.addWidget(
+            inline_blanks_view(
+                exercise.code,
+                dict(self.inputs),
+                accessible_name=f"Code mit Lücken: {_mark_blanks(exercise.code)}",
+            )
+        )
         self.finish_layout()
+        chain_tab_order(list(self.inputs.values()), self.submit_button)
 
     def item_widgets(self) -> dict[str, QWidget]:
         return dict(self.inputs)

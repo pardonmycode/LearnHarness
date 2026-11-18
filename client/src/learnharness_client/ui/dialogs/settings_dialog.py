@@ -7,8 +7,11 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
     QDialogButtonBox,
+    QFileDialog,
     QFormLayout,
+    QHBoxLayout,
     QLineEdit,
+    QPushButton,
     QSpinBox,
     QVBoxLayout,
 )
@@ -35,7 +38,19 @@ class SettingsDialog(QDialog):
             self.theme.addItem(label, value)
         index = self.theme.findData(settings.theme)
         self.theme.setCurrentIndex(max(0, index))
+        self.godot_path = QLineEdit(settings.godot_path)
+        self.godot_path.setPlaceholderText("Optional, z. B. C:\\Godot\\Godot_v4.exe")
+        self.godot_path.setAccessibleName("Pfad zum Godot-Programm")
+        browse = QPushButton("Suchen …")
+        browse.clicked.connect(self._browse_godot)
+        godot_row = QHBoxLayout()
+        godot_row.addWidget(self.godot_path, 1)
+        godot_row.addWidget(browse)
+        self.server_url.setAccessibleName("Lernserver-Adresse")
+        self.font_size.setAccessibleName("Schriftgröße")
+        self.theme.setAccessibleName("Darstellung")
         form.addRow("Lernserver-Adresse:", self.server_url)
+        form.addRow("Godot-Programm:", godot_row)
         form.addRow("Entwicklung:", self.fake_server)
         form.addRow("Schriftgröße:", self.font_size)
         form.addRow("Darstellung:", self.theme)
@@ -54,4 +69,12 @@ class SettingsDialog(QDialog):
         self.settings.use_fake_server = self.fake_server.isChecked()
         self.settings.font_size = self.font_size.value()
         self.settings.theme = str(self.theme.currentData())
+        self.settings.godot_path = self.godot_path.text()
         self.accept()
+
+    def _browse_godot(self) -> None:
+        path, _filter = QFileDialog.getOpenFileName(
+            self, "Godot-Programm auswählen", self.godot_path.text(), "Programme (*.exe);;Alle (*)"
+        )
+        if path:
+            self.godot_path.setText(path)

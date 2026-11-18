@@ -47,6 +47,36 @@ class AppSettings:
         self._settings.setValue("appearance/theme", value)
 
     @property
+    def godot_path(self) -> str:
+        return str(self._settings.value("godot/executable", ""))
+
+    @godot_path.setter
+    def godot_path(self, value: str) -> None:
+        self._settings.setValue("godot/executable", value.strip())
+
+    @property
+    def first_start_done(self) -> bool:
+        return bool(self._settings.value("setup/first_start_done", False, type=bool))
+
+    @first_start_done.setter
+    def first_start_done(self, value: bool) -> None:
+        self._settings.setValue("setup/first_start_done", value)
+
+    def tutorial_seen(self, profile_id: str) -> bool:
+        return bool(self._settings.value(f"tutorial/{profile_id}/seen", False, type=bool))
+
+    def mark_tutorial_seen(self, profile_id: str) -> None:
+        self._settings.setValue(f"tutorial/{profile_id}/seen", True)
+
+    def cached_progress(self, profile_id: str) -> str | None:
+        """Last ProgressUpdate JSON from the server, only for showing it offline."""
+        value = self._settings.value(f"progress/{profile_id}/cache", "")
+        return str(value) or None
+
+    def cache_progress(self, profile_id: str, progress_json: str) -> None:
+        self._settings.setValue(f"progress/{profile_id}/cache", progress_json)
+
+    @property
     def recent_projects(self) -> list[str]:
         value = self._settings.value("projects/recent", [])
         if isinstance(value, str):

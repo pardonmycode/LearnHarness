@@ -143,6 +143,21 @@ class EditorTabs(QWidget):
         self.status_message.emit(f"LearnAgent hat {document.path.name} vollständig geschrieben.")
         return True
 
+    def backups_for_current(self) -> list[Path]:
+        document = self.current_document()
+        if not document or not self.project or not self.store:
+            return []
+        relative = document.path.relative_to(self.project.root)
+        return self.store.backup_manager.list_for(relative)
+
+    def restore_into_current(self, text: str) -> bool:
+        """Put an older version into the editor as one undo step; saving stays explicit."""
+        editor = self.current_editor()
+        if editor is None:
+            return False
+        editor.replace_all_text(text)
+        return True
+
     def current_editor(self) -> CodeEditor | None:
         widget = self.tabs.currentWidget()
         return widget if isinstance(widget, CodeEditor) else None
@@ -220,12 +235,17 @@ class EditorTabs(QWidget):
             self.status_message.emit(str(exc))
             return False
         cursor_position = editor.textCursor().position()
+        scroll_bar = editor.verticalScrollBar()
+        scroll_value = scroll_bar.value() if scroll_bar else 0
         editor.blockSignals(True)
         editor.setPlainText(fresh.text)
         editor.blockSignals(False)
         cursor = editor.textCursor()
         cursor.setPosition(min(cursor_position, len(fresh.text)))
         editor.setTextCursor(cursor)
+        if scroll_bar:
+            # Keep the view where the child was reading instead of jumping to the cursor.
+            scroll_bar.setValue(min(scroll_value, scroll_bar.maximum()))
         self.documents[editor] = fresh
         self._update_title(editor)
         self._ensure_watched(fresh.path)

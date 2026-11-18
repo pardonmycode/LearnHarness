@@ -5,6 +5,8 @@ from __future__ import annotations
 from learnharness_protocol import ProgressUpdate
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
+from ..texts import T
+
 LEVEL_WORDS = {
     0: "noch nicht begonnen",
     1: "mit Hilfe",
@@ -26,12 +28,18 @@ class ProgressPanel(QWidget):
         )
         intro.setWordWrap(True)
         intro.setProperty("role", "muted")
+        self.offline_note = QLabel(T.PROGRESS_OFFLINE)
+        self.offline_note.setProperty("role", "small")
+        self.offline_note.hide()
         self.layout.addWidget(heading)
         self.layout.addWidget(intro)
+        self.layout.addWidget(self.offline_note)
         self._fixed_count = self.layout.count()
         self.layout.addStretch(1)
 
-    def set_progress(self, progress: ProgressUpdate) -> None:
+    def set_progress(self, progress: ProgressUpdate, *, cached: bool = False) -> None:
+        """``cached``: shown from the local copy while the server is unreachable."""
+        self.offline_note.setVisible(cached)
         while self.layout.count() > self._fixed_count + 1:
             item = self.layout.takeAt(self._fixed_count)
             if item is not None and item.widget():

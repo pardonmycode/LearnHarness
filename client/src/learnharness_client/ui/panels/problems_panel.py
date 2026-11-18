@@ -36,15 +36,17 @@ class ProblemsPanel(QWidget):
         row = QHBoxLayout()
         self.error_input = QLineEdit()
         self.error_input.setPlaceholderText("Godot-Fehlermeldung hier einfügen …")
+        self.error_input.setAccessibleName("Godot-Fehlermeldung einfügen")
         add_button = QPushButton("Fehler hinzufügen")
         row.addWidget(self.error_input, 1)
         row.addWidget(add_button)
         self.list = QListWidget()
+        self.list.setAccessibleName("Liste der Probleme")
         layout.addLayout(row)
         layout.addWidget(self.list)
         add_button.clicked.connect(self.add_from_input)
         self.error_input.returnPressed.connect(self.add_from_input)
-        self.list.itemDoubleClicked.connect(self._activate)
+        self.list.itemActivated.connect(self._activate)
 
     def add_from_input(self) -> None:
         text = self.error_input.text().strip()
@@ -60,11 +62,31 @@ class ProblemsPanel(QWidget):
         self.add_problem(problem)
         self.error_input.clear()
 
-    def add_problem(self, problem: Problem) -> None:
+    def problems(self) -> list[Problem]:
+        found: list[Problem] = []
+        for row in range(self.list.count()):
+            item = self.list.item(row)
+            problem = item.data(Qt.ItemDataRole.UserRole) if item else None
+            if isinstance(problem, Problem):
+                found.append(problem)
+        return found
+
+    def add_problem(self, problem: Problem) -> bool:
+        """Adds the problem unless the same one is already listed."""
+        if problem in self.problems():
+            return False
         location = f"{problem.file}:{problem.line} – " if problem.file else ""
         item = QListWidgetItem(f"[{problem.source}] {location}{problem.message}")
         item.setData(Qt.ItemDataRole.UserRole, problem)
         self.list.addItem(item)
+        return True
+
+    def clear_source(self, source: str) -> None:
+        for row in reversed(range(self.list.count())):
+            item = self.list.item(row)
+            problem = item.data(Qt.ItemDataRole.UserRole) if item else None
+            if isinstance(problem, Problem) and problem.source == source:
+                self.list.takeItem(row)
 
     def _activate(self, item: QListWidgetItem) -> None:
         problem = item.data(Qt.ItemDataRole.UserRole)

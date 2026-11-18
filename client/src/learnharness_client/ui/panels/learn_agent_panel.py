@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
 
 from ..exercises.base import ExerciseWidget
 from ..exercises.factory import create_exercise_widget
+from ..texts import T
 from ..theme import set_state
 
 LEVEL_DESCRIPTIONS = {
@@ -152,9 +153,7 @@ class LearnAgentPanel(QWidget):
 
     def _sync_start_button(self) -> None:
         self.start_button.setEnabled(self._online and not self._busy)
-        self.start_button.setToolTip(
-            "" if self._online else "Der Lernhelfer macht Pause. Du kannst weiter programmieren."
-        )
+        self.start_button.setToolTip("" if self._online else T.AGENT_OFFLINE_TIP)
 
     @property
     def current_level(self) -> int:

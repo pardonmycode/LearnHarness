@@ -3,28 +3,36 @@
 from __future__ import annotations
 
 from learnharness_protocol import Submission, TextBlanksExercise
-from PyQt6.QtWidgets import QFormLayout, QLabel, QLineEdit, QWidget
+from PyQt6.QtWidgets import QLineEdit, QWidget
 
-from .base import ExerciseWidget, code_view
-from .fill_blanks import _mark_blanks
+from ..theme import monospace_font
+from .base import ExerciseWidget, chain_tab_order, inline_blanks_view
+from .fill_blanks import _mark_blanks, numbered_ids
 
 
 class TextBlanksWidget(ExerciseWidget):
     def __init__(self, exercise: TextBlanksExercise, parent=None) -> None:
         super().__init__(exercise, parent)
-        self.layout.addWidget(
-            code_view(_mark_blanks(exercise.code), accessible_name="Code mit freien Textlücken")
-        )
-        form = QFormLayout()
+        blanks = {blank.id: blank for blank in exercise.blanks}
         self.inputs: dict[str, QLineEdit] = {}
-        for index, blank in enumerate(exercise.blanks, start=1):
+        for index, blank_id in enumerate(numbered_ids(exercise.code, list(blanks)), start=1):
             field = QLineEdit()
-            field.setPlaceholderText(blank.placeholder)
-            field.setAccessibleName(f"Freie Antwort für Lücke {index}")
-            self.inputs[blank.id] = field
-            form.addRow(QLabel(f"Lücke {index}"), field)
-        self.layout.addLayout(form)
+            field.setFont(monospace_font())
+            field.setPlaceholderText(blanks[blank_id].placeholder)
+            field.setMinimumWidth(field.fontMetrics().horizontalAdvance("M") * 10)
+            field.setMaxLength(200)
+            field.setAccessibleName(f"Lücke {index}")
+            field.setToolTip(f"Lücke {index}")
+            self.inputs[blank_id] = field
+        self.layout.addWidget(
+            inline_blanks_view(
+                exercise.code,
+                dict(self.inputs),
+                accessible_name=f"Code mit freien Textlücken: {_mark_blanks(exercise.code)}",
+            )
+        )
         self.finish_layout()
+        chain_tab_order(list(self.inputs.values()), self.submit_button)
 
     def item_widgets(self) -> dict[str, QWidget]:
         return dict(self.inputs)
