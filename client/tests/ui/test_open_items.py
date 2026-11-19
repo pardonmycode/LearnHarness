@@ -83,10 +83,10 @@ def test_godot_output_is_parsed_into_file_and_line() -> None:
     ]
 
 
-def test_log_reader_uses_appdata_and_reads_tail(tmp_path: Path) -> None:
-    path = default_log_path("Mein Spiel: Teil 2", appdata=str(tmp_path))
+def test_log_reader_uses_godot_data_dir_and_reads_tail(tmp_path: Path) -> None:
+    path = default_log_path("Mein Spiel: Teil 2", data_dir=tmp_path / "Godot")
     assert path == tmp_path / "Godot" / "app_userdata" / "Mein Spiel_ Teil 2" / "logs" / "godot.log"
-    assert default_log_path("x", appdata="") is None
+    assert path is not None
     path.parent.mkdir(parents=True)
     path.write_text("noise\n" * 50_000 + GODOT_OUTPUT, encoding="utf-8")
     assert [m.line for m in read_recent_errors(path)] == [7, 12]

@@ -35,7 +35,7 @@ def test_known_projects_are_parsed_filtered_and_deduplicated(tmp_path: Path) -> 
         f'["{second.as_posix()}"]\n\nfavorite=false\n\n'
         f'["{upper}"]\n\nfavorite=false\n',
     )
-    found = known_godot_projects(str(tmp_path / "appdata"))
+    found = known_godot_projects(tmp_path / "appdata" / "Godot")
     assert [path.name for path in found] == ["Jump", "Space Race"]
 
 
@@ -46,16 +46,15 @@ def test_godot3_entries_and_escaped_paths(tmp_path: Path) -> None:
         f'[resource]\nprojects/old = "{old.as_posix()}"\n',
         "editor_settings-3.tres",
     )
-    assert known_godot_projects(str(tmp_path / "appdata")) == [old]
+    assert known_godot_projects(tmp_path / "appdata" / "Godot") == [old]
     assert parse_project_paths('["C:/a \\"b\\""]\n') == ['C:/a "b"']
 
 
 def test_broken_or_missing_files_give_empty_list(tmp_path: Path) -> None:
-    assert known_godot_projects(str(tmp_path)) == []
-    assert known_godot_projects("") == []
+    assert known_godot_projects(tmp_path / "Godot") == []
     (tmp_path / "Godot").mkdir()
     (tmp_path / "Godot" / "projects.cfg").write_bytes(b"\xff\xfe[[[\x00garbage")
-    assert known_godot_projects(str(tmp_path)) == []
+    assert known_godot_projects(tmp_path / "Godot") == []
 
 
 def test_dialog_lists_recent_first_and_returns_selection(qtbot: QtBot, tmp_path: Path) -> None:

@@ -8,6 +8,10 @@ Exercise content itself comes from the learning server and is not translated her
 
 from __future__ import annotations
 
+import sys
+
+_WINDOWS = sys.platform == "win32"
+
 
 class T:
     APP_TITLE = "LearnHarness – Godot-Programmierwerkstatt"
@@ -223,7 +227,11 @@ class T:
     # Settings
     SETTINGS_TITLE = "Einstellungen"
     SETTINGS_FAKE_SERVER = "Eingebauten Übungsserver verwenden"
-    SETTINGS_GODOT_PLACEHOLDER = "Optional, z. B. C:\\Godot\\Godot_v4.exe"
+    SETTINGS_GODOT_PLACEHOLDER = (
+        "Optional, z. B. C:\\Godot\\Godot_v4.exe"
+        if _WINDOWS
+        else "Optional, z. B. /usr/bin/godot4 – leer: Godot aus dem PATH"
+    )
     SETTINGS_GODOT_A11Y = "Pfad zum Godot-Programm"
     SETTINGS_BROWSE = "Suchen …"
     SETTINGS_SERVER = "Lernserver-Adresse:"
@@ -235,8 +243,8 @@ class T:
     SETTINGS_THEME = "Darstellung:"
     SETTINGS_THEME_A11Y = "Darstellung"
     SETTINGS_CHOOSE_GODOT = "Godot-Programm auswählen"
-    SETTINGS_GODOT_FILTER = "Programme (*.exe);;Alle (*)"
-    THEME_SYSTEM = "Wie Windows"
+    SETTINGS_GODOT_FILTER = "Programme (*.exe);;Alle (*)" if _WINDOWS else "Alle Dateien (*)"
+    THEME_SYSTEM = "Wie das System"
     THEME_LIGHT = "Hell"
     THEME_DARK = "Dunkel"
     THEME_HIGH_CONTRAST = "Hoher Kontrast"

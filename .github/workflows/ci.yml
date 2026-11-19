@@ -6,7 +6,12 @@ on:
 
 jobs:
   check:
-    runs-on: windows-latest
+    # The app must run on Windows and Linux (paths, case rules, Godot folders differ).
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     env:
       QT_QPA_PLATFORM: offscreen
     steps:
@@ -16,6 +21,13 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
+
+      - name: Qt libraries (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libfontconfig1 libglib2.0-0
+          sudo apt-get install -y libdbus-1-3 libgssapi-krb5-2 fonts-dejavu-core
 
       - name: Install
         run: |

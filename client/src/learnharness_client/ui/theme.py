@@ -181,7 +181,17 @@ def resolve_mode(mode: str) -> str:
 
 def monospace_font(point_size: int | None = None) -> QFont:
     font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
-    for family in ("Cascadia Code", "Cascadia Mono", "Consolas", "JetBrains Mono"):
+    # Windows first, then fonts that common Linux distributions ship.
+    for family in (
+        "Cascadia Code",
+        "Cascadia Mono",
+        "Consolas",
+        "JetBrains Mono",
+        "DejaVu Sans Mono",
+        "Ubuntu Mono",
+        "Noto Sans Mono",
+        "Liberation Mono",
+    ):
         if family in QFontDatabase.families():
             font = QFont(family)
             break

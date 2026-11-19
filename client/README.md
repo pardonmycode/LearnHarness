@@ -14,6 +14,10 @@ seine Erfahrungsstufe. Profil-ID und Erfahrungsstufe werden beim Sitzungsstart a
 
 ## Entwicklung starten
 
+Die App läuft unter Windows und Linux. Unter Linux die Befehle mit `.venv/bin/python` statt
+`.\.venv\Scripts\python.exe` ausführen; nötige Systempakete und die Unterschiede (Godot-Ordner,
+Groß-/Kleinschreibung) stehen in der [README im Repository-Stamm](../README.md#linux).
+
 Im Repository-Stamm unter Windows PowerShell:
 
 ```powershell

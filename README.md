@@ -176,8 +176,9 @@ unterstützen, leitet der Server abgelehnte Anfragen automatisch an ein Ersatzmo
 
 ## Befehle
 
-Alle Befehle im Repository-Stamm, Windows PowerShell. Unter Linux/macOS statt
-`.\.venv\Scripts\python.exe` einfach `.venv/bin/python`.
+Die App läuft unter **Windows und Linux** (macOS sollte ebenso gehen, ist aber nicht getestet).
+Die Befehle stehen im Repository-Stamm zuerst für Windows PowerShell; unter Linux steht statt
+`.\.venv\Scripts\python.exe` einfach `.venv/bin/python` (Abschnitt [Linux](#linux)).
 
 ### Einmalig: Umgebung einrichten
 
@@ -207,13 +208,59 @@ python -m venv .venv
 
 Nach `pip install` gibt es dafür auch den Befehl `learnharness`.
 
-### App für Windows bauen (Ordner mit EXE)
+### App bauen (Windows: Ordner mit EXE; Linux: siehe [Linux](#linux))
 
 ```powershell
 cd client
 ..\.venv\Scripts\pyinstaller.exe learnharness.spec
 cd ..
 ```
+
+### Linux
+
+Einmal die Systembibliotheken für Qt installieren (Debian/Ubuntu; auf einem normalen Desktop
+sind sie meist schon da):
+
+```bash
+sudo apt install python3-venv libegl1 libgl1 libxkbcommon0 libfontconfig1 libglib2.0-0 \
+  libdbus-1-3 libgssapi-krb5-2
+```
+
+Dann wie unter Windows, nur mit Linux-Pfaden:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -e ./protocol -e "./client[dev]" -e "./server[dev]"
+
+# App mit Übungsserver und Beispielprojekt
+.venv/bin/python -m learnharness_client --fake-server --project ./client/tests/fixtures/sample_godot_project
+
+# Tests und Prüfungen
+.venv/bin/python -m pytest
+(cd server && ../.venv/bin/python -m pytest)
+.venv/bin/ruff check client protocol server
+(cd client && ../.venv/bin/mypy)
+
+# App bauen (Ordner dist/LearnHarness mit ausführbarer Datei LearnHarness)
+(cd client && ../.venv/bin/pyinstaller learnharness.spec)
+
+# Server lokal
+cd server && DJANGO_DEBUG=1 ../.venv/bin/python manage.py migrate && DJANGO_DEBUG=1 ../.venv/bin/python manage.py runserver 0.0.0.0:8000
+```
+
+Unterschiede zu Windows, die die App selbst berücksichtigt:
+
+| | Windows | Linux |
+|---|---|---|
+| Godot-Projektliste (`projects.cfg`) | `%APPDATA%\Godot` | `~/.config/godot` (bzw. `$XDG_CONFIG_HOME/godot`) |
+| Godot-Log eines Spiels | `%APPDATA%\Godot\app_userdata\<Projekt>\logs` | `~/.local/share/godot/app_userdata/<Projekt>/logs` |
+| Godot-Programm für F6 | Einstellungen, sonst `godot` aus dem PATH | Einstellungen, sonst automatisch `godot4`/`godot` aus dem PATH |
+| Groß-/Kleinschreibung in Dateinamen | egal (`Player.gd` = `player.gd`) | zählt (`Player.gd` ≠ `player.gd`) |
+| Einstellungen der App | Registry (`HKCU\Software\LearnHarness`) | `~/.config/LearnHarness/` |
+| Sicherungen, Logs, Wiederherstellung | `%APPDATA%\LearnHarness\LearnHarnessClient` | `~/.local/share/LearnHarness/LearnHarnessClient/` |
+
+Pfade vom Server oder von einem Windows-PC (`scripts\player.gd`) versteht die App auf beiden
+Systemen; `..\` gilt auch unter Linux als Versuch, das Projekt zu verlassen.
 
 ### Server lokal (SQLite, zum Ausprobieren)
 

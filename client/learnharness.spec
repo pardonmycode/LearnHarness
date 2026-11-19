@@ -1,4 +1,4 @@
-# PyInstaller one-folder build for Windows.
+# PyInstaller one-folder build (Windows and Linux: run it on the target system).
 from PyInstaller.utils.hooks import collect_data_files
 
 datas = collect_data_files("learnharness_client")

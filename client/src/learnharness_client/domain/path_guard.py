@@ -4,9 +4,19 @@ from __future__ import annotations
 
 import os
 import stat
+import sys
 from pathlib import Path
 
 from ..texts import T
+
+# Windows and (by default) macOS ignore upper/lower case in file names; Linux does not.
+CASE_INSENSITIVE_FS = sys.platform in ("win32", "darwin")
+
+
+def fold_case(text: str) -> str:
+    """Normalise a path text for comparisons the way the file system compares names:
+    on Linux ``Player.gd`` and ``player.gd`` are two different files."""
+    return text.casefold() if CASE_INSENSITIVE_FS else text
 
 
 class PathNotAllowed(ValueError):
@@ -63,7 +73,13 @@ class PathGuard:
                 raise PathNotAllowed(T.PATH_GDIGNORE)
 
     def ensure_allowed(self, path: Path | str, *, must_exist: bool = True) -> Path:
+        if isinstance(path, str):
+            # Paths from the server or a Windows PC may use "\". On Linux "\" is an ordinary
+            # character, so "..\x.gd" would slip through as a harmless file name.
+            path = path.replace("\\", "/")
         candidate = Path(path)
+        if os.sep != "\\" and any("\\" in part for part in candidate.parts):
+            raise PathNotAllowed(T.PATH_OUTSIDE)  # e.g. a Linux file literally named "..\x.gd"
         if not candidate.is_absolute():
             candidate = self.root / candidate
         absolute = candidate.absolute()

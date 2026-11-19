@@ -33,7 +33,7 @@ from .tutor_client import ClientError, TutorClient
 LOG = logging.getLogger(__name__)
 # mypy cannot express an Annotated discriminated union as ``type[...]``; the adapter type is exact.
 _INCOMING: TypeAdapter[StreamChunk | LearningResponse | ErrorMessage | Task] = TypeAdapter(
-    IncomingMessage  # type: ignore[arg-type]
+    IncomingMessage  # type: ignore[arg-type, unused-ignore]  # needed only on some versions
 )
 
 

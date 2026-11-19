@@ -86,7 +86,8 @@ def test_agent_may_only_write_the_round_target() -> None:
 
     window = SimpleNamespace(_learn_target_file="scripts/player.gd")
     assert MainWindow._is_learn_target(window, "scripts/player.gd")  # type: ignore[arg-type]
-    assert MainWindow._is_learn_target(window, "./scripts\Player.gd")  # type: ignore[arg-type]
+    # Backslashes count as separators everywhere; case rules: see test_platform_paths.py.
+    assert MainWindow._is_learn_target(window, r".\scripts\player.gd")  # type: ignore[arg-type]
     assert not MainWindow._is_learn_target(window, "scripts/enemy.gd")  # type: ignore[arg-type]
     window._learn_target_file = None
     assert not MainWindow._is_learn_target(window, "scripts/player.gd")  # type: ignore[arg-type]

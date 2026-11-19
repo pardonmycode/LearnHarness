@@ -6,7 +6,10 @@ import os
 import re
 from pathlib import Path
 
-# Godot 4: %APPDATA%/Godot/projects.cfg, one ConfigFile section per project: ["C:/path"]
+from .paths import godot_config_dir
+
+# Godot 4: <config dir>/projects.cfg (see paths.py), one ConfigFile section per project:
+# ["C:/path"] on Windows, ["/home/kind/spiel"] on Linux
 _SECTION = re.compile(r'^\s*\[\s*"((?:[^"\\]|\\.)*)"\s*\]\s*$')
 # Godot 3: editor_settings-3.tres, lines like projects/name = "C:/path"
 _GODOT3_ENTRY = re.compile(r'^\s*projects/[^=]+=\s*"((?:[^"\\]|\\.)*)"\s*$')
@@ -32,12 +35,11 @@ def parse_project_paths(text: str, pattern: re.Pattern[str] = _SECTION) -> list[
     ]
 
 
-def known_godot_projects(appdata: str | None = None) -> list[Path]:
+def known_godot_projects(config_dir: Path | None = None) -> list[Path]:
     """Existing project folders from Godot's project list, in file order, without duplicates."""
-    base = appdata if appdata is not None else os.environ.get("APPDATA", "")
-    if not base:
+    godot_dir = config_dir if config_dir is not None else godot_config_dir()
+    if godot_dir is None:
         return []
-    godot_dir = Path(base) / "Godot"
     candidates = parse_project_paths(_read(godot_dir / "projects.cfg"))
     candidates += parse_project_paths(_read(godot_dir / "editor_settings-3.tres"), _GODOT3_ENTRY)
     found: list[Path] = []

@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..texts import T
-from .path_guard import PathGuard, PathNotAllowed
+from .path_guard import PathGuard, PathNotAllowed, fold_case
 
 _PROJECT_NAME = re.compile(r'^config/name\s*=\s*"((?:[^"\\]|\\.)*)"\s*$', re.MULTILINE)
 
@@ -29,5 +29,6 @@ class GodotProject:
         text = descriptor.read_text(encoding="utf-8-sig", errors="replace")
         match = _PROJECT_NAME.search(text)
         name = match.group(1).replace(r"\"", '"') if match else candidate.name
-        digest = hashlib.sha256(str(candidate).casefold().encode("utf-8")).hexdigest()[:16]
+        # Same id on Windows as before; on Linux "Spiel" and "spiel" are different projects.
+        digest = hashlib.sha256(fold_case(str(candidate)).encode("utf-8")).hexdigest()[:16]
         return cls(candidate, name, digest, PathGuard(candidate))

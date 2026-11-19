@@ -7,18 +7,20 @@ import re
 from pathlib import Path
 
 from .output_parser import GodotMessage, parse_godot_output
+from .paths import godot_data_dir
 
 TAIL_BYTES = 128 * 1024
 _UNSAFE = re.compile(r'[<>:"/\\|?*]')
 
 
-def default_log_path(project_name: str, appdata: str | None = None) -> Path | None:
-    base = appdata if appdata is not None else os.environ.get("APPDATA")
-    if not base:
+def default_log_path(project_name: str, data_dir: Path | None = None) -> Path | None:
+    """``<Godot-Datenordner>/app_userdata/<Projekt>/logs/godot.log`` on every system."""
+    base = data_dir if data_dir is not None else godot_data_dir()
+    if base is None:
         return None
-    # Godot replaces characters that are not allowed in Windows folder names.
+    # Godot replaces characters that are not allowed in folder names (on every system).
     folder = _UNSAFE.sub("_", project_name).strip() or "[unnamed project]"
-    return Path(base) / "Godot" / "app_userdata" / folder / "logs" / "godot.log"
+    return base / "app_userdata" / folder / "logs" / "godot.log"
 
 
 def read_recent_errors(log_path: Path, limit: int = 20) -> list[GodotMessage]:

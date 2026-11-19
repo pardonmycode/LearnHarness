@@ -30,10 +30,12 @@ from PyQt6.QtWidgets import (
 
 from learnharness_client.admin_sync import AdminSync
 from learnharness_client.config import AppSettings
+from learnharness_client.domain.path_guard import fold_case
 from learnharness_client.domain.profile import StudentProfile
 from learnharness_client.domain.project import GodotProject
 from learnharness_client.godot.log_reader import default_log_path, read_recent_errors
 from learnharness_client.godot.output_parser import GodotMessage
+from learnharness_client.godot.paths import find_godot_on_path
 from learnharness_client.godot.syntax_check import SyntaxChecker
 from learnharness_client.net.connection_monitor import ConnectionMonitor
 from learnharness_client.net.tutor_client import ClientError, TutorClient
@@ -65,7 +67,7 @@ def is_target_file(path: str, target: str | None) -> bool:
     if target is None:
         return False
     normalized = PurePosixPath(path.replace("\\", "/")).as_posix().removeprefix("./")
-    return normalized.casefold() == target.casefold()
+    return fold_case(normalized) == fold_case(target)
 
 
 class MainWindow(QMainWindow):
@@ -733,14 +735,16 @@ class MainWindow(QMainWindow):
         if not self.project or document is None:
             QMessageBox.information(self, T.SYNTAX_CHECK, T.OPEN_FILE_FIRST)
             return
-        if not self.settings.godot_path:
+        # Without a setting, use Godot from PATH (typical on Linux: godot4 from the package).
+        godot = self.settings.godot_path or find_godot_on_path()
+        if not godot:
             QMessageBox.information(self, T.SYNTAX_CHECK, T.GODOT_NOT_SET)
             return
         # Godot reads the file from disk, so it must see the same state as the editor.
         if document.dirty and not self.editor_tabs.save_current():
             return
         self._syntax_check_file = document.path.relative_to(self.project.root).as_posix()
-        if self.syntax_checker.start(self.settings.godot_path, self.project.root, document.path):
+        if self.syntax_checker.start(godot, self.project.root, document.path):
             self.statusBar().showMessage(
                 T.GODOT_CHECK_RUNNING.format(file=document.path.name), 10_000
             )
@@ -751,7 +755,7 @@ class MainWindow(QMainWindow):
         editor = self.editor_tabs.current_editor()
         if editor:
             editor.set_error_lines(
-                [m.line for m in messages if m.file.casefold() == file.casefold()]
+                [m.line for m in messages if fold_case(m.file) == fold_case(file)]
             )
         if not messages:
             self.statusBar().showMessage(T.GODOT_CHECK_OK.format(file=file), 8000)

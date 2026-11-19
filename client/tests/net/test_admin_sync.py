@@ -112,6 +112,7 @@ def admin() -> Iterator[tuple[FakeAdmin, str]]:
     thread.start()
     yield state, f"http://127.0.0.1:{server.server_address[1]}"
     server.shutdown()
+    server.server_close()
 
 
 @pytest.fixture
