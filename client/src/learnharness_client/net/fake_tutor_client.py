@@ -114,6 +114,8 @@ class FakeTutorClient(TutorClient):
             3: "Welche Vector2-Komponente und welches Vorzeichen brauchst du für die Bewegung?",
         }
         text = questions.get(self.experience_level, questions[0])
+        if message.language == "python":
+            text = "Was soll dein Programm als Erstes auf dem Bildschirm anzeigen?"
         words = [
             word + (" " if index < len(text.split()) - 1 else "")
             for index, word in enumerate(text.split())
@@ -142,7 +144,7 @@ class FakeTutorClient(TutorClient):
 
     def _explain(self, message: StudentMessage) -> None:
         key, explanation = fake_content.find_explanation(
-            message.message, message.code_excerpt or ""
+            message.message, message.code_excerpt or "", message.language
         )
         response = LearningResponse(
             mode="explanation",
@@ -152,7 +154,7 @@ class FakeTutorClient(TutorClient):
         self._stream_text(explanation.text, response)
 
     def _start_mission(self, message: StudentMessage) -> None:
-        content = fake_content.find_mission(message.message)
+        content = fake_content.find_mission(message.message, message.language)
         response = LearningResponse(
             mode="mission",
             message=f"Deine Mission: {content.mission.title} {content.mission.goal}",
@@ -163,6 +165,9 @@ class FakeTutorClient(TutorClient):
     def _mission_step(self, message: StudentMessage) -> None:
         self._mission_file = message.file or self._mission_file
         content = fake_content.MISSIONS.get(message.mission_id or "")
+        if content is not None and content.language != message.language:
+            # A saved mission from another language must not write its code into this file.
+            content = None
         step = content.steps.get(message.mission_step_id or "") if content else None
         if content is None and message.mission_id and message.mission_step_id:
             step = fake_content.generic_mission_step(message.mission_id, message.mission_step_id)
@@ -185,6 +190,9 @@ class FakeTutorClient(TutorClient):
     def _start_learning_round(self, message: StudentMessage) -> None:
         self._learn_level = message.learning_level
         self._learn_file = message.file or "player.gd"
+        if message.language == "python":
+            self._start_python_round(message.learning_level or 1)
+            return
         focus = fake_content.FOCUS_ROUNDS.get(message.skill_focus or "")
         if focus is not None:
             exercise: Exercise = focus.exercise.model_copy(
@@ -213,6 +221,27 @@ class FakeTutorClient(TutorClient):
         )
         self._later(lambda: self.stream_finished.emit(response))
 
+    def _start_python_round(self, level: int) -> None:
+        exercise = MultipleChoiceExercise(
+            id=f"learn_python_{level}",
+            skill="Variablen",
+            difficulty=min(5, max(1, (level + 1) // 2)),
+            prompt="Welcher Befehl zeigt Text auf dem Bildschirm an?",
+            choices=[
+                Choice(id="right", text="print"),
+                Choice(id="wrong", text="input"),
+            ],
+        )
+        response = LearningResponse(
+            mode="exercise",
+            message=(
+                f"Level {level}: Wir klären zuerst eine kleine Frage. Nur wenn sie richtig "
+                "beantwortet ist, schreibe ich den Code mit Erklärung in dein Projekt."
+            ),
+            exercise=exercise,
+        )
+        self._later(lambda: self.stream_finished.emit(response))
+
     def _emit_chunk(self, text: str) -> None:
         if not self._cancelled:
             self.stream_chunk.emit(text)
@@ -226,7 +255,7 @@ class FakeTutorClient(TutorClient):
         self.error.emit(ClientError("Die Antwort wurde gestoppt.", "cancelled", False))
 
     def request_next_hint(self, task_id: str) -> None:
-        del task_id
+        python = task_id == "python_first_program"
         self.hint_level = min(4, self.hint_level + 1)
         hints = {
             1: "Denk an ein Koordinatensystem.",
@@ -234,6 +263,13 @@ class FakeTutorClient(TutorClient):
             3: "Schau dir die Eigenschaften x und y von position an.",
             4: "Probiere es zuerst in einer kleinen Lückentext-Übung.",
         }
+        if python:
+            hints = {
+                1: "Was soll dein Programm dem Menschen zeigen?",
+                2: "Für Text auf dem Bildschirm gibt es einen eigenen Befehl.",
+                3: "Der Befehl heißt print.",
+                4: "Text steht in Anführungszeichen innerhalb der Klammern von print.",
+            }
         message = hints[self.hint_level]
         response = LearningResponse(
             mode="hint",
@@ -242,7 +278,7 @@ class FakeTutorClient(TutorClient):
             hints=[message],
         )
         self._later(lambda: self.stream_finished.emit(response))
-        if self.hint_level == 4:
+        if self.hint_level == 4 and not python:
             self._later(lambda: self.exercise_received.emit(self._fill_blank()), 2)
 
     def fetch_task(self, task_id: str) -> None:
@@ -262,6 +298,27 @@ class FakeTutorClient(TutorClient):
     def submit_exercise(self, submission: Submission) -> None:
         if submission.exercise_id.startswith("learn_level_"):
             self._submit_learning_exercise(submission)
+            return
+        if submission.exercise_id.startswith("learn_python_"):
+            correct = submission.answers.get("choice") == "right"
+            generated = (
+                [
+                    GeneratedFile(
+                        path=self._learn_file,
+                        content=fake_content.PYTHON_GREETING_CODE,
+                        explanation="Die Kommentare im Code erklären jede Zeile.",
+                    )
+                ]
+                if correct
+                else []
+            )
+            self._review(
+                correct,
+                "Richtig! print zeigt Text an. Jetzt schreibt der Agent den Code."
+                if correct
+                else "Das passt noch nicht. Welcher Befehl gibt etwas aus?",
+                generated,
+            )
             return
         if submission.exercise_id.startswith("learn_focus_"):
             self._submit_focus_exercise(submission)

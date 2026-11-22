@@ -527,3 +527,19 @@ def test_prompt_logging_can_be_switched_off(
     )
     call = AiCall.objects.get()
     assert call.messages == [] and call.system_prompt == "" and call.output_tokens == 5
+
+
+def test_python_language_reaches_the_prompt(db) -> None:
+    settings = AiSettings.load()
+    prompt = harness.system_prompt("mission", settings, language="python")
+    assert "Python 3" in prompt and "```python" in prompt
+    assert "Godot" not in prompt
+
+
+def test_stream_filter_catches_python_solutions() -> None:
+    code = (
+        "import random\n\ndef main():\n    x = 1\n    print(x)\n    return x\n\n"
+        "class A:\n    pass\n"
+    )
+    text, notes = harness.filter_text(code, max_lines=3)
+    assert "def main" not in text and notes

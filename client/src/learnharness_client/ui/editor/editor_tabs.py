@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import QApplication, QMessageBox, QTabWidget, QVBoxLayout, 
 from learnharness_client.config import AppSettings, app_data_dir
 from learnharness_client.domain.backup import BackupManager
 from learnharness_client.domain.file_store import FileStore, FileStoreError, SaveConflict
-from learnharness_client.domain.project import GodotProject
+from learnharness_client.domain.project import Project
 from learnharness_client.domain.recovery import RecoveryManager
 from learnharness_client.domain.script_document import ScriptDocument, sha256_bytes
 
@@ -35,7 +35,7 @@ class EditorTabs(QWidget):
     def __init__(self, settings: AppSettings, parent=None) -> None:
         super().__init__(parent)
         self.settings = settings
-        self.project: GodotProject | None = None
+        self.project: Project | None = None
         self.store: FileStore | None = None
         self.recovery = RecoveryManager(app_data_dir())
         self.documents: dict[CodeEditor, ScriptDocument] = {}
@@ -72,7 +72,7 @@ class EditorTabs(QWidget):
         if app is not None:
             app.applicationStateChanged.connect(lambda _state: self.check_all_external_changes())
 
-    def set_project(self, project: GodotProject) -> None:
+    def set_project(self, project: Project) -> None:
         if self.project and not self.confirm_close_all():
             return
         self.project = project
@@ -95,7 +95,8 @@ class EditorTabs(QWidget):
         except (OSError, ValueError) as exc:
             QMessageBox.warning(self, T.FILE_NOT_OPENED, str(exc))
             return None
-        editor = CodeEditor(font_size=self.settings.font_size)
+        editor = CodeEditor(font_size=self.settings.font_size, language=self.project.language)
+        editor.adopt_indentation(document.text)
         editor.explain_requested.connect(self.explain_requested)
         editor.setPlainText(document.text)
         editor.document().setModified(False)
@@ -284,7 +285,7 @@ class EditorTabs(QWidget):
         self.documents[editor] = fresh
         self._update_title(editor)
         self._ensure_watched(fresh.path)
-        self.status_message.emit(T.RELOADED_FROM_GODOT.format(file=fresh.path.name))
+        self.status_message.emit(T.RELOADED_FROM_DISK.format(file=fresh.path.name))
         return True
 
     def _watcher_changed(self, path_text: str) -> None:

@@ -1,4 +1,4 @@
-"""QPlainTextEdit with line numbers and GDScript-friendly editing."""
+"""QPlainTextEdit with line numbers and editing rules for GDScript and Python."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import QPlainTextEdit, QTextEdit, QWidget
 
 from ...texts import T
 from ..theme import colors, monospace_font
-from .gdscript_highlighter import GDScriptHighlighter
+from .highlighters import create_highlighter
 
 _BRACKETS = {"(": ")", "[": "]", "{": "}"}
 _CLOSING = {value: key for key, value in _BRACKETS.items()}
@@ -40,8 +40,11 @@ class CodeEditor(QPlainTextEdit):
     cursor_location_changed = pyqtSignal(int, int)
     font_size_changed = pyqtSignal(int)
 
-    def __init__(self, parent=None, *, font_size: int = 14) -> None:
+    def __init__(self, parent=None, *, font_size: int = 14, language: str = "gdscript") -> None:
         super().__init__(parent)
+        self.language = language
+        # GDScript uses tabs; Python uses four spaces unless the file already uses tabs.
+        self.indent_unit = "    " if language == "python" else "\t"
         self.line_number_area = LineNumberArea(self)
         self.error_lines: set[int] = set()
         self.setObjectName("codeEditor")
@@ -49,12 +52,26 @@ class CodeEditor(QPlainTextEdit):
         self.setTabStopDistance(self.fontMetrics().horizontalAdvance(" ") * 4)
         self.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
         self.setAcceptDrops(False)
-        self.highlighter = GDScriptHighlighter(self.document())
+        self.highlighter = create_highlighter(self.document(), language)
         self.blockCountChanged.connect(self._update_margin)
         self.updateRequest.connect(self._update_line_number_area)
         self.cursorPositionChanged.connect(self._cursor_changed)
         self._update_margin()
         self._cursor_changed()
+
+    def adopt_indentation(self, text: str) -> None:
+        """Mixing tabs and spaces is an error in Python, so follow what the file uses."""
+        if self.language == "python":
+            uses_tabs = any(line.startswith("\t") for line in text.splitlines())
+            self.indent_unit = "\t" if uses_tabs else "    "
+
+    def _outdent_length(self, line: str) -> int:
+        if line.startswith("\t"):
+            return 1
+        if self.indent_unit == "\t":
+            return 0
+        prefix = line[: len(self.indent_unit)]
+        return len(prefix) - len(prefix.lstrip(" "))
 
     def line_number_area_width(self) -> int:
         digits = len(str(max(1, self.blockCount())))
@@ -262,9 +279,10 @@ class CodeEditor(QPlainTextEdit):
         if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             cursor = self.textCursor()
             current_line = cursor.block().text()
-            indentation = current_line[: len(current_line) - len(current_line.lstrip("\t"))]
+            blanks = " \t" if self.language == "python" else "\t"
+            indentation = current_line[: len(current_line) - len(current_line.lstrip(blanks))]
             if current_line.rstrip().endswith(":"):
-                indentation += "\t"
+                indentation += self.indent_unit
             super().keyPressEvent(event)
             self.insertPlainText(indentation)
             return
@@ -274,14 +292,15 @@ class CodeEditor(QPlainTextEdit):
         cursor = self.textCursor()
         if not cursor.hasSelection():
             if outdent:
+                length = self._outdent_length(cursor.block().text())
                 cursor.movePosition(QTextCursor.MoveOperation.StartOfBlock)
-                cursor.movePosition(
-                    QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor, 1
-                )
-                if cursor.selectedText() == "\t":
+                if length:
+                    cursor.movePosition(
+                        QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor, length
+                    )
                     cursor.removeSelectedText()
             else:
-                cursor.insertText("\t")
+                cursor.insertText(self.indent_unit)
             return
         start = cursor.selectionStart()
         end = cursor.selectionEnd()
@@ -290,17 +309,16 @@ class CodeEditor(QPlainTextEdit):
         cursor.beginEditBlock()
         while cursor.position() <= end:
             if outdent:
-                cursor.movePosition(
-                    QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor, 1
-                )
-                if cursor.selectedText() == "\t":
+                length = self._outdent_length(cursor.block().text())
+                if length:
+                    cursor.movePosition(
+                        QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor, length
+                    )
                     cursor.removeSelectedText()
-                    end -= 1
-                else:
-                    cursor.clearSelection()
+                    end -= length
             else:
-                cursor.insertText("\t")
-                end += 1
+                cursor.insertText(self.indent_unit)
+                end += len(self.indent_unit)
             if not cursor.movePosition(QTextCursor.MoveOperation.NextBlock):
                 break
         cursor.endEditBlock()

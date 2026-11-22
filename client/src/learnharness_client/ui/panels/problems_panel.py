@@ -1,4 +1,4 @@
-"""Problems from Godot or server review."""
+"""Problems from Godot, Python or server review."""
 
 from __future__ import annotations
 
@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 from ...texts import T
 
 _GODOT_LOCATION = re.compile(r"res://([^:\s]+\.gd):(\d+)", re.IGNORECASE)
+_PYTHON_LOCATION = re.compile(r'File "([^"]+\.py)", line (\d+)', re.IGNORECASE)
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,6 +35,7 @@ class ProblemsPanel(QWidget):
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
+        self.language = "gdscript"
         layout = QVBoxLayout(self)
         row = QHBoxLayout()
         self.error_input = QLineEdit()
@@ -50,16 +52,33 @@ class ProblemsPanel(QWidget):
         self.error_input.returnPressed.connect(self.add_from_input)
         self.list.itemActivated.connect(self._activate)
 
+    def set_language(self, language: str) -> None:
+        self.language = language
+        python = language == "python"
+        self.error_input.setPlaceholderText(
+            T.PROBLEM_INPUT_PLACEHOLDER_PYTHON if python else T.PROBLEM_INPUT_PLACEHOLDER
+        )
+        self.error_input.setAccessibleName(
+            T.PROBLEM_INPUT_A11Y_PYTHON if python else T.PROBLEM_INPUT_A11Y
+        )
+
     def add_from_input(self) -> None:
         text = self.error_input.text().strip()
         if not text:
             return
-        match = _GODOT_LOCATION.search(text)
+        if self.language == "python":
+            # In a traceback the last location is where the error happened.
+            matches = list(_PYTHON_LOCATION.finditer(text))
+            match = matches[-1] if matches else None
+            source = T.SOURCE_PYTHON
+        else:
+            match = _GODOT_LOCATION.search(text)
+            source = T.SOURCE_GODOT
         problem = Problem(
             file=match.group(1) if match else "",
             line=int(match.group(2)) if match else 0,
             message=text,
-            source=T.SOURCE_GODOT,
+            source=source,
         )
         self.add_problem(problem)
         self.error_input.clear()

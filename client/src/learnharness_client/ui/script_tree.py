@@ -1,4 +1,4 @@
-"""Safe, compact GDScript tree built only from PathGuard-approved files."""
+"""Safe, compact script tree built only from PathGuard-approved files."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 from PyQt6.QtCore import QFileSystemWatcher, Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QTreeWidget, QTreeWidgetItem
 
-from learnharness_client.domain.project import GodotProject
+from learnharness_client.domain.project import Project
 
 from ..texts import T
 
@@ -22,7 +22,7 @@ class ScriptTree(QTreeWidget):
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
-        self.project: GodotProject | None = None
+        self.project: Project | None = None
         self.setHeaderLabel(T.SCRIPTS)
         self.setIndentation(14)
         self.setAnimated(True)
@@ -36,7 +36,7 @@ class ScriptTree(QTreeWidget):
         self._refresh_timer.timeout.connect(self.refresh)
         self.watcher.directoryChanged.connect(lambda _path: self._refresh_timer.start())
 
-    def set_project(self, project: GodotProject) -> None:
+    def set_project(self, project: Project) -> None:
         self.project = project
         self.refresh()
 
@@ -75,10 +75,13 @@ class ScriptTree(QTreeWidget):
         except OSError:
             return
         for child in children:
-            if child.name.startswith(".") or child.name == "addons":
+            if child.name.startswith(".") or not child.is_dir():
                 continue
-            if child.is_dir() and not child.is_symlink() and not _is_junction(child):
-                self._watch_folders(child, depth + 1)
+            if child.is_symlink() or _is_junction(child):
+                continue
+            if self.project and self.project.guard.skips_folder(child):
+                continue
+            self._watch_folders(child, depth + 1)
 
     def _open_item(self, item: QTreeWidgetItem) -> None:
         value = item.data(0, Qt.ItemDataRole.UserRole)

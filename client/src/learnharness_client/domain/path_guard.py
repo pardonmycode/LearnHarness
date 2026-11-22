@@ -6,8 +6,11 @@ import os
 import stat
 import sys
 from pathlib import Path
+from typing import Literal
 
 from ..texts import T
+
+ProjectLanguage = Literal["gdscript", "python"]
 
 # Windows and (by default) macOS ignore upper/lower case in file names; Linux does not.
 CASE_INSENSITIVE_FS = sys.platform in ("win32", "darwin")
@@ -20,22 +23,29 @@ def fold_case(text: str) -> str:
 
 
 class PathNotAllowed(ValueError):
-    """Raised when a path would escape the selected Godot project."""
+    """Raised when a path would escape the selected project."""
 
 
 class PathGuard:
     EXCLUDED_DIRECTORIES = frozenset({".godot", ".import", ".git"})
+    # Installed or generated code; hidden folders and virtual environments count as well.
+    PYTHON_EXCLUDED_DIRECTORIES = frozenset({"__pycache__", "node_modules", "site-packages"})
+    MAX_SCRIPTS = 2000
 
     def __init__(
         self,
         project_root: Path,
         *,
-        allowed_suffixes: frozenset[str] = frozenset({".gd"}),
+        allowed_suffixes: frozenset[str] | None = None,
         include_addons: bool = False,
+        language: ProjectLanguage = "gdscript",
     ) -> None:
         self.root = project_root.resolve(strict=True)
-        if not (self.root / "project.godot").is_file():
+        self.language: ProjectLanguage = language
+        if language == "gdscript" and not (self.root / "project.godot").is_file():
             raise PathNotAllowed(T.PATH_NOT_PROJECT)
+        if allowed_suffixes is None:
+            allowed_suffixes = frozenset({".py" if language == "python" else ".gd"})
         self.allowed_suffixes = frozenset(suffix.casefold() for suffix in allowed_suffixes)
         self.include_addons = include_addons
         self._reject_reparse_point(self.root)
@@ -61,6 +71,13 @@ class PathGuard:
         relative = resolved.relative_to(self.root)
         parent_parts = relative.parts[:-1] if resolved.suffix else relative.parts
         folded = {part.casefold() for part in parent_parts}
+        if self.language == "python":
+            current = self.root
+            for part in parent_parts:
+                current /= part
+                if self.skips_folder(current):
+                    raise PathNotAllowed(T.PATH_PROTECTED)
+            return
         if folded & self.EXCLUDED_DIRECTORIES:
             raise PathNotAllowed(T.PATH_PROTECTED)
         if not self.include_addons and "addons" in folded:
@@ -71,6 +88,21 @@ class PathGuard:
             current /= part
             if (current / ".gdignore").exists():
                 raise PathNotAllowed(T.PATH_GDIGNORE)
+
+    def skips_folder(self, folder: Path) -> bool:
+        """True for folders that never contain the child's own scripts."""
+        name = folder.name.casefold()
+        if self.language == "python":
+            return (
+                name.startswith(".")
+                or name in self.PYTHON_EXCLUDED_DIRECTORIES
+                or (folder / "pyvenv.cfg").exists()
+            )
+        return (
+            name in self.EXCLUDED_DIRECTORIES
+            or (name == "addons" and not self.include_addons)
+            or (folder / ".gdignore").exists()
+        )
 
     def ensure_allowed(self, path: Path | str, *, must_exist: bool = True) -> Path:
         if isinstance(path, str):
@@ -95,7 +127,7 @@ class PathGuard:
         if not resolved.is_relative_to(self.root) or resolved == self.root:
             raise PathNotAllowed(T.PATH_OUTSIDE)
         if resolved.suffix.casefold() not in self.allowed_suffixes:
-            raise PathNotAllowed(T.PATH_ONLY_GD)
+            raise PathNotAllowed(T.PATH_ONLY_PY if self.language == "python" else T.PATH_ONLY_GD)
         self._check_components(resolved)
         self._check_exclusions(resolved)
         if must_exist and not resolved.is_file():
@@ -107,9 +139,17 @@ class PathGuard:
 
     def iter_scripts(self) -> list[Path]:
         scripts: list[Path] = []
-        for candidate in self.root.rglob("*.gd"):
-            try:
-                scripts.append(self.ensure_allowed(candidate))
-            except PathNotAllowed:
-                continue
+        for folder, subfolders, files in os.walk(self.root):
+            current = Path(folder)
+            subfolders[:] = [name for name in subfolders if not self.skips_folder(current / name)]
+            for name in files:
+                if Path(name).suffix.casefold() not in self.allowed_suffixes:
+                    continue
+                try:
+                    scripts.append(self.ensure_allowed(current / name))
+                except PathNotAllowed:
+                    continue
+            if len(scripts) >= self.MAX_SCRIPTS:
+                del scripts[self.MAX_SCRIPTS :]
+                break
         return sorted(scripts, key=lambda item: str(item.relative_to(self.root)).casefold())

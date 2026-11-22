@@ -107,8 +107,21 @@ GENERIC_EXPLANATION = Explanation(
 )
 
 
-def find_explanation(question: str, code: str) -> tuple[str, Explanation]:
+PYTHON_EXPLANATION = Explanation(
+    "Python liest diesen Code von oben nach unten: Jede Zeile ist ein kleiner Auftrag. "
+    "Eingerückte Zeilen gehören zu der Zeile mit dem Doppelpunkt darüber.",
+    "Wozu gehören eingerückte Zeilen in Python?",
+    "Zu der Zeile mit dem Doppelpunkt darüber.",
+    "Zu gar nichts, Python überspringt sie.",
+)
+
+
+def find_explanation(
+    question: str, code: str, language: str = "gdscript"
+) -> tuple[str, Explanation]:
     """Pick the topic named in the question first, then one that occurs in the code."""
+    if language == "python":
+        return "python", PYTHON_EXPLANATION
     for text in (question, code):
         for key, explanation in EXPLANATIONS.items():
             if key in text:
@@ -210,6 +223,7 @@ class MissionContent:
     mission: Mission
     keywords: tuple[str, ...]
     steps: dict[str, MissionStepContent]
+    language: str = "gdscript"
 
 
 def _choice(mission_id: str, step: str, prompt: str, right: str, wrong: str) -> Exercise:
@@ -260,7 +274,56 @@ COIN_CODE = (
     '\tprint("Münzen: ", coins)\n'
 )
 
+PYTHON_GREETING_CODE = (
+    "# input wartet, bis du etwas eintippst, und merkt es sich in name.\n"
+    'name = input("Wie heißt du? ")\n'
+    "# print zeigt den Text auf dem Bildschirm an.\n"
+    'print(f"Hallo, {name}!")\n'
+)
+
 MISSIONS: dict[str, MissionContent] = {
+    "python_greeting": MissionContent(
+        Mission(
+            id="python_greeting",
+            title="Baue eine Begrüßung!",
+            goal="Dein Programm fragt nach deinem Namen und begrüßt dich.",
+            skill="variables",
+            steps=[
+                MissionStep(id="understand", title="Verstehen, was input macht", kind="understand"),
+                MissionStep(id="greet", title="Die Begrüßung vervollständigen", kind="exercise"),
+                MissionStep(id="try", title="Dein Programm starten", kind="try"),
+            ],
+        ),
+        (),
+        {
+            "understand": MissionStepContent(
+                "input zeigt eine Frage an und wartet, bis du etwas eintippst. Deine Antwort "
+                "kannst du in einer Variablen speichern.",
+                _choice(
+                    "python_greeting",
+                    "understand",
+                    "Was macht input?",
+                    "Es wartet auf eine Eingabe.",
+                    "Es beendet das Programm.",
+                ),
+                {"choice": "right"},
+            ),
+            "greet": MissionStepContent(
+                "Jetzt soll dein Programm antworten. Wenn du richtig ergänzt, schreibe ich den "
+                "Code mit Erklärungen in dein Skript.",
+                _mission_fill(
+                    "python_greeting",
+                    "greet",
+                    "Welcher Befehl zeigt Text auf dem Bildschirm an?",
+                    '{{blank}}(f"Hallo, {name}!")',
+                    ["print", "input", "len"],
+                ),
+                {"blank": "print"},
+                PYTHON_GREETING_CODE,
+            ),
+        },
+        "python",
+    ),
     "double_jump": MissionContent(
         Mission(
             id="double_jump",
@@ -404,7 +467,9 @@ def generic_mission_step(mission_id: str, step_id: str) -> MissionStepContent:
     )
 
 
-def find_mission(wish: str) -> MissionContent:
+def find_mission(wish: str, language: str = "gdscript") -> MissionContent:
+    if language == "python":
+        return MISSIONS["python_greeting"]
     lowered = wish.casefold()
     for content in MISSIONS.values():
         if any(keyword in lowered for keyword in content.keywords):

@@ -14,17 +14,20 @@ _WINDOWS = sys.platform == "win32"
 
 
 class T:
-    APP_TITLE = "LearnHarness – Godot-Programmierwerkstatt"
+    APP_TITLE = "LearnHarness – Programmierwerkstatt"
     PROJECT_TITLE = "{project} – LearnHarness"
 
     # Menus and actions
     MENU_FILE = "&Datei"
     MENU_EDIT = "&Bearbeiten"
     MENU_VIEW = "&Ansicht"
-    MENU_GODOT = "&Godot"
+    MENU_CHECK = "&Prüfen"
     MENU_HELP = "&Hilfe"
-    OPEN_PROJECT = "Godot-Projekt öffnen …"
-    NEW_SCRIPT = "Neues GDScript …"
+    OPEN_PROJECT = "Projekt öffnen …"
+    NEW_PYTHON_PROJECT = "Neues Python-Projekt …"
+    OPEN_PYTHON_SCRIPT = "Python-Skript öffnen …"
+    PYTHON_FILE_FILTER = "Python-Skripte (*.py)"
+    NEW_SCRIPT = "Neues Skript …"
     SAVE = "Speichern"
     OLDER_VERSIONS = "Ältere Version ansehen …"
     RECENT_PROJECTS = "Zuletzt verwendete Projekte"
@@ -35,6 +38,7 @@ class T:
     SETTINGS = "Einstellungen …"
     SHOW_PROBLEMS = "Probleme anzeigen"
     SYNTAX_CHECK = "Skript mit Godot prüfen"
+    SYNTAX_CHECK_PYTHON = "Python-Skript prüfen"
     READ_GODOT_LOG = "Fehler aus dem Godot-Log holen"
     TUTORIAL = "Kurzanleitung"
     DIAGNOSTICS = "Technische Details"
@@ -43,7 +47,7 @@ class T:
     TAB_AGENT = "LearnAgent"
     TAB_TUTOR = "Tutor"
     TAB_PROGRESS = "Fortschritt"
-    PROBLEMS_DOCK = "Probleme und Godot-Fehler"
+    PROBLEMS_DOCK = "Probleme und Fehlermeldungen"
 
     # Status bar
     NO_PROJECT = "Kein Projekt geöffnet"
@@ -60,12 +64,16 @@ class T:
 
     # Messages
     OPEN_PROJECT_FIRST_TITLE = "Erst Projekt öffnen"
-    OPEN_PROJECT_FIRST = "Öffne zuerst ein Godot-Projekt."
-    OPEN_FILE_FIRST = "Öffne zuerst eine GDScript-Datei."
+    OPEN_PROJECT_FIRST = "Öffne zuerst ein Projekt."
+    OPEN_FILE_FIRST = "Öffne zuerst eine Skriptdatei."
     NEW_SCRIPT_PROMPT = "Dateiname, zum Beispiel enemy.gd:"
+    NEW_SCRIPT_PROMPT_PYTHON = "Dateiname, zum Beispiel rechner.py:"
+    NEW_PYTHON_PROJECT_PROMPT = "Wie soll dein Projekt heißen?"
+    NEW_PYTHON_PROJECT_WHERE = "Wo soll der Projektordner liegen?"
+    PROJECT_NOT_CREATED = "Projekt nicht angelegt"
     GOTO_LINE_PROMPT = "Zeilennummer:"
     WAIT_FOR_SESSION = "Öffne zuerst ein Projekt und warte kurz auf den Lernserver."
-    AGENT_NEEDS_FILE = "Öffne zuerst die GDScript-Datei, die der LearnAgent später schreiben soll."
+    AGENT_NEEDS_FILE = "Öffne zuerst die Skriptdatei, die der LearnAgent später schreiben soll."
     PROJECT_NOT_OPENED = "Projekt nicht geöffnet"
     SETTINGS_SAVED_TITLE = "Einstellungen gespeichert"
     SETTINGS_SAVED = (
@@ -105,6 +113,14 @@ class T:
     GODOT_LOG_EMPTY = "Im Godot-Log stehen keine neuen Fehler."
     GODOT_LOG_FOUND = "{count} Fehler aus dem Godot-Log übernommen."
 
+    # Python
+    PYTHON_CHECK_OK = "In {file} ist kein Syntaxfehler."
+    PYTHON_CHECK_ERROR = "In Zeile {line} stimmt etwas nicht. Schau unten bei den Problemen."
+    PYTHON_CHECK_UNREADABLE = "Python kann diese Datei nicht lesen."
+    PYTHON_IN_GODOT_PROJECT = (
+        "Dieser Ordner ist ein Godot-Projekt. Lege dein Python-Skript in einen eigenen Ordner."
+    )
+
     # First start
     FIRST_START_TITLE = "Willkommen! Wo ist der Lernserver?"
     FIRST_START_INTRO = (
@@ -133,13 +149,13 @@ class T:
     TUTORIAL_STEP = "Schritt {current} von {total}"
     TUTORIAL_STEPS = (
         (
-            "1. Dein Godot-Projekt",
-            "Links siehst du die Skripte deines Spiels. Mit einem Doppelklick öffnest du eins. "
-            "Mit Strg+S speicherst du – Godot sieht die Änderung sofort.",
+            "1. Dein Projekt",
+            "Links siehst du deine Skripte für Godot oder Python. Mit einem Doppelklick "
+            "öffnest du eins. Mit Strg+S speicherst du.",
         ),
         (
             "2. Der LearnAgent",
-            "Rechts beschreibst du, was dein Spiel können soll. Der Agent stellt dir zuerst "
+            "Rechts beschreibst du, was dein Projekt können soll. Der Agent stellt dir zuerst "
             "eine Lernfrage. Erst wenn deine Antwort stimmt, schreibt er den Code.",
         ),
         (
@@ -171,8 +187,8 @@ class T:
     # App start
     CRASH_TITLE = "Etwas ist schiefgegangen"
     CRASH = "Dein ungespeicherter Text wurde als Entwurf gesichert. Bitte starte LearnHarness neu."
-    CHOOSE_PROJECT = "Godot-Projekt auswählen"
-    NOT_A_PROJECT_TITLE = "Kein Godot-Projekt"
+    CHOOSE_PROJECT = "Projektordner auswählen"
+    NOT_A_PROJECT_TITLE = "Kein Projekt gefunden"
 
     # Domain errors (shown to the child via QMessageBox)
     PATH_NOT_PROJECT = "Der gewählte Ordner ist kein Godot-Projekt."
@@ -180,16 +196,25 @@ class T:
     PATH_PROTECTED = "Dieser Projektordner ist geschützt."
     PATH_ADDONS = "Add-ons sind standardmäßig ausgeblendet."
     PATH_GDIGNORE = "Dieser Ordner wird von Godot ignoriert."
-    PATH_OUTSIDE = "Die Datei liegt außerhalb des Godot-Projekts."
+    PATH_OUTSIDE = "Die Datei liegt außerhalb des Projekts."
     PATH_NOT_FOUND = "Die Skriptdatei wurde nicht gefunden."
-    PATH_ONLY_GD = "Es dürfen nur GDScript-Dateien geöffnet werden."
+    PATH_ONLY_GD = "In einem Godot-Projekt dürfen nur GDScript-Dateien geöffnet werden."
+    PATH_ONLY_PY = "In einem Python-Projekt dürfen nur Python-Dateien geöffnet werden."
     PATH_NOT_FILE = "Der Pfad ist keine Skriptdatei."
-    PROJECT_MISSING_DESCRIPTOR = "In diesem Ordner fehlt die Datei project.godot."
+    PROJECT_MISSING_DESCRIPTOR = (
+        "In diesem Ordner habe ich kein Godot-Projekt (project.godot) und keine Python-Datei "
+        "gefunden."
+    )
+    PROJECT_FOLDER_TOO_BROAD = (
+        "Dieser Ordner ist zu groß für ein Projekt. Lege dein Skript in einen eigenen Ordner."
+    )
+    PROJECT_NAME_INVALID = (
+        "Der Name darf Buchstaben, Zahlen, Leerzeichen, - und _ enthalten (höchstens 60 Zeichen)."
+    )
+    PROJECT_EXISTS = "Einen Ordner mit diesem Namen gibt es dort schon."
     FILE_TOO_LARGE = "Diese Datei ist zu groß für den Lerneditor."
     FILE_NOT_UTF8 = "Die Datei ist nicht als UTF-8 gespeichert."
-    FILE_CHANGED_ON_DISK = (
-        "Die Datei wurde seit dem Öffnen in Godot oder einem anderen Programm geändert."
-    )
+    FILE_CHANGED_ON_DISK = "Die Datei wurde seit dem Öffnen in einem anderen Programm geändert."
     FILE_OPEN_FAILED = "Die Datei konnte nicht zum Speichern geöffnet werden."
     FILE_WRITE_INCOMPLETE = "Die Datei konnte nicht vollständig geschrieben werden."
     FILE_COMMIT_FAILED = "Das sichere Speichern konnte nicht abgeschlossen werden."
@@ -204,7 +229,7 @@ class T:
 
     # Login
     LOGIN_TITLE = "Wer programmiert heute?"
-    LOGIN_HEADING = "Willkommen in der Godot-Programmierwerkstatt!"
+    LOGIN_HEADING = "Willkommen in der Programmierwerkstatt!"
     LOGIN_INTRO = (
         "Wähle dein Profil oder lege ein neues an. Benutze bitte einen Spitznamen, "
         "nicht deinen vollständigen Namen. Die Erfahrungsstufe hilft dem Lernhelfer, "
@@ -251,16 +276,16 @@ class T:
     FIRST_START_ADDRESS_A11Y = "Adresse des Lernservers"
 
     # Conflict and recovery dialogs
-    CONFLICT_TITLE = "Die Datei wurde auch in Godot geändert"
+    CONFLICT_TITLE = "Die Datei wurde auch woanders geändert"
     CONFLICT_INTRO = (
         "Deine Version und die Version auf der Festplatte sind verschieden. "
         "Wähle bewusst, welche Version du behalten möchtest."
     )
-    CONFLICT_DISK_VERSION = "Version aus Godot"
+    CONFLICT_DISK_VERSION = "Version auf der Festplatte"
     CONFLICT_MY_VERSION = "Meine Version"
     CONFLICT_SAME = "Die Texte sehen gleich aus."
     CONFLICT_KEEP_MINE = "Meine Version behalten"
-    CONFLICT_LOAD_DISK = "Version aus Godot laden"
+    CONFLICT_LOAD_DISK = "Version von der Festplatte laden"
     CONFLICT_CANCEL = "Erst einmal nichts ändern"
     CONFLICT_DELETED = "(Die Datei wurde gelöscht.)"
     RECOVERY_TITLE = "Ungespeicherte Arbeit gefunden"
@@ -289,7 +314,7 @@ class T:
     SAVED = "Gespeichert: {file}"
     SAVE_FAILED_TITLE = "Speichern nicht möglich"
     SAVE_FAILED = "Dein Text bleibt im Editor und wurde als Entwurf gesichert.\n\n{error}"
-    RELOADED_FROM_GODOT = "Neu aus Godot geladen: {file}"
+    RELOADED_FROM_DISK = "Neu geladen: {file}"
     DELETED_EXTERNALLY = "{file} wurde außerhalb des Editors gelöscht. Dein Text bleibt geöffnet."
     KEEPING_MY_VERSION = "Deine Version bleibt im Editor. Speichere sie bewusst mit Strg+S."
     UNSAVED_CHANGES_TITLE = "Ungespeicherte Änderungen"
@@ -297,16 +322,20 @@ class T:
 
     # Script tree
     SCRIPTS = "Skripte"
-    SCRIPTS_A11Y = "Skriptdateien im Godot-Projekt"
+    SCRIPTS_A11Y = "Skriptdateien im Projekt"
 
     # Problems
     PROBLEM_INPUT_PLACEHOLDER = "Godot-Fehlermeldung hier einfügen …"
     PROBLEM_INPUT_A11Y = "Godot-Fehlermeldung einfügen"
+    PROBLEM_INPUT_PLACEHOLDER_PYTHON = "Python-Fehlermeldung hier einfügen …"
+    PROBLEM_INPUT_A11Y_PYTHON = "Python-Fehlermeldung einfügen"
     PROBLEM_ADD = "Fehler hinzufügen"
     PROBLEM_LIST_A11Y = "Liste der Probleme"
     SOURCE_GODOT = "Godot"
     SOURCE_GODOT_CHECK = "Godot-Prüfung"
     SOURCE_GODOT_LOG = "Godot-Log"
+    SOURCE_PYTHON = "Python"
+    SOURCE_PYTHON_CHECK = "Python-Prüfung"
     SOURCE_REVIEW = "Prüfung"
 
     # Diagnostics
@@ -338,7 +367,7 @@ class T:
     # LearnAgent panel
     AGENT_HEADING = "LearnAgent"
     AGENT_INTRO = (
-        "Beschreibe, was dein Spiel können soll. Der Agent erklärt zuerst das Thema und "
+        "Beschreibe, was dein Projekt können soll. Der Agent erklärt zuerst das Thema und "
         "stellt dir eine Lernfrage. Erst wenn deine Antwort richtig ist, schreibt er den "
         "Code in dein Projekt."
     )
@@ -348,11 +377,12 @@ class T:
     AGENT_LEVEL_LOCKED = "Level {level}  🔒"
     AGENT_UNLOCKED = "{level} von 10 freigeschaltet"
     AGENT_UNLOCKED_A11Y = "Freigeschaltete Level"
-    AGENT_WISH_SECTION = "WAS SOLL DEIN SPIEL KÖNNEN?"
+    AGENT_WISH_SECTION = "WAS SOLL DEIN PROJEKT KÖNNEN?"
     AGENT_WISH_PLACEHOLDER = "Zum Beispiel: Meine Figur soll nach rechts laufen."
+    AGENT_WISH_PLACEHOLDER_PYTHON = "Zum Beispiel: Mein Programm soll mich begrüßen."
     AGENT_WISH_A11Y = "Wunsch an den LearnAgent"
     AGENT_START = "Lernrunde starten  →"
-    AGENT_WISH_EMPTY = "Beschreibe zuerst kurz deinen Spielwunsch."
+    AGENT_WISH_EMPTY = "Beschreibe zuerst kurz deinen Wunsch."
     AGENT_PREPARING = "Der LearnAgent bereitet eine passende Lernfrage vor …"
     AGENT_CORRECT = "✓  Richtig! Jetzt darf der LearnAgent den vollständigen Code schreiben."
     AGENT_NOT_YET = (
@@ -379,7 +409,7 @@ class T:
         7: "Ergänze wichtige Ausdrücke mit kleinen Hinweisen.",
         8: "Plane eine Funktion und ergänze mehrere zusammenhängende Teile.",
         9: "Entscheide selbst über den Lösungsweg und begründe ihn.",
-        10: "Beschreibe ein eigenes Spielfeature und prüfe den Plan des Agenten.",
+        10: "Beschreibe eine eigene Funktion und prüfe den Plan des Agenten.",
     }
 
     # Progress panel
@@ -425,11 +455,9 @@ class T:
     GODOT_START_FAILED = "Godot ließ sich nicht starten."
 
     # Project choice
-    PROJECT_CHOICE_TITLE = "Welches Spiel möchtest du bearbeiten?"
-    PROJECT_CHOICE_INTRO = (
-        "Diese Godot-Projekte habe ich auf deinem Computer gefunden. Wähle eins aus."
-    )
-    PROJECT_CHOICE_LIST_A11Y = "Gefundene Godot-Projekte"
+    PROJECT_CHOICE_TITLE = "Welches Projekt möchtest du bearbeiten?"
+    PROJECT_CHOICE_INTRO = "Diese Projekte habe ich auf deinem Computer gefunden. Wähle eins aus."
+    PROJECT_CHOICE_LIST_A11Y = "Gefundene Projekte"
     PROJECT_CHOICE_RECENT_TAG = "Zuletzt benutzt · {path}"
     PROJECT_CHOICE_GODOT_TAG = "Aus Godot · {path}"
     PROJECT_CHOICE_OPEN = "Öffnen"
@@ -573,7 +601,13 @@ class T:
         "Wähle eine Mission oder beschreibe, was du bauen möchtest. Du arbeitest sie Schritt "
         "für Schritt durch – zum Schluss probierst du alles in Godot aus."
     )
+    MISSION_INTRO_PYTHON = (
+        "Wähle eine Mission oder beschreibe, was du bauen möchtest. Du arbeitest sie Schritt "
+        "für Schritt durch – zum Schluss startest du dein Python-Programm."
+    )
     MISSION_SUGGESTIONS = ("Baue einen Doppelsprung!", "Zähle Münzen!")
+    MISSION_SUGGESTIONS_PYTHON = ("Baue eine Begrüßung!",)
+    MISSION_WISH_PLACEHOLDER_PYTHON = "Oder eigener Wunsch, z. B. „Ein kleiner Taschenrechner“"
     MISSION_WISH_PLACEHOLDER = "Oder eigener Wunsch, z. B. „Meine Figur soll schießen können“"
     MISSION_WISH_A11Y = "Wunsch für eine eigene Mission"
     MISSION_START = "Mission starten"
@@ -584,6 +618,11 @@ class T:
     MISSION_TRY_DONE = "Ich habe es in Godot ausprobiert"
     MISSION_TRY_TEXT = (
         "Speichere dein Skript, starte das Spiel in Godot (F5) und probiere es aus. Klappt "
+        "etwas nicht? Frag im Tab „Tutor“ nach."
+    )
+    MISSION_TRY_DONE_PYTHON = "Ich habe es ausprobiert"
+    MISSION_TRY_TEXT_PYTHON = (
+        "Speichere dein Skript und starte es im Terminal mit python und dem Dateinamen. Klappt "
         "etwas nicht? Frag im Tab „Tutor“ nach."
     )
     MISSION_STEP_DONE = "Schritt geschafft!"

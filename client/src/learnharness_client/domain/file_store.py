@@ -1,4 +1,4 @@
-"""Load and atomically save guarded GDScript documents."""
+"""Load and atomically save guarded script documents."""
 
 from __future__ import annotations
 
@@ -10,6 +10,8 @@ from ..texts import T
 from .backup import BackupManager
 from .path_guard import PathGuard
 from .script_document import ScriptDocument, sha256_bytes
+
+NEW_SCRIPT_TEMPLATES = {"gdscript": "extends Node\n", "python": 'print("Hallo!")\n'}
 
 
 class FileStoreError(OSError):
@@ -84,7 +86,9 @@ class FileStore:
         document.path = allowed
         document.mark_saved(data, allowed.stat().st_mtime_ns)
 
-    def create(self, relative_path: Path | str, text: str = "extends Node\n") -> ScriptDocument:
+    def create(self, relative_path: Path | str, text: str | None = None) -> ScriptDocument:
+        if text is None:
+            text = NEW_SCRIPT_TEMPLATES[self.guard.language]
         allowed = self.guard.ensure_allowed(relative_path, must_exist=False)
         if allowed.exists():
             raise FileStoreError(T.FILE_EXISTS)

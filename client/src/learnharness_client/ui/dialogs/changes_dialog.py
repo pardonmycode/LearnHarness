@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ...texts import T
-from ..editor.gdscript_highlighter import GDScriptHighlighter
+from ..editor.highlighters import highlighter_for_file
 from ..theme import colors, monospace_font
 
 
@@ -40,14 +40,16 @@ def line_changes(old: str, new: str) -> LineChanges:
     return LineChanges(frozenset(removed), frozenset(added))
 
 
-def _code_pane(text: str, accessible_name: str) -> QPlainTextEdit:
+def _code_pane(text: str, accessible_name: str, file_name: str) -> QPlainTextEdit:
     view = QPlainTextEdit(text)
     view.setObjectName("codeView")
     view.setReadOnly(True)
     view.setFont(monospace_font())
     view.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
     view.setAccessibleName(accessible_name)
-    view._highlighter = GDScriptHighlighter(view.document())  # type: ignore[attr-defined]
+    view._highlighter = highlighter_for_file(  # type: ignore[attr-defined]
+        view.document(), file_name
+    )
     return view
 
 
@@ -86,8 +88,8 @@ class ChangesDialog(QDialog):
         old_title.setProperty("role", "section")
         new_title = QLabel(T.CHANGES_NEW)
         new_title.setProperty("role", "section")
-        self.old_view = _code_pane(old or T.CHANGES_NEW_FILE, T.CHANGES_OLD_A11Y)
-        self.new_view = _code_pane(new, T.CHANGES_NEW_A11Y)
+        self.old_view = _code_pane(old or T.CHANGES_NEW_FILE, T.CHANGES_OLD_A11Y, file_name)
+        self.new_view = _code_pane(new, T.CHANGES_NEW_A11Y, file_name)
         c = colors()
         if old:
             _mark_lines(self.old_view, self.changes.removed, c.danger_bg)

@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import QApplication, QDialog, QMessageBox
 
 from learnharness_client.admin_sync import AdminSync, SyncResult
 from learnharness_client.config import AppSettings, app_data_dir
-from learnharness_client.domain.project import GodotProject
+from learnharness_client.domain.project import Project
 from learnharness_client.godot.project_list import known_godot_projects
 from learnharness_client.net.fake_tutor_client import FakeTutorClient
 from learnharness_client.net.http_tutor_client import HttpTutorClient, same_server
@@ -46,8 +46,8 @@ def configure_logging() -> Path:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="LearnHarness Godot learning client")
-    parser.add_argument("--project", type=Path, help="Godot project to open")
+    parser = argparse.ArgumentParser(description="LearnHarness learning client")
+    parser.add_argument("--project", type=Path, help="Godot or Python project to open")
     parser.add_argument("--server", help="Learning server base URL")
     parser.add_argument(
         "--fake-server",
@@ -118,14 +118,14 @@ def main(argv: list[str] | None = None) -> int:
     sys.excepthook = exception_hook
     if args.project:
         try:
-            window.open_project(GodotProject.open(args.project))
+            window.open_project(Project.open(args.project))
         except (OSError, ValueError) as exc:
             QMessageBox.warning(window, T.PROJECT_NOT_OPENED, str(exc))
     else:
         # Children should land directly in their game; the last project opens automatically.
         for recent in settings.recent_projects:
             try:
-                window.open_project(GodotProject.open(recent))
+                window.open_project(Project.open(recent))
                 break
             except (OSError, ValueError):
                 continue

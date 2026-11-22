@@ -22,7 +22,7 @@ class StudentMessage(ProtocolModel):
     project_id: str
     experience_level: int = Field(default=0, ge=0, le=3)
     learning_level: int | None = Field(default=None, ge=1, le=10)
-    language: Literal["gdscript"] = "gdscript"
+    language: Literal["gdscript", "python"] = "gdscript"
     current_task: str | None = None
     file: str | None = None
     code_excerpt: str | None = None

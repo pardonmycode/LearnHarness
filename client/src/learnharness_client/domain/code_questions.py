@@ -1,4 +1,4 @@
-"""Suggest child-friendly questions about a piece of GDScript.
+"""Suggest child-friendly questions about a piece of GDScript or Python.
 
 The questions are only a starting point for the code explainer; the child can always
 ask something else. No network and no AI is involved here.
@@ -8,12 +8,27 @@ from __future__ import annotations
 
 import re
 
-_FUNC = re.compile(r"^\s*func\s+([A-Za-z_]\w*)")
+_FUNC = re.compile(r"^\s*(?:func|(?:async\s+)?def)\s+([A-Za-z_]\w*)")
 _ASSIGN = re.compile(r"^\s*([A-Za-z_][\w.]*)\s*(=|\+=|-=|\*=|/=)\s*(.+?)\s*$")
 _CALL = re.compile(r"\b([A-Za-z_]\w*)\s*\(")
 _VAR = re.compile(r"^\s*(?:@export\s+)?(?:var|const)\s+([A-Za-z_]\w*)")
 _EXTENDS = re.compile(r"^\s*extends\s+(\w+)")
-_KEYWORDS = {"if", "elif", "while", "for", "func", "return", "match", "print", "range", "and"}
+_KEYWORDS = {
+    "if",
+    "elif",
+    "while",
+    "for",
+    "func",
+    "def",
+    "return",
+    "match",
+    "print",
+    "range",
+    "and",
+    "or",
+    "not",
+    "in",
+}
 
 MAX_QUESTIONS = 4
 

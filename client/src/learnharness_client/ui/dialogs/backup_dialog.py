@@ -20,7 +20,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ...texts import T
-from ..editor.gdscript_highlighter import GDScriptHighlighter
+from ..editor.highlighters import highlighter_for_file
 from ..theme import monospace_font
 
 
@@ -66,7 +66,7 @@ class BackupDialog(QDialog):
         self.preview.setFont(monospace_font())
         self.preview.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
         self.preview.setAccessibleName(T.BACKUP_PREVIEW_A11Y)
-        self._highlighter = GDScriptHighlighter(self.preview.document())
+        self._highlighter = highlighter_for_file(self.preview.document(), file_name)
         row.addWidget(self.versions)
         row.addWidget(self.preview, 1)
         layout.addLayout(row, 1)

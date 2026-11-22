@@ -1,4 +1,4 @@
-"""Pick a Godot project from recent ones and those Godot already knows."""
+"""Pick a project from recent ones and those Godot already knows, or start a new one."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
-from learnharness_client.domain.project import GodotProject
+from learnharness_client.domain.project import Project
 
 from ...texts import T
 
@@ -26,8 +26,9 @@ class ProjectChoiceDialog(QDialog):
 
     def __init__(self, known: list[Path], recent: list[str], parent=None) -> None:
         super().__init__(parent)
-        self.selected: GodotProject | None = None
+        self.selected: Project | None = None
         self.wants_folder_dialog = False
+        self.wants_new_python = False
         self.setWindowTitle(T.PROJECT_CHOICE_TITLE)
         self.setMinimumSize(560, 400)
 
@@ -51,7 +52,7 @@ class ProjectChoiceDialog(QDialog):
             if key in seen:
                 continue
             try:
-                project = GodotProject.open(path)
+                project = Project.open(path)
             except (OSError, ValueError):
                 continue
             seen.add(os.path.normcase(str(project.root)))
@@ -63,17 +64,20 @@ class ProjectChoiceDialog(QDialog):
 
         buttons = QHBoxLayout()
         other = QPushButton(T.PROJECT_CHOICE_OTHER_FOLDER)
+        self.new_python_button = QPushButton(T.NEW_PYTHON_PROJECT)
         cancel = QPushButton(T.PROJECT_CHOICE_CANCEL)
         self.open_button = QPushButton(T.PROJECT_CHOICE_OPEN)
         self.open_button.setProperty("primary", "true")
         self.open_button.setDefault(True)
         buttons.addWidget(other)
+        buttons.addWidget(self.new_python_button)
         buttons.addStretch(1)
         buttons.addWidget(cancel)
         buttons.addWidget(self.open_button)
         layout.addLayout(buttons)
 
         other.clicked.connect(self._other_folder)
+        self.new_python_button.clicked.connect(self._new_python)
         cancel.clicked.connect(self.reject)
         self.open_button.clicked.connect(self._open_current)
         self.projects.itemActivated.connect(lambda _item: self._open_current())
@@ -89,9 +93,13 @@ class ProjectChoiceDialog(QDialog):
     def _open_current(self) -> None:
         item = self.projects.currentItem()
         project = item.data(Qt.ItemDataRole.UserRole) if item else None
-        if isinstance(project, GodotProject):
+        if isinstance(project, Project):
             self.selected = project
             self.accept()
+
+    def _new_python(self) -> None:
+        self.wants_new_python = True
+        self.reject()
 
     def _other_folder(self) -> None:
         self.wants_folder_dialog = True

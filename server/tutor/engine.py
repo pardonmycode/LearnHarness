@@ -6,7 +6,7 @@ import logging
 import time
 from collections.abc import Callable
 from datetime import timedelta
-from typing import Any
+from typing import Any, Literal
 from uuid import uuid4
 
 from django.core.cache import cache
@@ -43,9 +43,20 @@ TASKS: dict[str, Task] = {
             "Schreibe den Code selbst in player.gd."
         ),
         files=["player.gd"],
-    )
+    ),
+    "python_first_program": Task(
+        id="python_first_program",
+        title="Schreibe dein erstes Python-Programm",
+        skill="Variablen",
+        instructions=(
+            "Lass dein Programm etwas auf dem Bildschirm anzeigen. "
+            "Schreibe den Code selbst in main.py."
+        ),
+        files=["main.py"],
+    ),
 }
-TASK_SKILLS = {"move_player_right": "movement"}
+TASK_SKILLS = {"move_player_right": "movement", "python_first_program": "variables"}
+TASK_LANGUAGES: dict[str, Literal["gdscript", "python"]] = {"python_first_program": "python"}
 
 UNAVAILABLE = "Der Lernhelfer kann gerade nicht antworten. Versuch es gleich noch einmal."
 TOO_FAST = "Langsam – du hast gerade sehr viele Fragen gestellt. Warte kurz und denk selbst nach."
@@ -243,6 +254,7 @@ class Tutor:
             self.settings,
             learning_level=message.learning_level if message else None,
             experience_level=message.experience_level if message else self.session.experience_level,
+            **({"language": message.language} if message else {}),
             **extra,
         )
 
@@ -357,7 +369,12 @@ class Tutor:
             if len(steps_data) < 2:
                 raise harness.HarnessRejected("Mission braucht mindestens zwei Schritte")
             if steps_data[-1].get("kind") != "try":
-                steps_data.append({"title": "Probiere es in Godot aus", "kind": "try"})
+                title = (
+                    "Starte dein Programm"
+                    if message.language == "python"
+                    else "Probiere es in Godot aus"
+                )
+                steps_data.append({"title": title, "kind": "try"})
             mission = Mission(
                 id=f"wunsch-{uuid4().hex[:10]}",
                 title=str(data.get("title", "Deine Mission"))[:120] or "Deine Mission",
@@ -411,7 +428,11 @@ class Tutor:
         if step.kind == "try":
             return LearningResponse(
                 mode="explanation",
-                message="Speichere dein Skript und probiere es in Godot aus (F5).",
+                message=(
+                    "Speichere dein Skript und starte dein Programm."
+                    if message.language == "python"
+                    else "Speichere dein Skript und probiere es in Godot aus (F5)."
+                ),
             )
         extra = (
             f"Mission: {mission.title} – {mission.goal}\n"
@@ -437,8 +458,10 @@ class Tutor:
         if self._rate_limited():
             return _error("rate_limited", TOO_FAST, retry_after=30)
         level = min(4, int(self.session.hint_levels.get(task_id, 0)) + 1)
+        language = TASK_LANGUAGES.get(task_id, "gdscript")
         message = StudentMessage(
             intent="chat",
+            language=language,
             session_id=self.session.id,
             project_id=self.session.project_id,
             message=f"Ich brauche einen Tipp für die Aufgabe (Stufe {level}).",
@@ -447,7 +470,7 @@ class Tutor:
         try:
             text, _ = self._call_stream(
                 "hint",
-                self._system("hint", hint_level=level),
+                self._system("hint", hint_level=level, language=language),
                 [{"role": "user", "content": prompt}],
                 None,
             )
@@ -499,8 +522,10 @@ class Tutor:
             return _error("unknown_task", "Diese Aufgabe kenne ich nicht.")
         if self._rate_limited():
             return _error("rate_limited", TOO_FAST, retry_after=30)
+        language = TASK_LANGUAGES.get(task.id, "gdscript")
         message = StudentMessage(
             intent="chat",
+            language=language,
             session_id=self.session.id,
             project_id=self.session.project_id,
             file=submission.file,
@@ -524,7 +549,7 @@ class Tutor:
         try:
             review, _ = self._call_json(
                 "review",
-                self._system("review"),
+                self._system("review", language=language),
                 [{"role": "user", "content": prompt}],
                 harness.REVIEW_SCHEMA,
                 build,

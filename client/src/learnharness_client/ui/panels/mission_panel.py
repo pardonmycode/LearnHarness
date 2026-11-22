@@ -50,7 +50,9 @@ class MissionPanel(QWidget):
         layout.setSpacing(12)
         heading = QLabel(T.MISSION_HEADING)
         heading.setProperty("role", "heading")
+        self.language = "gdscript"
         intro = QLabel(T.MISSION_INTRO)
+        self.intro = intro
         intro.setWordWrap(True)
         intro.setProperty("role", "muted")
 
@@ -62,10 +64,17 @@ class MissionPanel(QWidget):
         self.assigned_card.hide()
 
         self.choose_card, choose_layout = card(T.MISSION_OWN_HEADING)
-        for suggestion in T.MISSION_SUGGESTIONS:
-            button = QPushButton(suggestion)
-            button.clicked.connect(lambda _=False, text=suggestion: self.request_mission(text))
-            choose_layout.addWidget(button)
+        self._suggestions: dict[str, list[QPushButton]] = {"gdscript": [], "python": []}
+        for language, suggestions in (
+            ("gdscript", T.MISSION_SUGGESTIONS),
+            ("python", T.MISSION_SUGGESTIONS_PYTHON),
+        ):
+            for suggestion in suggestions:
+                button = QPushButton(suggestion)
+                button.clicked.connect(lambda _=False, text=suggestion: self.request_mission(text))
+                button.setVisible(language == self.language)
+                self._suggestions[language].append(button)
+                choose_layout.addWidget(button)
         wish_row = QHBoxLayout()
         self.wish = QLineEdit()
         self.wish.setPlaceholderText(T.MISSION_WISH_PLACEHOLDER)
@@ -203,6 +212,18 @@ class MissionPanel(QWidget):
             return {}
         return {"mission": self.mission.model_dump(mode="json"), "done": sorted(self.done)}
 
+    def set_language(self, language: str) -> None:
+        self.language = language
+        python = language == "python"
+        self.intro.setText(T.MISSION_INTRO_PYTHON if python else T.MISSION_INTRO)
+        self.wish.setPlaceholderText(
+            T.MISSION_WISH_PLACEHOLDER_PYTHON if python else T.MISSION_WISH_PLACEHOLDER
+        )
+        for owner, buttons in self._suggestions.items():
+            for button in buttons:
+                button.setVisible(owner == language)
+        self._render()
+
     def restore(self, state: dict[str, object]) -> None:
         try:
             mission = Mission.model_validate(state.get("mission"))
@@ -257,7 +278,8 @@ class MissionPanel(QWidget):
             self._set_message(T.MISSION_COMPLETE.format(title=self.mission.title), "success")
             return
         self.step_button.show()
-        self.step_button.setText(T.MISSION_TRY_DONE if current.kind == "try" else T.MISSION_DO_STEP)
+        try_done = T.MISSION_TRY_DONE_PYTHON if self.language == "python" else T.MISSION_TRY_DONE
+        self.step_button.setText(try_done if current.kind == "try" else T.MISSION_DO_STEP)
         self._sync_buttons()
 
     # Working on steps ------------------------------------------------------------------
@@ -307,7 +329,9 @@ class MissionPanel(QWidget):
         if following is not None:
             text = f"{T.MISSION_STEP_DONE} {feedback}".strip()
             if following.kind == "try":
-                text += "\n\n" + T.MISSION_TRY_TEXT
+                text += "\n\n" + (
+                    T.MISSION_TRY_TEXT_PYTHON if self.language == "python" else T.MISSION_TRY_TEXT
+                )
             self._set_message(text, "success")
         self._emit_progress()
         if following is None and self.mission is not None:

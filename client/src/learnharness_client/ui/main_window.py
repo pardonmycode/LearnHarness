@@ -32,7 +32,8 @@ from learnharness_client.admin_sync import AdminSync
 from learnharness_client.config import AppSettings
 from learnharness_client.domain.path_guard import fold_case
 from learnharness_client.domain.profile import StudentProfile
-from learnharness_client.domain.project import GodotProject
+from learnharness_client.domain.project import Project, is_project_folder
+from learnharness_client.domain.python_check import check_python
 from learnharness_client.godot.log_reader import default_log_path, read_recent_errors
 from learnharness_client.godot.output_parser import GodotMessage
 from learnharness_client.godot.paths import find_godot_on_path
@@ -54,12 +55,14 @@ from .panels.mission_panel import MissionPanel
 from .panels.problems_panel import Problem, ProblemsPanel
 from .panels.progress_panel import ProgressPanel
 from .panels.tutor_panel import TutorPanel
-from .project_picker import choose_project
+from .project_picker import choose_project, choose_python_script, new_python_project
 from .script_tree import ScriptTree
 from .theme import set_state
 
 LOG = logging.getLogger(__name__)
 MAX_FILE_CONTEXT = 16_000  # characters of the open script sent along with learn rounds
+GODOT_TASK_ID = "move_player_right"
+PYTHON_TASK_ID = "python_first_program"
 
 
 def is_target_file(path: str, target: str | None) -> bool:
@@ -86,9 +89,9 @@ class MainWindow(QMainWindow):
         self.tutor_client = tutor_client
         self.student_profile = student_profile
         self.server_url = server_url
-        self.project: GodotProject | None = None
+        self.project: Project | None = None
         self.session_id: str | None = None
-        self.current_task_id = "move_player_right"
+        self.current_task_id = GODOT_TASK_ID
         self.learn_round_active = False
         self._awaiting_learn_response = False
         self._learn_target_file: str | None = None
@@ -178,6 +181,10 @@ class MainWindow(QMainWindow):
         open_project = QAction(T.OPEN_PROJECT, self)
         open_project.setShortcut(QKeySequence.StandardKey.Open)
         open_project.triggered.connect(self.pick_project)
+        new_python = QAction(T.NEW_PYTHON_PROJECT, self)
+        new_python.triggered.connect(self.create_python_project)
+        open_python = QAction(T.OPEN_PYTHON_SCRIPT, self)
+        open_python.triggered.connect(self.open_python_script)
         new_script = QAction(T.NEW_SCRIPT, self)
         new_script.setShortcut(QKeySequence("Ctrl+Shift+N"))
         new_script.triggered.connect(self.create_script)
@@ -189,7 +196,9 @@ class MainWindow(QMainWindow):
         quit_action.triggered.connect(self.close)
         older_versions = QAction(T.OLDER_VERSIONS, self)
         older_versions.triggered.connect(self.show_older_versions)
-        file_menu.addActions([open_project, new_script, save, older_versions])
+        file_menu.addActions(
+            [open_project, new_python, open_python, new_script, save, older_versions]
+        )
         self.recent_menu = file_menu.addMenu(T.RECENT_PROJECTS)
         self._refresh_recent_menu()
         file_menu.addSeparator()
@@ -220,13 +229,15 @@ class MainWindow(QMainWindow):
         problems_action.setText(T.SHOW_PROBLEMS)
         view_menu.addAction(problems_action)
 
-        godot_menu = self.menuBar().addMenu(T.MENU_GODOT)
+        check_menu = self.menuBar().addMenu(T.MENU_CHECK)
         syntax_action = QAction(T.SYNTAX_CHECK, self)
+        self.syntax_action = syntax_action
         syntax_action.setShortcut(QKeySequence("F6"))
         syntax_action.triggered.connect(self.run_syntax_check)
         log_action = QAction(T.READ_GODOT_LOG, self)
         log_action.triggered.connect(self.read_godot_log)
-        godot_menu.addActions([syntax_action, log_action])
+        self.log_action = log_action
+        check_menu.addActions([syntax_action, log_action])
 
         help_menu = self.menuBar().addMenu(T.MENU_HELP)
         tutorial_action = QAction(T.TUTORIAL, self)
@@ -291,10 +302,39 @@ class MainWindow(QMainWindow):
         if project:
             self.open_project(project)
 
-    def open_project(self, project: GodotProject) -> None:
+    def create_python_project(self) -> None:
+        project = new_python_project(self)
+        if project:
+            self.open_project(project)
+
+    def open_python_script(self) -> None:
+        start = self.settings.recent_projects[0] if self.settings.recent_projects else ""
+        chosen = choose_python_script(self, start)
+        if chosen is None:
+            return
+        project, script = chosen
+        if self.project is None or self.project.root != project.root:
+            self.open_project(project)
+        # Opening can be cancelled while unsaved changes of the old project are asked about.
+        if self.project is not None and self.project.root == project.root:
+            self.editor_tabs.open_file(script)
+
+    def _apply_language(self, language: str) -> None:
+        python = language == "python"
+        self.current_task_id = PYTHON_TASK_ID if python else GODOT_TASK_ID
+        self.syntax_action.setText(T.SYNTAX_CHECK_PYTHON if python else T.SYNTAX_CHECK)
+        self.log_action.setEnabled(not python)
+        self.problems_panel.set_language(language)
+        self.mission_panel.set_language(language)
+        self.learn_agent_panel.prompt.setPlaceholderText(
+            T.AGENT_WISH_PLACEHOLDER_PYTHON if python else T.AGENT_WISH_PLACEHOLDER
+        )
+
+    def open_project(self, project: Project) -> None:
         if self.project and not self.editor_tabs.confirm_close_all():
             return
         self.project = project
+        self._apply_language(project.language)
         self.settings.remember_project(project.root)
         self._refresh_recent_menu()
         self.script_tree.set_project(project)
@@ -317,12 +357,16 @@ class MainWindow(QMainWindow):
         if not self.project:
             QMessageBox.information(self, T.OPEN_PROJECT_FIRST_TITLE, T.OPEN_PROJECT_FIRST)
             return
-        name, accepted = QInputDialog.getText(self, T.NEW_SCRIPT, T.NEW_SCRIPT_PROMPT)
+        prompt = (
+            T.NEW_SCRIPT_PROMPT_PYTHON if self.project.language == "python" else T.NEW_SCRIPT_PROMPT
+        )
+        name, accepted = QInputDialog.getText(self, T.NEW_SCRIPT, prompt)
         if not accepted or not name.strip():
             return
         name = name.strip()
-        if not name.casefold().endswith(".gd"):
-            name += ".gd"
+        suffix = ".py" if self.project.language == "python" else ".gd"
+        if not name.casefold().endswith(suffix):
+            name += suffix
         editor = self.editor_tabs.create_file(Path(name))
         if editor:
             self.script_tree.refresh()
@@ -337,7 +381,8 @@ class MainWindow(QMainWindow):
     def _session_started(self, session: SessionInfo) -> None:
         self.session_id = session.session_id
         self.diagnostics.set_session(session.session_id)
-        if session.current_task_id:
+        # The session's default task is a Godot task; Python projects keep their own.
+        if session.current_task_id and (self.project is None or self.project.language != "python"):
             self.current_task_id = session.current_task_id
         self.tutor_client.fetch_progress()
         if self.admin_sync is not None:
@@ -374,6 +419,7 @@ class MainWindow(QMainWindow):
         self._response_owner = "explain"
         message = StudentMessage(
             intent="explain",
+            language=self.project.language,
             session_id=self.session_id,
             project_id=self.project.project_id,
             experience_level=int(self.student_profile.experience_level),
@@ -400,6 +446,7 @@ class MainWindow(QMainWindow):
             return None
         return StudentMessage(
             intent=intent,  # type: ignore[arg-type]
+            language=self.project.language,
             session_id=self.session_id,
             project_id=self.project.project_id,
             experience_level=int(self.student_profile.experience_level),
@@ -469,6 +516,7 @@ class MainWindow(QMainWindow):
         self._learn_target_file = relative
         message = StudentMessage(
             intent="learn",
+            language=self.project.language,
             session_id=self.session_id,
             project_id=self.project.project_id,
             experience_level=int(self.student_profile.experience_level),
@@ -499,6 +547,7 @@ class MainWindow(QMainWindow):
             end_line = start_line + max(0, excerpt.count("\n"))
             self.tutor_panel.set_context_description(relative, start_line, end_line)
         message = StudentMessage(
+            language=self.project.language,
             session_id=self.session_id,
             project_id=self.project.project_id,
             experience_level=int(self.student_profile.experience_level),
@@ -735,6 +784,9 @@ class MainWindow(QMainWindow):
         if not self.project or document is None:
             QMessageBox.information(self, T.SYNTAX_CHECK, T.OPEN_FILE_FIRST)
             return
+        if self.project.language == "python":
+            self._run_python_check()
+            return
         # Without a setting, use Godot from PATH (typical on Linux: godot4 from the package).
         godot = self.settings.godot_path or find_godot_on_path()
         if not godot:
@@ -748,6 +800,25 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(
                 T.GODOT_CHECK_RUNNING.format(file=document.path.name), 10_000
             )
+
+    def _run_python_check(self) -> None:
+        """Checks the text in the editor; the child's code is parsed but never run."""
+        editor = self.editor_tabs.current_editor()
+        relative = self._relative_current_file()
+        if editor is None or relative is None:
+            return
+        found = check_python(editor.toPlainText(), relative)
+        self.problems_panel.clear_source(T.SOURCE_PYTHON_CHECK)
+        editor.set_error_lines([problem.line for problem in found])
+        if not found:
+            self.statusBar().showMessage(T.PYTHON_CHECK_OK.format(file=relative), 8000)
+            return
+        for problem in found:
+            self.problems_panel.add_problem(
+                Problem(relative, problem.line, problem.message, T.SOURCE_PYTHON_CHECK)
+            )
+        self.problems_dock.setVisible(True)
+        self.statusBar().showMessage(T.PYTHON_CHECK_ERROR.format(line=found[0].line), 8000)
 
     def _syntax_check_finished(self, messages: list[GodotMessage]) -> None:
         file = self._syntax_check_file
@@ -798,7 +869,7 @@ class MainWindow(QMainWindow):
         available = False
         for path_text in self.settings.recent_projects:
             path = Path(path_text)
-            if not (path / "project.godot").is_file():
+            if not is_project_folder(path):
                 continue
             available = True
             action = self.recent_menu.addAction(path.name)
@@ -810,7 +881,7 @@ class MainWindow(QMainWindow):
 
     def _open_recent(self, path: Path) -> None:
         try:
-            self.open_project(GodotProject.open(path))
+            self.open_project(Project.open(path))
         except (OSError, ValueError) as exc:
             QMessageBox.warning(self, T.PROJECT_NOT_OPENED, str(exc))
 
