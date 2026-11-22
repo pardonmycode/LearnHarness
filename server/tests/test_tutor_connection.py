@@ -61,18 +61,18 @@ def test_missing_key_is_named(monkeypatch: MonkeyPatch) -> None:
     assert "ANTHROPIC_API_KEY fehlt" in providers.connection_problem(settings)
 
 
-def test_env_file_is_read_without_overriding(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
-    for name in ("LH_A", "LH_B", "LH_C", "LH_EMPTY"):
-        monkeypatch.delenv(name, raising=False)
-    monkeypatch.setenv("LH_C", "echt")
+def test_env_file_gives_only_ai_keys(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    for name in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "VLLM_API_KEY", "POSTGRES_HOST"):
+        monkeypatch.setenv(name, "platzhalter")
+        monkeypatch.delenv(name)
+    monkeypatch.setenv("OPENAI_API_KEY", "echt")
     env = tmp_path / ".env"
-    env.write_text('# Kommentar\nLH_A="mit quotes"\nexport LH_B=b#1\nLH_C=datei\nLH_EMPTY=\n')
-    # monkeypatch restores these names afterwards, also when the loader sets them.
-    monkeypatch.setenv("LH_A", "x")
-    monkeypatch.delenv("LH_A")
+    env.write_text(
+        '# Kommentar\nexport ANTHROPIC_API_KEY="sk-ant-test"\nOPENAI_API_KEY=datei\n'
+        "VLLM_API_KEY=\nPOSTGRES_HOST=db\n"
+    )
     load_env_file(env)
-    assert os.environ["LH_A"] == "mit quotes"
-    assert os.environ["LH_B"] == "b#1"
-    assert os.environ["LH_C"] == "echt"
-    assert "LH_EMPTY" not in os.environ
-    os.environ.pop("LH_B")
+    assert os.environ["ANTHROPIC_API_KEY"] == "sk-ant-test"
+    assert os.environ["OPENAI_API_KEY"] == "echt"
+    assert "VLLM_API_KEY" not in os.environ
+    assert "POSTGRES_HOST" not in os.environ
