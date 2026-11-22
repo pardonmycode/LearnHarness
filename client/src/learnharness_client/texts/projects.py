@@ -18,7 +18,8 @@ class ProjectTexts:
     PLAN_HEADING = "Dein Projekt"
     PLAN_INTRO = (
         "Beschreibe, was du bauen möchtest. Der Lernhelfer fragt nach und schlägt Schritte vor. "
-        "Du entscheidest, was auf deine To-do-Liste kommt."
+        "Du entscheidest, was auf deine To-do-Liste kommt. Deine Idee hilft ihm auch in den "
+        "anderen Tabs."
     )
     PLAN_IDEA_SECTION = "WAS FÜR EIN PROJEKT SOLL DAS WERDEN?"
     PLAN_IDEA_A11Y = "Beschreibung deines Projekts"

@@ -5,6 +5,7 @@ from __future__ import annotations
 from learnharness_protocol import StudentMessage
 
 from ..models import AiSettings
+from .game_blueprint import game_blueprint
 from .rules import BASE_RULES, EXPERIENCE, INTENTS, LANGUAGES, LEVELS, SKILLS
 
 
@@ -16,6 +17,7 @@ def system_prompt(
     experience_level: int = 0,
     hint_level: int = 1,
     language: str = "gdscript",
+    game: bool = False,
 ) -> str:
     words = LANGUAGES.get(language, LANGUAGES["gdscript"])
     parts = [
@@ -38,6 +40,9 @@ def system_prompt(
             try_step=words["try"],
         )
     )
+    blueprint = game_blueprint(intent, language) if game else ""
+    if blueprint:
+        parts.append(blueprint)
     if settings.teacher_instructions.strip():
         parts.append(
             "Zusätzliche Hinweise der Lehrkraft (die festen Regeln oben gelten trotzdem):\n"

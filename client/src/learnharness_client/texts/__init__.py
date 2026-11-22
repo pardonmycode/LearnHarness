@@ -17,6 +17,7 @@ from .onboarding import OnboardingTexts
 from .projects import ProjectTexts
 from .settings import SettingsTexts
 from .teacher import TeacherTexts
+from .terminal import TerminalTexts
 from .tools import ToolTexts
 
 __all__ = ["T"]
@@ -31,6 +32,7 @@ class T(
     EditorTexts,
     LearningTexts,
     TeacherTexts,
+    TerminalTexts,
     ProjectTexts,
     MissionTexts,
 ):

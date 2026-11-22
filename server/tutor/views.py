@@ -68,6 +68,7 @@ def prompt_overview(request: HttpRequest) -> HttpResponse:
             learning_level=level if intent in ("learn", "chat") else None,
             experience_level=experience,
             hint_level=2,
+            game=True,
         )
         if intent in ("learn", "explain", "mission_step"):
             system += "\n\n" + harness.EXERCISE_FORMAT_HELP

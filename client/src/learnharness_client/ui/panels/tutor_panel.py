@@ -189,5 +189,8 @@ class TutorPanel(QWidget):
         self._streaming = False
         self._sync_buttons()
 
-    def set_context_description(self, filename: str, start: int, end: int) -> None:
-        self.context_label.setText(T.TUTOR_CONTEXT.format(file=filename, start=start, end=end))
+    def set_context_description(
+        self, filename: str, start: int, end: int, *, with_idea: bool = False
+    ) -> None:
+        template = T.TUTOR_CONTEXT_WITH_IDEA if with_idea else T.TUTOR_CONTEXT
+        self.context_label.setText(template.format(file=filename, start=start, end=end))

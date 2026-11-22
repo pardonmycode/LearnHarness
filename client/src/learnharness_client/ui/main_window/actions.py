@@ -78,6 +78,17 @@ class WindowActions:
         self.log_action = log_action
         check_menu.addActions([syntax_action, log_action])
 
+        run_menu = self.menuBar().addMenu(T.MENU_RUN)
+        self.run_action = QAction(T.RUN_START, self)
+        self.run_action.setShortcut(QKeySequence("F5"))
+        self.run_action.setEnabled(False)
+        self.run_action.triggered.connect(self.run_script)
+        self.stop_action = QAction(T.RUN_STOP, self)
+        self.stop_action.setShortcut(QKeySequence("Shift+F5"))
+        self.stop_action.setEnabled(False)
+        self.stop_action.triggered.connect(self.stop_script)
+        run_menu.addActions([self.run_action, self.stop_action])
+
         help_menu = self.menuBar().addMenu(T.MENU_HELP)
         tutorial_action = QAction(T.TUTORIAL, self)
         tutorial_action.setShortcut(QKeySequence.StandardKey.HelpContents)
@@ -105,6 +116,10 @@ class WindowActions:
         )
         self.tutor_panel.cancel_requested.connect(self.tutor_client.cancel)
         self.problems_panel.problem_activated.connect(self.open_problem)
+        self.editor_tabs.current_file_changed.connect(self._update_run_target)
+        self.terminal.run_requested.connect(self.run_script)
+        self.terminal.stop_requested.connect(self.stop_script)
+        self.terminal.running_changed.connect(self._run_state_changed)
 
         self.tutor_client.health_changed.connect(self._health_changed)
         self.tutor_client.session_started.connect(self._session_started)

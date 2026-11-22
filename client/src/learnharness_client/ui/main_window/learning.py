@@ -32,6 +32,7 @@ class LearningActions:
         message = StudentMessage(
             intent="learn",
             language=self.project.language,
+            project_description=self._project_idea(),
             session_id=self.session_id,
             project_id=self.project.project_id,
             experience_level=int(self.student_profile.experience_level),
@@ -60,9 +61,12 @@ class LearningActions:
             excerpt = excerpt[:16_000]
             relative = document.path.relative_to(self.project.root).as_posix()
             end_line = start_line + max(0, excerpt.count("\n"))
-            self.tutor_panel.set_context_description(relative, start_line, end_line)
+            self.tutor_panel.set_context_description(
+                relative, start_line, end_line, with_idea=self._project_idea() is not None
+            )
         message = StudentMessage(
             language=self.project.language,
+            project_description=self._project_idea(),
             session_id=self.session_id,
             project_id=self.project.project_id,
             experience_level=int(self.student_profile.experience_level),

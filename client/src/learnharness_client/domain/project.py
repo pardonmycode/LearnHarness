@@ -72,14 +72,6 @@ class Project:
 GodotProject = Project
 
 
-def _package_name(name: str) -> str:
-    """Turn a child's project name into a valid Python package name."""
-    # casefold() already turns "ß" into "ss".
-    replaced = name.casefold().replace("ä", "ae").replace("ö", "oe").replace("ü", "ue")
-    slug = re.sub(r"[^a-z0-9]+", "-", replaced).strip("-")
-    return slug or "mein-projekt"
-
-
 def create_python_project(parent: Path | str, name: str) -> Project:
     """Create ``parent/name`` with a runnable main.py; never touches an existing folder."""
     clean = name.strip()
@@ -95,21 +87,11 @@ def create_python_project(parent: Path | str, name: str) -> Project:
     except FileExistsError as exc:
         raise PathNotAllowed(T.PROJECT_EXISTS) from exc
     main_file = root / "main.py"
-    settings_file = root / "pyproject.toml"
     try:
         main_file.write_text(PYTHON_MAIN_TEMPLATE, encoding="utf-8", newline="\n")
-        settings_file.write_text(
-            "[project]\n"
-            f'name = "{_package_name(clean)}"\n'
-            'version = "0.1.0"\n'
-            'requires-python = ">=3.10"\n',
-            encoding="utf-8",
-            newline="\n",
-        )
     except OSError:
-        # Only the files created above: the folder did not exist before this call.
+        # Only the file created above: the folder did not exist before this call.
         main_file.unlink(missing_ok=True)
-        settings_file.unlink(missing_ok=True)
         root.rmdir()
         raise
     return Project.open(root)

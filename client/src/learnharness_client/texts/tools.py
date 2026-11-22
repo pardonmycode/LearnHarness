@@ -8,8 +8,13 @@ class ToolTexts:
     TUTOR_NAME = "Lernhelfer"
     CHILD_NAME = "Du"
     NOTICE_NAME = "Hinweis"
-    TUTOR_CONTEXT_DEFAULT = "Dem Lernhelfer wird nur ein kleiner Codeausschnitt gezeigt."
+    TUTOR_CONTEXT_DEFAULT = (
+        "Dem Lernhelfer werden nur deine Projektidee und ein kleiner Codeausschnitt gezeigt."
+    )
     TUTOR_CONTEXT = "Ich zeige dem Lernhelfer: {file}, Zeilen {start}–{end}."
+    TUTOR_CONTEXT_WITH_IDEA = (
+        "Ich zeige dem Lernhelfer: deine Projektidee und {file}, Zeilen {start}–{end}."
+    )
     TUTOR_OFFLINE_TIP = "Der Lernhelfer macht Pause. Deine Frage bleibt hier stehen."
     AGENT_OFFLINE_TIP = "Der Lernhelfer macht Pause. Du kannst weiter programmieren."
 

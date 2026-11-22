@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import tomllib
 from pathlib import Path
 
 import pytest
@@ -76,8 +75,7 @@ def test_create_project_writes_valid_files(tmp_path: Path) -> None:
     assert project.language == "python"
     assert project.name == "Mein Übungs-Spiel"
     assert check_python((project.root / "main.py").read_text(encoding="utf-8"), "main.py") == []
-    settings = tomllib.loads((project.root / "pyproject.toml").read_text(encoding="utf-8"))
-    assert settings["project"]["name"] == "mein-uebungs-spiel"
+    assert [path.name for path in project.root.iterdir()] == ["main.py"]
 
 
 @pytest.mark.parametrize("name", ["", "..", "a/b", "a\\b", ".hidden", "CON", "x" * 61, "name."])

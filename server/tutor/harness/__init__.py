@@ -24,6 +24,7 @@ from .checks import (
     check_generated_code,
     clean_todo_suggestions,
 )
+from .game_blueprint import game_blueprint, is_game_project
 from .prompts import system_prompt, user_prompt
 from .rules import BASE_RULES, EXPERIENCE, INTENTS, LANGUAGES, LEVELS, SKILLS
 from .schemas import (
@@ -59,6 +60,8 @@ __all__ = [
     "check_generated_code",
     "clean_todo_suggestions",
     "filter_text",
+    "game_blueprint",
+    "is_game_project",
     "looks_like_code",
     "system_prompt",
     "user_prompt",

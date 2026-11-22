@@ -200,6 +200,13 @@ class AiCalls:
             self.settings,
             learning_level=message.learning_level if message else None,
             experience_level=message.experience_level if message else self.session.experience_level,
-            **({"language": message.language} if message else {}),
+            **(
+                {
+                    "language": message.language,
+                    "game": harness.is_game_project(message.language, message.project_description),
+                }
+                if message
+                else {}
+            ),
             **extra,
         )

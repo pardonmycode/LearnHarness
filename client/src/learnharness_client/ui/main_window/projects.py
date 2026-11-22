@@ -56,6 +56,8 @@ class ProjectActions:
     def open_project(self, project: Project) -> None:
         if self.project and not self.editor_tabs.confirm_close_all():
             return
+        self.terminal.shutdown()
+        self.terminal.output.clear()
         self.project = project
         self._apply_language(project.language)
         saved_plan = self.settings.project_plan(self.student_profile.profile_id, project.project_id)
@@ -64,6 +66,7 @@ class ProjectActions:
         self._refresh_recent_menu()
         self.script_tree.set_project(project)
         self.editor_tabs.set_project(project)
+        self._update_run_target()
         self.project_status.setText(project.name)
         self.setWindowTitle(T.PROJECT_TITLE.format(project=project.name))
         self.session_id = None
@@ -144,6 +147,10 @@ class ProjectActions:
             message=text,
         )
         self.tutor_client.send_message(message)
+
+    def _project_idea(self) -> str | None:
+        """The child's idea, so the helper knows what the code is for."""
+        return self.project_panel.plan.description.strip() or None
 
     def _save_project_plan(self, data: dict[str, object]) -> None:
         if self.project:

@@ -14,6 +14,7 @@
 | Farben oder Stil ändern | [`palettes.py`](../client/src/learnharness_client/ui/theme/palettes.py), [`stylesheet.py`](../client/src/learnharness_client/ui/theme/stylesheet.py) |
 | den Projekt-Tab ändern | [`C/ui/panels/project_panel/`](../client/src/learnharness_client/ui/panels/project_panel/) |
 | eine neue Übungsart anzeigen | [`C/ui/exercises/`](../client/src/learnharness_client/ui/exercises/), registriert in [`factory.py`](../client/src/learnharness_client/ui/exercises/factory.py) |
+| das Terminal ändern | [`terminal_panel.py`](../client/src/learnharness_client/ui/panels/terminal_panel.py), Startlogik in [`run_target.py`](../client/src/learnharness_client/domain/run_target.py) |
 | eine Einstellung ergänzen | [`C/config/preferences.py`](../client/src/learnharness_client/config/preferences.py), Dialog in [`settings_dialog.py`](../client/src/learnharness_client/ui/dialogs/settings_dialog.py) |
 
 ## Editor und Dateien
@@ -34,6 +35,7 @@
 |---|---|
 | die festen KI-Regeln ändern | [`harness/rules.py`](../server/tutor/harness/rules.py) |
 | eine neue Sprache ergänzen | `LANGUAGES` in [`rules.py`](../server/tutor/harness/rules.py), `ProjectLanguage` in [`path_guard.py`](../client/src/learnharness_client/domain/path_guard.py), `language` in [`messages.py`](../protocol/src/learnharness_protocol/messages.py) |
+| Grundgerüst und Architektur für Spiele ändern | [`harness/game_blueprint.py`](../server/tutor/harness/game_blueprint.py) |
 | den Code-Filter ändern | [`harness/stream_guard.py`](../server/tutor/harness/stream_guard.py) |
 | den Projektplan der KI ändern | `project_plan` in [`rules.py`](../server/tutor/harness/rules.py), Ablauf in [`engine/rounds.py`](../server/tutor/engine/rounds.py) |
 | eine feste Aufgabe ergänzen | [`engine/tasks.py`](../server/tutor/engine/tasks.py) |

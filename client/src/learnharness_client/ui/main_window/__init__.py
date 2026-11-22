@@ -25,6 +25,7 @@ from ..panels.mission_panel import MissionPanel
 from ..panels.problems_panel import ProblemsPanel
 from ..panels.progress_panel import ProgressPanel
 from ..panels.project_panel import ProjectPanel
+from ..panels.terminal_panel import TerminalPanel
 from ..panels.tutor_panel import TutorPanel
 from ..script_tree import ScriptTree
 from ..theme import set_state
@@ -35,6 +36,7 @@ from .explain_missions import ExplainMissionActions
 from .learning import LearningActions
 from .projects import ProjectActions
 from .responses import ServerResponses
+from .running import RunActions
 from .window_dialogs import WindowDialogs
 
 __all__ = [
@@ -58,6 +60,7 @@ class MainWindow(
     ServerResponses,
     WindowDialogs,
     CheckActions,
+    RunActions,
     QMainWindow,
 ):
     def __init__(
@@ -106,23 +109,39 @@ class MainWindow(
         self.mission_panel.restore(settings.mission_progress(student_profile.profile_id))
 
         learning_tabs = QTabWidget()
-        learning_tabs.addTab(self.learn_agent_panel, T.TAB_AGENT)
         learning_tabs.addTab(self.project_panel, T.TAB_PROJECT)
+        learning_tabs.addTab(self.learn_agent_panel, T.TAB_AGENT)
         learning_tabs.addTab(self.mission_panel, T.TAB_MISSIONS)
         learning_tabs.addTab(self.explain_panel, T.TAB_EXPLAIN)
         learning_tabs.addTab(self.tutor_panel, T.TAB_TUTOR)
         learning_tabs.addTab(self.progress_panel, T.TAB_PROGRESS)
         self.learning_tabs = learning_tabs
 
+        self.terminal = TerminalPanel()
+        code_splitter = QSplitter(Qt.Orientation.Horizontal)
+        code_splitter.addWidget(self.script_tree)
+        code_splitter.addWidget(self.editor_tabs)
+        code_splitter.setStretchFactor(0, 1)
+        code_splitter.setStretchFactor(1, 4)
+        code_splitter.setChildrenCollapsible(False)
+        code_splitter.setSizes([220, 700])
+        self.code_splitter = code_splitter
+        # The terminal sits below tree and code; the learning tabs keep the full height.
+        work_splitter = QSplitter(Qt.Orientation.Vertical)
+        work_splitter.addWidget(code_splitter)
+        work_splitter.addWidget(self.terminal)
+        work_splitter.setStretchFactor(0, 4)
+        work_splitter.setStretchFactor(1, 1)
+        work_splitter.setChildrenCollapsible(False)
+        work_splitter.setSizes([590, 210])
+        self.work_splitter = work_splitter
         splitter = QSplitter(Qt.Orientation.Horizontal)
-        splitter.addWidget(self.script_tree)
-        splitter.addWidget(self.editor_tabs)
+        splitter.addWidget(work_splitter)
         splitter.addWidget(learning_tabs)
-        splitter.setStretchFactor(0, 1)
-        splitter.setStretchFactor(1, 4)
-        splitter.setStretchFactor(2, 2)
+        splitter.setStretchFactor(0, 3)
+        splitter.setStretchFactor(1, 1)
         splitter.setChildrenCollapsible(False)
-        splitter.setSizes([220, 700, 460])
+        splitter.setSizes([920, 460])
         self.splitter = splitter
         self.setCentralWidget(splitter)
 
@@ -168,21 +187,31 @@ class MainWindow(
     def _restore_window_state(self) -> None:
         geometry = self.settings.value("window/geometry")
         state = self.settings.value("window/state")
-        sizes = self.settings.value("window/splitter")
         if isinstance(geometry, QByteArray):
             self.restoreGeometry(geometry)
         if isinstance(state, QByteArray):
             self.restoreState(state)
-        if isinstance(sizes, list):
-            self.splitter.setSizes([int(size) for size in sizes])
+        for key, splitter in self._saved_splitters():
+            sizes = self.settings.value(key)
+            if isinstance(sizes, list) and len(sizes) == splitter.count():
+                splitter.setSizes([int(size) for size in sizes])
+
+    def _saved_splitters(self) -> tuple[tuple[str, QSplitter], ...]:
+        return (
+            ("window/main_splitter", self.splitter),
+            ("window/code_splitter", self.code_splitter),
+            ("window/work_splitter", self.work_splitter),
+        )
 
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 - Qt API
         self.editor_tabs.write_recovery_drafts()
         if not self.editor_tabs.confirm_close_all():
             event.ignore()
             return
+        self.terminal.shutdown()
         self.settings.set_value("window/geometry", self.saveGeometry())
         self.settings.set_value("window/state", self.saveState())
-        self.settings.set_value("window/splitter", self.splitter.sizes())
+        for key, splitter in self._saved_splitters():
+            self.settings.set_value(key, splitter.sizes())
         self.connection_monitor.stop()
         event.accept()

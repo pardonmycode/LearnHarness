@@ -54,8 +54,8 @@ class MissionTexts:
     )
     MISSION_TRY_DONE_PYTHON = "Ich habe es ausprobiert"
     MISSION_TRY_TEXT_PYTHON = (
-        "Speichere dein Skript und starte es im Terminal mit python und dem Dateinamen. Klappt "
-        "etwas nicht? Frag im Tab „Tutor“ nach."
+        "Klicke unten im Terminal auf Starten oder drücke F5. Klappt etwas nicht? Frag im Tab "
+        "„Tutor“ nach."
     )
     MISSION_STEP_DONE = "Schritt geschafft!"
     MISSION_NOT_YET = "Noch nicht ganz. Versuche es noch einmal."

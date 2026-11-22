@@ -58,6 +58,7 @@ class ExplainMissionActions:
         return StudentMessage(
             intent=intent,  # type: ignore[arg-type]
             language=self.project.language,
+            project_description=self._project_idea(),
             session_id=self.session_id,
             project_id=self.project.project_id,
             experience_level=int(self.student_profile.experience_level),

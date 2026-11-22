@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from learnharness_protocol import StudentMessage
 from PyQt6.QtCore import QSettings, Qt
 from pytest import MonkeyPatch
 from pytestqt.qtbot import QtBot
@@ -39,9 +40,10 @@ def _plan_once(qtbot: QtBot, window: MainWindow) -> None:
     qtbot.waitUntil(lambda: bool(panel.plan.suggestions))
 
 
-def test_tab_sits_next_to_learn_agent(window: MainWindow) -> None:
-    assert window.learning_tabs.tabText(0) == "LearnAgent"
-    assert window.learning_tabs.tabText(1) == "Projekt"
+def test_project_tab_comes_first_and_opens_at_start(window: MainWindow) -> None:
+    assert window.learning_tabs.tabText(0) == "Projekt"
+    assert window.learning_tabs.tabText(1) == "LearnAgent"
+    assert window.learning_tabs.currentWidget() is window.project_panel
 
 
 def test_suggestions_join_the_list_only_when_accepted(qtbot: QtBot, window: MainWindow) -> None:
@@ -140,3 +142,15 @@ def test_plan_tolerates_damaged_data_and_limits_the_list() -> None:
     for number in range(MAX_TODOS + 5):
         plan.add_todo(f"Punkt {number}")
     assert len(plan.todos) == MAX_TODOS
+
+
+def test_project_idea_goes_along_with_learning_requests(qtbot: QtBot, window: MainWindow) -> None:
+    sent: list[StudentMessage] = []
+    original = window.tutor_client.send_message
+    window.tutor_client.send_message = lambda message: (sent.append(message), original(message))
+    window.project_panel.description.setPlainText("Ein Spiel mit einem Fuchs")
+    window.send_tutor_message("Wie fange ich an?")
+    window.start_learning_round("Figur bewegen", 1)
+    window.request_mission("Münzen sammeln")
+    assert [message.project_description for message in sent] == ["Ein Spiel mit einem Fuchs"] * 3
+    assert "Projektidee" in window.tutor_panel.context_label.text()
