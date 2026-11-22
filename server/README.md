@@ -48,7 +48,7 @@ Umschalten wirkt sofort, ohne Neustart und ohne Änderung an der App. „Verbind
 die gespeicherten Einstellungen (vorher speichern). Bei Claude-Modellen, die es unterstützen, ist
 die serverseitige Ausweichlösung bei Ablehnungen eingeschaltet (`fallbacks: "default"`).
 
-**Harness** (`tutor/harness.py`), damit die Kinder keine fertigen Lösungen bekommen:
+**Harness** (`tutor/harness/`), damit die Kinder keine fertigen Lösungen bekommen:
 
 - Feste Regeln im System-Prompt (kurz, kindgerecht, keine fertigen Lösungen, keine persönlichen
   Daten); Text der Kinder steht in `<kind>…</kind>` und gilt als Inhalt, nicht als Anweisung.

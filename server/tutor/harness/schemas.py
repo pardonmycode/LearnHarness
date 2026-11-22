@@ -1,0 +1,85 @@
+"""JSON formats the AI must answer in."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from .rules import SKILLS
+
+_STR = {"type": "string"}
+
+
+def _obj(properties: dict[str, Any]) -> dict[str, Any]:
+    # Strict structured output: every property required, nothing else allowed.
+    return {
+        "type": "object",
+        "properties": properties,
+        "required": list(properties),
+        "additionalProperties": False,
+    }
+
+
+EXERCISE_SCHEMA = _obj(
+    {
+        "message": _STR,
+        "skill": {"type": "string", "enum": list(SKILLS)},
+        "kind": {"type": "string", "enum": ["multiple_choice", "fill_blanks"]},
+        "prompt": _STR,
+        "code": _STR,
+        "choices": {
+            "type": "array",
+            "items": _obj({"text": _STR, "correct": {"type": "boolean"}}),
+        },
+        "blanks": {
+            "type": "array",
+            "items": _obj({"options": {"type": "array", "items": _STR}, "answer": _STR}),
+        },
+        "explanation_after_correct": _STR,
+        "new_file_content": _STR,
+    }
+)
+
+
+MISSION_SCHEMA = _obj(
+    {
+        "title": _STR,
+        "goal": _STR,
+        "message": _STR,
+        "skill": {"type": "string", "enum": list(SKILLS)},
+        "steps": {
+            "type": "array",
+            "items": _obj(
+                {
+                    "title": _STR,
+                    "kind": {"type": "string", "enum": ["understand", "learn", "exercise", "try"]},
+                }
+            ),
+        },
+    }
+)
+
+
+PROJECT_PLAN_SCHEMA = _obj(
+    {
+        "message": _STR,
+        "todos": {"type": "array", "items": _STR},
+    }
+)
+
+
+REVIEW_SCHEMA = _obj(
+    {
+        "correct": {"type": "boolean"},
+        "feedback": _STR,
+        "marked_lines": {"type": "array", "items": {"type": "integer"}},
+    }
+)
+
+
+EXERCISE_FORMAT_HELP = """Antworte als JSON. "message": kurzer Text an das Kind (ohne Lösung).
+"kind": "multiple_choice" oder "fill_blanks". "prompt": die Aufgabe. "code": Code zur Aufgabe
+(bei fill_blanks mit Lücken {{1}}, {{2}} …; sonst darf er leer sein). Bei multiple_choice
+"choices" mit genau einer richtigen Antwort (correct=true) und "blanks" leer. Bei fill_blanks
+"blanks" in der Reihenfolge der Lücken, je mit 2–4 "options" und der richtigen "answer" (muss in
+den options stehen), "choices" leer. "explanation_after_correct": was das Kind nach der richtigen
+Antwort liest."""

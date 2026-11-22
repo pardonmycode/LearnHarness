@@ -372,7 +372,7 @@ Server setzen und `DJANGO_SECURE=1` setzen.
 ## Entwicklung und Qualität
 
 - Python 3.12+, PyQt6, Pydantic 2, Django 5.2, Channels/daphne, `anthropic`- und `openai`-SDK.
-- Alle Texte, die Kinder sehen, stehen zentral in `client/src/learnharness_client/texts.py`.
+- Alle Texte, die Kinder sehen, stehen zentral in `client/src/learnharness_client/texts/`.
 - Tests laufen ohne Fenster (`QT_QPA_PLATFORM=offscreen`); der Server testet mit SQLite, die CI
   zusätzlich mit PostgreSQL.
 - GitHub Actions (`.github/workflows/ci.yml`) führt bei jedem Push ruff, mypy und alle Tests aus
@@ -381,6 +381,7 @@ Server setzen und `DJANGO_SECURE=1` setzen.
 
 ## Weitere Dokumentation
 
+- **[docs/README.md](docs/README.md) – Wegweiser durch den Code: Was liegt wo?**
 - [client/README.md](client/README.md) – Details zur App
 - [server/README.md](server/README.md) – Verwaltung, Lernserver, API, Sicherung im Detail
 - `protocol/schemas/` – JSON-Schemas aller Nachrichten

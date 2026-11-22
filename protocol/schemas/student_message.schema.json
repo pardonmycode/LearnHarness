@@ -2,7 +2,7 @@
   "additionalProperties": false,
   "properties": {
     "protocol_version": {
-      "default": "1.4",
+      "default": "1.5",
       "title": "Protocol Version",
       "type": "string"
     },
@@ -19,7 +19,8 @@
         "learn",
         "explain",
         "mission",
-        "mission_step"
+        "mission_step",
+        "project_plan"
       ],
       "title": "Intent",
       "type": "string"
@@ -161,6 +162,42 @@
       ],
       "default": null,
       "title": "Mission Step Id"
+    },
+    "project_description": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Project Description"
+    },
+    "project_todos": {
+      "items": {
+        "maxLength": 120,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 30,
+      "title": "Project Todos",
+      "type": "array"
+    },
+    "project_question": {
+      "anyOf": [
+        {
+          "maxLength": 1000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Project Question"
     },
     "message": {
       "maxLength": 4000,

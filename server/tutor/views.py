@@ -23,6 +23,7 @@ INTENT_LABELS = {
     "learn": "LearnAgent-Runde",
     "mission": "Mission aus einem Wunsch planen",
     "mission_step": "Missionsschritt",
+    "project_plan": "Projekt und To-do-Liste planen",
     "review": "Code-Abgabe prüfen",
 }
 SCHEMAS = {
@@ -30,6 +31,7 @@ SCHEMAS = {
     "learn": harness.EXERCISE_SCHEMA,
     "mission_step": harness.EXERCISE_SCHEMA,
     "mission": harness.MISSION_SCHEMA,
+    "project_plan": harness.PROJECT_PLAN_SCHEMA,
     "review": harness.REVIEW_SCHEMA,
 }
 EXAMPLE_CODE = "extends CharacterBody2D\n\nvar speed = 200\n"

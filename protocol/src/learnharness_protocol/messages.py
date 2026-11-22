@@ -12,7 +12,11 @@ from .missions import Mission
 
 # chat: tutor chat · learn: LearnAgent round · explain: explain selected code
 # mission: start a mission from a wish · mission_step: work on one mission step
-StudentIntent = Literal["chat", "learn", "explain", "mission", "mission_step"]
+# project_plan: plan the project and suggest to-dos together with the child
+StudentIntent = Literal[
+    "chat", "learn", "explain", "mission", "mission_step", "project_plan"
+]
+TodoText = Annotated[str, Field(min_length=1, max_length=120)]
 
 
 class StudentMessage(ProtocolModel):
@@ -33,6 +37,9 @@ class StudentMessage(ProtocolModel):
     skill_focus: str | None = Field(default=None, max_length=64)
     mission_id: str | None = Field(default=None, max_length=64)
     mission_step_id: str | None = Field(default=None, max_length=64)
+    project_description: str | None = Field(default=None, max_length=2000)
+    project_todos: list[TodoText] = Field(default_factory=list, max_length=30)
+    project_question: str | None = Field(default=None, max_length=1000)
     message: str = Field(min_length=1, max_length=4000)
 
 
@@ -43,12 +50,22 @@ class StreamChunk(ProtocolModel):
 
 class LearningResponse(ProtocolModel):
     type: Literal["learning_response"] = "learning_response"
-    mode: Literal["socratic", "hint", "exercise", "explanation", "review", "mission"]
+    mode: Literal[
+        "socratic",
+        "hint",
+        "exercise",
+        "explanation",
+        "review",
+        "mission",
+        "project_plan",
+    ]
     message: str
     hint_level: int = Field(default=0, ge=0, le=4)
     hints: list[str] = Field(default_factory=list)
     exercise: Exercise | None = None
     mission: Mission | None = None
+    # Only proposals: a to-do is added when the child accepts it.
+    todo_suggestions: list[TodoText] = Field(default_factory=list, max_length=8)
     code_changes: list[dict[str, object]] = Field(default_factory=list)
 
 

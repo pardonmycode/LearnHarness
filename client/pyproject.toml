@@ -44,7 +44,7 @@ files = [
     "src/learnharness_client/domain",
     "src/learnharness_client/net",
     "src/learnharness_client/godot",
-    "src/learnharness_client/texts.py",
+    "src/learnharness_client/texts",
     "src/learnharness_client/qtcompat.py",
     "../protocol/src/learnharness_protocol",
 ]
