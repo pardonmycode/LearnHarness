@@ -36,7 +36,7 @@ if not SECRET_KEY:
         raise ImproperlyConfigured("DJANGO_SECRET_KEY muss gesetzt sein (oder DJANGO_DEBUG=1).")
     SECRET_KEY = "dev-only-insecure-key"  # noqa: S105 - development only
 
-ALLOWED_HOSTS = _env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
+ALLOWED_HOSTS = _env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,192.168.178.72")
 CSRF_TRUSTED_ORIGINS = _env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
 
 INSTALLED_APPS = [
