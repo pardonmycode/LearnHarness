@@ -14,7 +14,7 @@ from learnharness_protocol import StudentMessage
 
 from . import harness
 from .models import AiSettings
-from .providers import model_available
+from .providers import connection_problem, model_available
 
 INTENT_LABELS = {
     "chat": "Tutor-Chat",
@@ -101,7 +101,10 @@ def prompt_overview(request: HttpRequest) -> HttpResponse:
 def test_connection(request: HttpRequest) -> HttpResponse:
     settings = AiSettings.load()
     ok, latency = model_available(force=True)
-    if ok:
+    problem = connection_problem(settings)
+    if problem:
+        messages.error(request, f"{settings.get_provider_display()}: {problem}")
+    elif ok:
         messages.success(
             request,
             f"{settings.get_provider_display()} mit „{settings.active_model}“ erreichbar "

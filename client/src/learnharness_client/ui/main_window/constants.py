@@ -9,6 +9,8 @@ from learnharness_client.domain.path_guard import fold_case
 MAX_FILE_CONTEXT = 16_000  # characters of the open script sent along with learn rounds
 
 
+# Share of the window width for the learning tabs until the child drags the divider.
+LEARNING_TABS_SHARE = 0.53
 GODOT_TASK_ID = "move_player_right"
 
 

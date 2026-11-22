@@ -104,6 +104,21 @@ class PathGuard:
             or (folder / ".gdignore").exists()
         )
 
+    def ensure_folder(self, path: Path) -> Path:
+        """A visible folder inside the project, for the terminal's cd command."""
+        candidate = Path(os.path.normpath(path))
+        if not candidate.is_relative_to(self.root):
+            raise PathNotAllowed(T.PATH_OUTSIDE)
+        current = self.root
+        for part in candidate.relative_to(self.root).parts:
+            current /= part
+            self._reject_reparse_point(current)
+            if self.skips_folder(current):
+                raise PathNotAllowed(T.PATH_PROTECTED)
+        if not candidate.is_dir():
+            raise PathNotAllowed(T.TERMINAL_NO_FOLDER)
+        return candidate
+
     def ensure_allowed(self, path: Path | str, *, must_exist: bool = True) -> Path:
         if isinstance(path, str):
             # Paths from the server or a Windows PC may use "\". On Linux "\" is an ordinary

@@ -86,6 +86,33 @@ class AnthropicProvider(Provider):
             raise ProviderError("Leere Antwort")
         return text
 
+    def diagnose(self) -> str | None:
+        """A tiny real request: only this notices a wrong key's scope or missing credit."""
+        errors = self._anthropic
+        try:
+            self.client.messages.create(
+                model=self.model,
+                max_tokens=16,
+                messages=[{"role": "user", "content": "Antworte nur mit OK."}],
+            )
+        except errors.AuthenticationError:
+            return "Der API-Schlüssel ist ungültig. Prüfe ANTHROPIC_API_KEY in server/.env."
+        except errors.PermissionDeniedError:
+            return "Dieser API-Schlüssel hat keinen Zugriff auf das Modell."
+        except errors.NotFoundError:
+            return f"Das Modell „{self.model}“ gibt es nicht oder es ist nicht freigeschaltet."
+        except errors.RateLimitError:
+            return "Das Limit des Claude-Kontos ist gerade erreicht."
+        except errors.BadRequestError as exc:
+            if "credit balance" in str(exc).casefold():
+                return "Das Claude-Konto hat kein Guthaben. Lade es in der Claude Console auf."
+            return f"Claude lehnt die Anfrage ab: {exc.message}"
+        except errors.APIConnectionError:
+            return "Der Server erreicht api.anthropic.com nicht. Prüfe Internet und Firewall."
+        except errors.APIStatusError as exc:
+            return f"Claude meldet Fehler {exc.status_code}. Versuch es gleich noch einmal."
+        return None
+
     def ping(self) -> bool:
         try:
             self.client.models.retrieve(self.model)

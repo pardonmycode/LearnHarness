@@ -26,6 +26,7 @@ __all__ = [
     "Provider",
     "ProviderError",
     "Usage",
+    "connection_problem",
     "get_provider",
     "model_available",
     "parse_json",
@@ -51,6 +52,17 @@ def get_provider(settings: AiSettings | None = None) -> Provider:
     return OpenAICompatibleProvider(
         settings.provider, model, settings.max_output_tokens, settings.vllm_base_url, key
     )
+
+
+def connection_problem(settings: AiSettings) -> str | None:
+    """For the admin's connection test: why Claude cannot answer, in plain words."""
+    if settings.provider != AiSettings.Provider.ANTHROPIC:
+        return None
+    try:
+        provider = get_provider(settings)
+    except ProviderError as exc:
+        return str(exc)
+    return provider.diagnose() if isinstance(provider, AnthropicProvider) else None
 
 
 PING_CACHE_SECONDS = 60

@@ -40,7 +40,8 @@ Die App auf dem Rechner des Kindes. Die Beschreibung ist jeweils der Kopfkomment
 | [project.py](../client/src/learnharness_client/domain/project.py) | Project discovery and metadata for Godot and Python projects. |
 | [project_plan.py](../client/src/learnharness_client/domain/project_plan.py) | A child's project idea and to-do list. The child decides what goes on the list. |
 | [python_check.py](../client/src/learnharness_client/domain/python_check.py) | Syntax check for Python scripts. The code is only parsed, never executed. |
-| [run_target.py](../client/src/learnharness_client/domain/run_target.py) | Decides what the Start button runs: a Python script of the project or the Godot game. |
+| [run_target.py](../client/src/learnharness_client/domain/run_target.py) | The programs the terminal may start: a Python script of the project or the Godot game. |
+| [terminal_commands.py](../client/src/learnharness_client/domain/terminal_commands.py) | The few commands children can type. Nothing here reaches a system shell. |
 | [recovery.py](../client/src/learnharness_client/domain/recovery.py) | Crash-recovery drafts stored outside the Godot project. |
 | [script_document.py](../client/src/learnharness_client/domain/script_document.py) | In-memory representation of a GDScript file. |
 
@@ -196,7 +197,7 @@ Die App auf dem Rechner des Kindes. Die Beschreibung ist jeweils der Kopfkomment
 | [learning.py](../client/src/learnharness_client/ui/main_window/learning.py) | LearnAgent rounds, tutor messages and exercise reviews. |
 | [projects.py](../client/src/learnharness_client/ui/main_window/projects.py) | Opening and creating projects and scripts, and the project plan. |
 | [responses.py](../client/src/learnharness_client/ui/main_window/responses.py) | Answers, connection state and progress from the learning server. |
-| [running.py](../client/src/learnharness_client/ui/main_window/running.py) | Starting and stopping the project from the terminal. |
+| [running.py](../client/src/learnharness_client/ui/main_window/running.py) | What the terminal needs from the main window. |
 | [window_dialogs.py](../client/src/learnharness_client/ui/main_window/window_dialogs.py) | Dialogs opened from the main window. |
 
 ## `client/src/learnharness_client/ui/panels/`
@@ -209,7 +210,8 @@ Die App auf dem Rechner des Kindes. Die Beschreibung ist jeweils der Kopfkomment
 | [explain_panel.py](../client/src/learnharness_client/ui/panels/explain_panel.py) | Interactive code explainer: questions about the selected code plus a check question. |
 | [problems_panel.py](../client/src/learnharness_client/ui/panels/problems_panel.py) | Problems from Godot, Python or server review. |
 | [progress_panel.py](../client/src/learnharness_client/ui/panels/progress_panel.py) | Per-skill progress without scores or rankings. |
-| [terminal_panel.py](../client/src/learnharness_client/ui/panels/terminal_panel.py) | Small terminal that runs the project and shows its output. It is not a free shell. |
+| [terminal_console.py](../client/src/learnharness_client/ui/panels/terminal_console.py) | Text area that behaves like a console: only the current input line can be edited. |
+| [terminal_panel.py](../client/src/learnharness_client/ui/panels/terminal_panel.py) | Terminal without buttons: children type commands such as ``python main.py``. |
 | [tutor_panel.py](../client/src/learnharness_client/ui/panels/tutor_panel.py) | Tutor conversation without any apply-to-editor action. |
 
 ## `client/src/learnharness_client/ui/panels/learn_agent_panel/`

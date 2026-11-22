@@ -23,8 +23,9 @@ Kind → Client ──HTTP / WebSocket──→ Server → Harness → KI-Anbiet
 2. **Kein Codeverlust.** Der Editor funktioniert ohne Server. Vor jedem Speichern entsteht eine
    Sicherung, ungespeicherte Arbeit landet in Wiederherstellungsentwürfen.
 3. **Nur im Projekt.** Jeder Dateizugriff läuft über den `PathGuard`.
-4. **Code läuft nur auf Knopfdruck.** Die Syntaxprüfung liest den Code nur. Ausgeführt wird er
-   ausschließlich über den Starten-Knopf im Terminal, ohne freie Kommandozeile und ohne Sandbox.
+4. **Code läuft nur auf Befehl.** Die Syntaxprüfung liest den Code nur. Ausgeführt wird er, wenn
+   das Kind im Terminal `python datei.py` tippt. Das Terminal kennt nur wenige Lernbefehle und
+   erreicht keine System-Shell. Die gestarteten Skripte laufen aber ohne Sandbox.
 5. **Lösungen bleiben auf dem Server.** Der Client bekommt Übungen ohne richtige Antworten.
 6. **Kindgerecht.** Alle sichtbaren Texte stehen zentral in `texts/`.
 

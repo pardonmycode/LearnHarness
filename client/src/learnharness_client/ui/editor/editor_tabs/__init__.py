@@ -74,7 +74,11 @@ class EditorTabs(TabFiles, TabSaving, TabWatching, QWidget):
         self.quick_save_timer.timeout.connect(self.autosave_dirty)
         app = QApplication.instance()
         if app is not None:
-            app.applicationStateChanged.connect(lambda _state: self.check_all_external_changes())
+            # A bound method: Qt drops the connection when this widget is destroyed.
+            app.applicationStateChanged.connect(self._application_state_changed)
+
+    def _application_state_changed(self, _state: object) -> None:
+        self.check_all_external_changes()
 
     def set_project(self, project: Project) -> None:
         if self.project and not self.confirm_close_all():

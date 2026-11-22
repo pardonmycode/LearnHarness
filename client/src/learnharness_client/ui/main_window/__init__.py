@@ -31,7 +31,13 @@ from ..script_tree import ScriptTree
 from ..theme import set_state
 from .actions import WindowActions
 from .checks import CheckActions
-from .constants import GODOT_TASK_ID, MAX_FILE_CONTEXT, PYTHON_TASK_ID, is_target_file
+from .constants import (
+    GODOT_TASK_ID,
+    LEARNING_TABS_SHARE,
+    MAX_FILE_CONTEXT,
+    PYTHON_TASK_ID,
+    is_target_file,
+)
 from .explain_missions import ExplainMissionActions
 from .learning import LearningActions
 from .projects import ProjectActions
@@ -117,7 +123,7 @@ class MainWindow(
         learning_tabs.addTab(self.progress_panel, T.TAB_PROGRESS)
         self.learning_tabs = learning_tabs
 
-        self.terminal = TerminalPanel()
+        self.terminal = TerminalPanel(self._save_open_files, self._godot_program)
         code_splitter = QSplitter(Qt.Orientation.Horizontal)
         code_splitter.addWidget(self.script_tree)
         code_splitter.addWidget(self.editor_tabs)
@@ -138,10 +144,12 @@ class MainWindow(
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(work_splitter)
         splitter.addWidget(learning_tabs)
-        splitter.setStretchFactor(0, 3)
-        splitter.setStretchFactor(1, 1)
+        splitter.setStretchFactor(0, 47)
+        splitter.setStretchFactor(1, 53)
         splitter.setChildrenCollapsible(False)
-        splitter.setSizes([920, 460])
+        splitter.setHandleWidth(8)
+        learning_tabs.setMinimumWidth(320)
+        work_splitter.setMinimumWidth(420)
         self.splitter = splitter
         self.setCentralWidget(splitter)
 
@@ -195,10 +203,13 @@ class MainWindow(
             sizes = self.settings.value(key)
             if isinstance(sizes, list) and len(sizes) == splitter.count():
                 splitter.setSizes([int(size) for size in sizes])
+            elif splitter is self.splitter:
+                tabs = round(self.width() * LEARNING_TABS_SHARE)
+                splitter.setSizes([self.width() - tabs, tabs])
 
     def _saved_splitters(self) -> tuple[tuple[str, QSplitter], ...]:
         return (
-            ("window/main_splitter", self.splitter),
+            ("window/main_splitter_v2", self.splitter),
             ("window/code_splitter", self.code_splitter),
             ("window/work_splitter", self.work_splitter),
         )

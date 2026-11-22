@@ -27,7 +27,7 @@ Alle Pfade liegen unter `client/src/learnharness_client/`.
 | [`responses.py`](../client/src/learnharness_client/ui/main_window/responses.py) | Serverantworten und Verbindungsstatus |
 | [`checks.py`](../client/src/learnharness_client/ui/main_window/checks.py) | Syntaxprüfung und Godot-Log |
 | [`window_dialogs.py`](../client/src/learnharness_client/ui/main_window/window_dialogs.py) | Einstellungen, Lehrkraft, ältere Versionen |
-| [`running.py`](../client/src/learnharness_client/ui/main_window/running.py) | Skript oder Spiel starten und stoppen |
+| [`running.py`](../client/src/learnharness_client/ui/main_window/running.py) | Speichern vor dem Start, Godot-Pfad fürs Terminal |
 
 ## Tabs: `ui/panels/`
 
@@ -40,7 +40,7 @@ Alle Pfade liegen unter `client/src/learnharness_client/`.
 | Tutor | [`tutor_panel.py`](../client/src/learnharness_client/ui/panels/tutor_panel.py) |
 | Fortschritt | [`progress_panel.py`](../client/src/learnharness_client/ui/panels/progress_panel.py) |
 | Probleme (unten) | [`problems_panel.py`](../client/src/learnharness_client/ui/panels/problems_panel.py) |
-| Terminal (unter dem Code) | [`terminal_panel.py`](../client/src/learnharness_client/ui/panels/terminal_panel.py) |
+| Terminal (unter dem Code) | [`terminal_panel.py`](../client/src/learnharness_client/ui/panels/terminal_panel.py), Eingabe in [`terminal_console.py`](../client/src/learnharness_client/ui/panels/terminal_console.py) |
 
 ## Editor: `ui/editor/`
 
@@ -63,7 +63,8 @@ Alle Pfade liegen unter `client/src/learnharness_client/`.
 | [`recovery.py`](../client/src/learnharness_client/domain/recovery.py) | Entwürfe für den Absturzfall |
 | [`python_check.py`](../client/src/learnharness_client/domain/python_check.py) | Python-Syntaxprüfung ohne Ausführung |
 | [`project_plan.py`](../client/src/learnharness_client/domain/project_plan.py) | Projektidee und To-do-Liste |
-| [`run_target.py`](../client/src/learnharness_client/domain/run_target.py) | Entscheidet, was der Starten-Knopf ausführt |
+| [`terminal_commands.py`](../client/src/learnharness_client/domain/terminal_commands.py) | Befehle des Terminals (`python`, `ls`, `cd` …) |
+| [`run_target.py`](../client/src/learnharness_client/domain/run_target.py) | Findet Python und beschreibt das zu startende Programm |
 
 ## Netzwerk: `net/`
 

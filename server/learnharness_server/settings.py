@@ -12,6 +12,8 @@ from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
 
+from .env_file import load_env_file
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -24,6 +26,10 @@ def _env_list(name: str, default: str = "") -> list[str]:
 
 
 DEBUG = _env_bool("DJANGO_DEBUG")
+# Tests must never pick up real keys or a real database from server/.env.
+if not os.environ.get("DJANGO_SETTINGS_MODULE", "").endswith("test_settings"):
+    load_env_file(Path(__file__).resolve().parent.parent / ".env")
+
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "")
 if not SECRET_KEY:
     if not DEBUG:

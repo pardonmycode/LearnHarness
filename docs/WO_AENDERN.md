@@ -14,7 +14,7 @@
 | Farben oder Stil ändern | [`palettes.py`](../client/src/learnharness_client/ui/theme/palettes.py), [`stylesheet.py`](../client/src/learnharness_client/ui/theme/stylesheet.py) |
 | den Projekt-Tab ändern | [`C/ui/panels/project_panel/`](../client/src/learnharness_client/ui/panels/project_panel/) |
 | eine neue Übungsart anzeigen | [`C/ui/exercises/`](../client/src/learnharness_client/ui/exercises/), registriert in [`factory.py`](../client/src/learnharness_client/ui/exercises/factory.py) |
-| das Terminal ändern | [`terminal_panel.py`](../client/src/learnharness_client/ui/panels/terminal_panel.py), Startlogik in [`run_target.py`](../client/src/learnharness_client/domain/run_target.py) |
+| das Terminal ändern | [`terminal_panel.py`](../client/src/learnharness_client/ui/panels/terminal_panel.py), Befehle in [`terminal_commands.py`](../client/src/learnharness_client/domain/terminal_commands.py) |
 | eine Einstellung ergänzen | [`C/config/preferences.py`](../client/src/learnharness_client/config/preferences.py), Dialog in [`settings_dialog.py`](../client/src/learnharness_client/ui/dialogs/settings_dialog.py) |
 
 ## Editor und Dateien

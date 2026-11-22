@@ -83,7 +83,7 @@ assets/
 (states/, entities/, systems/ und ui/ enthalten je eine __init__.py.)
 
 Ordnerregeln:
-- Gestartet wird über den Starten-Knopf im Terminal der App (F5). Er führt main.py aus.
+- Das Kind startet selbst im Terminal der App: python main.py
 - Importe immer vom Projektordner aus, z. B. from game.entities.player import Player.
 - Eine Datei, eine Aufgabe. Datei- und Ordnernamen klein_mit_unterstrich.
 - Keine Datei so nennen wie ein Python-Modul, also nicht random.py, math.py oder pygame.py.

@@ -56,9 +56,8 @@ class ProjectActions:
     def open_project(self, project: Project) -> None:
         if self.project and not self.editor_tabs.confirm_close_all():
             return
-        self.terminal.shutdown()
-        self.terminal.output.clear()
         self.project = project
+        self.terminal.set_project(project)
         self._apply_language(project.language)
         saved_plan = self.settings.project_plan(self.student_profile.profile_id, project.project_id)
         self.project_panel.load(ProjectPlan.from_dict(saved_plan))
@@ -66,7 +65,6 @@ class ProjectActions:
         self._refresh_recent_menu()
         self.script_tree.set_project(project)
         self.editor_tabs.set_project(project)
-        self._update_run_target()
         self.project_status.setText(project.name)
         self.setWindowTitle(T.PROJECT_TITLE.format(project=project.name))
         self.session_id = None

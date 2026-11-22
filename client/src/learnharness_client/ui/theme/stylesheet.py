@@ -113,7 +113,10 @@ QProgressBar {{ background: {c.surface_alt}; border: none; border-radius: 6px;
 QProgressBar::chunk {{ background: {c.accent}; border-radius: 6px; }}
 
 QSplitter::handle {{ background: {c.window}; }}
-QSplitter::handle:horizontal {{ width: 6px; }}
+QSplitter::handle:hover {{ background: {c.accent_soft}; }}
+QSplitter::handle:pressed {{ background: {c.accent}; }}
+QSplitter::handle:horizontal {{ width: 8px; }}
+QSplitter::handle:vertical {{ height: 8px; }}
 QDockWidget::title {{ background: {c.surface_alt}; padding: 6px 10px; }}
 
 QStatusBar {{ background: {c.surface}; border-top: 1px solid {c.border}; color: {c.muted}; }}
