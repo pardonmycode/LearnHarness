@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from learnharness_protocol import StudentMessage
+from learnharness_protocol import Mission, MissionStep, StudentMessage
 
 from ..models import AiSettings
 from .game_blueprint import game_blueprint
@@ -14,6 +14,7 @@ from .rules import (
     LEVELS,
     SKILLS,
 )
+from .topics import MISSION_TOPIC_GUIDE, MISSION_TOPICS, stage_for
 
 
 def system_prompt(
@@ -47,6 +48,8 @@ def system_prompt(
             try_step=words["try"],
         )
     )
+    if intent == "mission":
+        parts.append(MISSION_TOPIC_GUIDE)
     blueprint = game_blueprint(intent, language) if game else ""
     if blueprint:
         parts.append(blueprint)
@@ -61,6 +64,22 @@ def system_prompt(
 def _tag(name: str, text: str) -> str:
     # The closing tag inside the child's text must not end the block early.
     return f"<{name}>\n{text.replace(f'</{name}>', f'</ {name}>')}\n</{name}>"
+
+
+def topic_levels(levels: dict[str, int]) -> str:
+    """Server-side stages per topic, for planning a mission that fits the child."""
+    lines = [f"- {topic}: Stufe {stage_for(levels.get(topic, 1))}" for topic in MISSION_TOPICS]
+    return "Stufen des Kindes je Thema:\n" + "\n".join(lines)
+
+
+def mission_step_context(mission: Mission, step: MissionStep) -> str:
+    """The whole plan, so a step builds on earlier ones and leaves later ones alone."""
+    current = mission.steps.index(step)
+    lines = [f"Titel: {mission.title}", f"Ziel: {mission.goal}", "Schritte:"]
+    for index, item in enumerate(mission.steps):
+        mark = "x" if index < current else (">" if index == current else " ")
+        lines.append(f"- [{mark}] {item.title} (Art: {item.kind})")
+    return "Die Mission:\n" + _tag("mission", "\n".join(lines))
 
 
 def user_prompt(message: StudentMessage, *, task: str | None = None, extra: str = "") -> str:
@@ -87,6 +106,11 @@ def user_prompt(message: StudentMessage, *, task: str | None = None, extra: str 
             f"Frage: {turn.question}\nAntwort: {turn.answer}" for turn in message.project_turns
         )
         parts.append("Bisheriges Gespräch über das Projekt:\n" + _tag("gespraech", talk))
+    if message.intent == "project_plan" and message.project_skipped_questions:
+        skipped = "\n".join(f"- {question}" for question in message.project_skipped_questions)
+        parts.append(
+            "Diese Fragen wollte das Kind nicht beantworten:\n" + _tag("uebersprungen", skipped)
+        )
     if message.intent == "project_plan" and message.project_question:
         parts.append("Deine letzte Rückfrage:\n" + _tag("frage", message.project_question))
     if message.skill_focus:
@@ -94,5 +118,10 @@ def user_prompt(message: StudentMessage, *, task: str | None = None, extra: str 
         parts.append(f"Übungsschwerpunkt: {label} (hier braucht das Kind noch Übung)")
     if extra:
         parts.append(extra)
-    parts.append("Nachricht des Kindes:\n" + _tag("kind", message.message))
+    # Started by a button: the message is only a step id or repeats the description.
+    by_button = message.intent == "mission_step" or (
+        message.intent == "project_plan" and not message.project_question
+    )
+    if not by_button:
+        parts.append("Nachricht des Kindes:\n" + _tag("kind", message.message))
     return "\n\n".join(parts)

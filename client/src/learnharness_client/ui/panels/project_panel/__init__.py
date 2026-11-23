@@ -39,6 +39,7 @@ class ProjectPanel(PanelPlanning, PanelRendering, QWidget):
         self._has_project = False
         self._pending_answer: str | None = None
         self._asked_description = ""
+        self._skipping = ""
 
         content = QWidget()
         layout = QVBoxLayout(content)
@@ -140,6 +141,7 @@ class ProjectPanel(PanelPlanning, PanelRendering, QWidget):
         self._has_project = True
         self._busy = False
         self._pending_answer = None
+        self._skipping = ""
         self.content.setEnabled(True)
         self.description.blockSignals(True)
         self.description.setPlainText(plan.description)

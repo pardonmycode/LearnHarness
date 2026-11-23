@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from .rules import SKILLS
+from .topics import MISSION_TOPICS, STAGE_KINDS
 
 _STR = {"type": "string"}
 
@@ -40,12 +41,25 @@ EXERCISE_SCHEMA = _obj(
 )
 
 
+def mission_exercise_schema(stage: int, topic: str | None) -> dict[str, Any]:
+    """The exercise format of one stage, so the AI cannot pick another kind of exercise."""
+    properties = dict(EXERCISE_SCHEMA["properties"])
+    properties["kind"] = {"type": "string", "enum": [STAGE_KINDS[stage]]}
+    properties["skill"] = {"type": "string", "enum": [topic] if topic else list(MISSION_TOPICS)}
+    if stage == 3:
+        properties["blanks"] = {
+            "type": "array",
+            "items": _obj({"answer": _STR, "alternatives": {"type": "array", "items": _STR}}),
+        }
+    return _obj(properties)
+
+
 MISSION_SCHEMA = _obj(
     {
         "title": _STR,
         "goal": _STR,
         "message": _STR,
-        "skill": {"type": "string", "enum": list(SKILLS)},
+        "skill": {"type": "string", "enum": list(MISSION_TOPICS)},
         "steps": {
             "type": "array",
             "items": _obj(

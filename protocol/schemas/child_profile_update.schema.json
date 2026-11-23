@@ -3,7 +3,7 @@
   "description": "Changes a client may make; the level is changed only via LevelUnlock.",
   "properties": {
     "protocol_version": {
-      "default": "1.7",
+      "default": "1.8",
       "title": "Protocol Version",
       "type": "string"
     },

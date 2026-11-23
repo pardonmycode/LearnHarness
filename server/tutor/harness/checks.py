@@ -7,11 +7,19 @@ from dataclasses import dataclass
 from typing import Any
 from uuid import uuid4
 
-from learnharness_protocol import Blank, Choice, FillBlanksExercise, MultipleChoiceExercise
+from learnharness_protocol import (
+    Blank,
+    Choice,
+    FillBlanksExercise,
+    MultipleChoiceExercise,
+    TextBlank,
+    TextBlanksExercise,
+)
 from learnharness_protocol.exercises import Exercise
 
 from .rules import SKILLS
 from .stream_guard import filter_text, looks_like_code
+from .topics import MISSION_TOPICS, STAGE_KINDS, normalize_typed
 
 
 class HarnessRejected(Exception):
@@ -19,6 +27,8 @@ class HarnessRejected(Exception):
 
 
 MAX_DESCRIPTION_LENGTH = 2000
+MAX_TYPED_BLANKS = 2
+MAX_TYPED_ANSWER = 40
 PLAN_MIN_ANSWERS = 3  # the AI may call the idea clear from here on
 PLAN_ENOUGH_ANSWERS = 5  # from here on the child is always told it can start
 
@@ -38,7 +48,7 @@ def clean_description(text: Any, current: str) -> str | None:
 @dataclass
 class BuiltExercise:
     exercise: Exercise
-    answers: dict[str, str]
+    answers: dict[str, str | list[str]]
     message: str
     skill_id: str
     explanation: str
@@ -46,19 +56,66 @@ class BuiltExercise:
     notes: list[str]
 
 
-def build_exercise(data: dict[str, Any], *, max_lines: int, prefix: str) -> BuiltExercise:
-    """Turn structured AI output into a protocol exercise; answers stay on the server."""
+def _text_blanks(
+    data: dict[str, Any], exercise_id: str, skill_id: str, prompt: str, code: str
+) -> tuple[Exercise, dict[str, str | list[str]]]:
+    """Blanks the child types; every accepted spelling stays on the server."""
+    blanks_data = data.get("blanks") or []
+    if not 1 <= len(blanks_data) <= MAX_TYPED_BLANKS:
+        raise HarnessRejected("Tippaufgabe braucht ein bis zwei Lücken")
+    blanks: list[TextBlank] = []
+    answers: dict[str, str | list[str]] = {}
+    for index, blank in enumerate(blanks_data, start=1):
+        answer = str(blank.get("answer", "")).strip()
+        if not answer or len(answer) > MAX_TYPED_ANSWER:
+            raise HarnessRejected("Tippantwort fehlt oder ist zu lang")
+        others = [str(item).strip() for item in blank.get("alternatives") or []]
+        blank_id = f"b{index}"
+        code = code.replace(f"{{{{{index}}}}}", f"{{{{{blank_id}}}}}")
+        blanks.append(TextBlank(id=blank_id))
+        answers[blank_id] = [answer, *[item for item in others if item]]
+    if any(f"{{{{{blank.id}}}}}" not in code for blank in blanks):
+        raise HarnessRejected("Lückencode passt nicht zu den Lücken")
+    exercise = TextBlanksExercise(
+        id=exercise_id,
+        skill=SKILLS[skill_id],
+        difficulty=3,
+        prompt=prompt,
+        code=code,
+        blanks=blanks,
+    )
+    return exercise, answers
+
+
+def build_exercise(
+    data: dict[str, Any],
+    *,
+    max_lines: int,
+    prefix: str,
+    stage: int | None = None,
+    topic: str | None = None,
+) -> BuiltExercise:
+    """Turn structured AI output into a protocol exercise; answers stay on the server.
+
+    With a stage, only the exercise kind of that stage is accepted."""
+    exercise: Exercise
     exercise_id = f"{prefix}_{uuid4().hex[:12]}"
-    skill_id = data.get("skill") if data.get("skill") in SKILLS else "variables"
+    allowed = MISSION_TOPICS if stage else SKILLS
+    skill_id = topic or (data.get("skill") if data.get("skill") in allowed else "variables")
+    if stage and data.get("kind") != STAGE_KINDS[stage]:
+        raise HarnessRejected(f"Stufe {stage} verlangt die Aufgabenart {STAGE_KINDS[stage]}")
     message, notes = filter_text(str(data.get("message", "")).strip(), max_lines)
     prompt = str(data.get("prompt", "")).strip()
     code = str(data.get("code", "")).rstrip()
     if not prompt:
         raise HarnessRejected("Übung ohne Aufgabentext")
-    if data.get("kind") == "fill_blanks":
+    answers: dict[str, str | list[str]]
+    if data.get("kind") == "text_blanks" and stage == 3:
+        exercise, answers = _text_blanks(data, exercise_id, skill_id, prompt, code)
+    elif data.get("kind") == "fill_blanks":
         blanks_data = data.get("blanks") or []
         blanks: list[Blank] = []
-        answers: dict[str, str] = {}
+        answers = {}
         for index, blank in enumerate(blanks_data, start=1):
             options = [str(option) for option in blank.get("options", []) if str(option).strip()]
             answer = str(blank.get("answer", ""))
@@ -72,7 +129,7 @@ def build_exercise(data: dict[str, Any], *, max_lines: int, prefix: str) -> Buil
             answers[blank_id] = answer
         if not blanks or any(f"{{{{{blank.id}}}}}" not in code for blank in blanks):
             raise HarnessRejected("Lückencode passt nicht zu den Lücken")
-        exercise: Exercise = FillBlanksExercise(
+        exercise = FillBlanksExercise(
             id=exercise_id,
             skill=SKILLS[skill_id],
             difficulty=2,
@@ -129,5 +186,12 @@ def check_generated_code(before: str, after: str, max_changed: int) -> str | Non
     return None
 
 
-def check_answers(expected: dict[str, str], given: dict[str, Any]) -> dict[str, bool]:
-    return {key: str(given.get(key, "")).strip() == value for key, value in expected.items()}
+def _answer_matches(expected: str | list[str], given: Any) -> bool:
+    text = str(given if given is not None else "").strip()
+    if isinstance(expected, list):  # typed by the child: several spellings are right
+        return bool(text) and normalize_typed(text) in {normalize_typed(v) for v in expected}
+    return text == expected
+
+
+def check_answers(expected: dict[str, Any], given: dict[str, Any]) -> dict[str, bool]:
+    return {key: _answer_matches(value, given.get(key, "")) for key, value in expected.items()}

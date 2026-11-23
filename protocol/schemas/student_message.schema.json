@@ -5,7 +5,7 @@
       "description": "One question of the helper about the project and the child's answer.",
       "properties": {
         "protocol_version": {
-          "default": "1.7",
+          "default": "1.8",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -33,7 +33,7 @@
   "additionalProperties": false,
   "properties": {
     "protocol_version": {
-      "default": "1.7",
+      "default": "1.8",
       "title": "Protocol Version",
       "type": "string"
     },
@@ -226,6 +226,16 @@
       },
       "maxItems": 12,
       "title": "Project Turns",
+      "type": "array"
+    },
+    "project_skipped_questions": {
+      "items": {
+        "maxLength": 1000,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 8,
+      "title": "Project Skipped Questions",
       "type": "array"
     },
     "project_done_missions": {

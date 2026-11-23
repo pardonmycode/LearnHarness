@@ -169,6 +169,7 @@ class ExerciseRecord(models.Model):
     generated_content = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     solved_at = models.DateTimeField(null=True, blank=True)
+    wrong_attempts = models.PositiveSmallIntegerField(default=0)  # before it was solved
 
     class Meta:
         verbose_name = "Übung"

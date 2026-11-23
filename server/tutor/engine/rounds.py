@@ -48,14 +48,24 @@ class TutorRounds:
         extra: str = "",
         allow_code: bool,
         prefix: str,
+        stage: int | None = None,
+        topic: str | None = None,
     ) -> harness.BuiltExercise:
-        system = self._system(intent, message) + "\n\n" + harness.EXERCISE_FORMAT_HELP
+        help_text = harness.stage_instructions(topic, stage) if stage else None
+        system = (
+            self._system(intent, message) + "\n\n" + (help_text or harness.EXERCISE_FORMAT_HELP)
+        )
+        schema = harness.mission_exercise_schema(stage, topic) if stage else harness.EXERCISE_SCHEMA
         prompt = harness.user_prompt(message, extra=extra)
         before = message.code_excerpt or ""
 
         def build(data: dict[str, Any]) -> harness.BuiltExercise:
             built = harness.build_exercise(
-                data, max_lines=self.settings.max_code_lines_in_chat, prefix=prefix
+                data,
+                max_lines=self.settings.max_code_lines_in_chat,
+                prefix=prefix,
+                stage=stage,
+                topic=topic,
             )
             if allow_code:
                 reason = harness.check_generated_code(
@@ -68,7 +78,7 @@ class TutorRounds:
             return built
 
         built, _ = self._call_json(
-            intent, system, [{"role": "user", "content": prompt}], harness.EXERCISE_SCHEMA, build
+            intent, system, [{"role": "user", "content": prompt}], schema, build
         )
         ExerciseRecord.objects.create(
             id=built.exercise.id,
@@ -104,7 +114,7 @@ class TutorRounds:
         if not description:
             return _error("no_project_idea", "Beschreibe zuerst kurz dein Projekt.")
         answered = len(message.project_turns) + bool(message.project_question)
-        extra = f"Das Kind hat schon {answered} Fragen beantwortet."
+        extra = f"Bisher beantwortete Fragen: {answered}."
         if answered >= harness.PLAN_ENOUGH_ANSWERS:
             extra += " Das reicht: Sag, dass es loslegen kann, und biete eine freiwillige Frage an."
 

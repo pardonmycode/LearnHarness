@@ -142,6 +142,7 @@ class ProjectActions:
             experience_level=int(self.student_profile.experience_level),
             **self._project_context(),
             project_question=self.project_panel.open_question,
+            project_skipped_questions=self.project_panel.skipped_questions,
             project_turns=[
                 ProjectTurn(question=turn.question, answer=turn.answer) for turn in plan.turns
             ],

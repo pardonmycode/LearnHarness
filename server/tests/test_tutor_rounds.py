@@ -98,7 +98,13 @@ def test_mission_step_uses_the_teacher_note(
         kind="learn",
         note="Betone, dass Namen klein geschrieben werden.",
     )
-    scripted["provider"] = ScriptedProvider(json_answers=[_exercise_json()])
+    first_stage = _exercise_json(
+        kind="multiple_choice",
+        code="",
+        blanks=[],
+        choices=[{"text": "var", "correct": True}, {"text": "if", "correct": False}],
+    )
+    scripted["provider"] = ScriptedProvider(json_answers=[first_stage])
     message = StudentMessage(
         intent="mission_step",
         session_id=session.id,

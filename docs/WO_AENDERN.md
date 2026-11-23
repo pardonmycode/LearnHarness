@@ -38,6 +38,7 @@
 | die festen KI-Regeln ändern | [`harness/rules.py`](../server/tutor/harness/rules.py) |
 | eine neue Sprache ergänzen | `LANGUAGES` in [`rules.py`](../server/tutor/harness/rules.py), `ProjectLanguage` in [`path_guard.py`](../client/src/learnharness_client/domain/path_guard.py), `language` in [`messages.py`](../protocol/src/learnharness_protocol/messages.py) |
 | Grundgerüst und Architektur für Spiele ändern | [`harness/game_blueprint.py`](../server/tutor/harness/game_blueprint.py) |
+| Missionsthemen und die 3 Stufen ändern | [`topics.py`](../server/tutor/harness/topics.py) |
 | ändern, was die KI zum Projekt fragt | `INTENTS["project_plan"]` in [`rules.py`](../server/tutor/harness/rules.py) |
 | den Code-Filter ändern | [`harness/stream_guard.py`](../server/tutor/harness/stream_guard.py) |
 | den Projektplan der KI ändern | `project_plan` in [`rules.py`](../server/tutor/harness/rules.py), Ablauf in [`engine/rounds.py`](../server/tutor/engine/rounds.py) |

@@ -17,6 +17,7 @@ StudentIntent = Literal[
     "chat", "learn", "explain", "mission", "mission_step", "project_plan"
 ]
 MissionTitle = Annotated[str, Field(min_length=1, max_length=120)]
+ProjectQuestion = Annotated[str, Field(min_length=1, max_length=1000)]
 
 
 class ProjectTurn(ProtocolModel):
@@ -47,8 +48,14 @@ class StudentMessage(ProtocolModel):
     project_description: str | None = Field(default=None, max_length=2000)
     project_question: str | None = Field(default=None, max_length=1000)
     project_turns: list[ProjectTurn] = Field(default_factory=list, max_length=12)
+    # Questions the child did not want to answer; the helper must not ask them again.
+    project_skipped_questions: list[ProjectQuestion] = Field(
+        default_factory=list, max_length=8
+    )
     # Finished missions, so the next one builds on them instead of repeating them.
-    project_done_missions: list[MissionTitle] = Field(default_factory=list, max_length=30)
+    project_done_missions: list[MissionTitle] = Field(
+        default_factory=list, max_length=30
+    )
     message: str = Field(min_length=1, max_length=4000)
 
 

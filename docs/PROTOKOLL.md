@@ -35,7 +35,7 @@ Die erzeugten Schemas liegen in [`protocol/schemas/`](../protocol/schemas/).
 `language` ist `gdscript` oder `python`.
 
 Die Felder `project_description` und `project_done_missions` geben jeder Anfrage das Projekt mit.
-`project_turns` und `project_question` tragen das Fragegespräch. Die Antwort kann
+`project_turns`, `project_question` und `project_skipped_questions` tragen das Fragegespräch. Die Antwort kann
 `description_suggestion` und `project_ready` enthalten. Die Beschreibung ändert sich erst, wenn das
 Kind den Vorschlag übernimmt.
 

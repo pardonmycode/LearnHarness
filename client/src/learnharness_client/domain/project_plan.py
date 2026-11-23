@@ -8,6 +8,7 @@ MAX_DESCRIPTION = 2000
 MAX_QUESTION = 1000
 MAX_ANSWER = 1000
 MAX_TURNS = 12
+MAX_SKIPPED = 8
 MAX_FINISHED_MISSIONS = 30
 MAX_MISSION_TITLE = 120
 
@@ -25,6 +26,7 @@ class ProjectPlan:
     suggestion: str = ""  # a better description; only used when the child accepts it
     ready: bool = False  # the helper knows enough to start building
     turns: list[PlanTurn] = field(default_factory=list)
+    skipped: list[str] = field(default_factory=list)  # questions the child did not want
     finished_missions: list[str] = field(default_factory=list)
     # To-dos of older versions are kept untouched in the saved data.
     old_todos: object = None
@@ -34,11 +36,17 @@ class ProjectPlan:
         if question and answer:
             self.turns = [*self.turns, PlanTurn(question, answer)][-MAX_TURNS:]
 
+    def add_skipped(self, question: str) -> None:
+        clean = question.strip()[:MAX_QUESTION]
+        if clean and clean not in self.skipped:
+            self.skipped = [*self.skipped, clean][-MAX_SKIPPED:]
+
     def forget_talk(self) -> None:
         self.question = ""
         self.suggestion = ""
         self.ready = False
         self.turns = []
+        self.skipped = []
 
     def add_finished_mission(self, title: str) -> None:
         clean = " ".join(title.split())[:MAX_MISSION_TITLE].strip()
@@ -52,6 +60,7 @@ class ProjectPlan:
             "suggestion": self.suggestion,
             "ready": self.ready,
             "turns": [{"question": t.question, "answer": t.answer} for t in self.turns],
+            "skipped": list(self.skipped),
             "finished_missions": list(self.finished_missions),
         }
         if self.old_todos is not None:
@@ -77,6 +86,10 @@ class ProjectPlan:
                 asked, answered = entry.get("question"), entry.get("answer")
                 if isinstance(asked, str) and isinstance(answered, str):
                     plan.add_turn(asked, answered)
+        skipped = data.get("skipped")
+        for question in skipped if isinstance(skipped, list) else []:
+            if isinstance(question, str):
+                plan.add_skipped(question)
         missions = data.get("finished_missions")
         for title in missions if isinstance(missions, list) else []:
             if isinstance(title, str):

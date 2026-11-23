@@ -33,10 +33,12 @@ class FakeConversation(FakeClientBase):
         answered = len(message.project_turns) + bool(message.project_question)
         questions = fake_content.PLAN_QUESTIONS
         description = (message.project_description or "").strip()
-        proposal = f"{description} {message.message.strip()}"[:2000] if answered else None
+        answering = bool(message.project_question)
+        proposal = f"{description} {message.message.strip()}"[:2000] if answering else None
+        fresh = [q for q in questions[answered:] if q not in message.project_skipped_questions]
         response = LearningResponse(
             mode="project_plan",
-            message=questions[min(answered, len(questions) - 1)],
+            message=fresh[0] if fresh else questions[-1],
             description_suggestion=proposal,
             project_ready=answered >= 5,
         )

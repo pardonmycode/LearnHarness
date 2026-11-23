@@ -5,7 +5,7 @@ from __future__ import annotations
 from learnharness_protocol import LearningResponse
 from PyQt6.QtGui import QTextCursor
 
-from learnharness_client.domain.project_plan import MAX_DESCRIPTION, MAX_QUESTION
+from learnharness_client.domain.project_plan import MAX_DESCRIPTION, MAX_QUESTION, MAX_SKIPPED
 
 from ....texts import T
 
@@ -39,6 +39,13 @@ class PanelPlanning:
         """The question the request on its way answers, if it is an answer."""
         return self.plan.question or None if self._pending_answer else None
 
+    @property
+    def skipped_questions(self) -> list[str]:
+        """Questions the helper must not ask again, including one being skipped right now."""
+        known = self.plan.skipped
+        fresh = [self._skipping] if self._skipping and self._skipping not in known else []
+        return [*known, *fresh][-MAX_SKIPPED:]
+
     def _request_from_description(self) -> None:
         self._request(self.plan.description.strip(), answer=None)
 
@@ -52,6 +59,7 @@ class PanelPlanning:
             return
         self._busy = True
         self._pending_answer = answer
+        self._skipping = "" if answer else self.plan.question.strip()
         self._asked_description = self.plan.description
         self._sync_buttons()
         self._set_message(T.PLAN_THINKING, "neutral")
@@ -62,6 +70,8 @@ class PanelPlanning:
         if self._pending_answer:
             self.plan.add_turn(self.plan.question, self._pending_answer)
             self.reply.clear()
+        self.plan.add_skipped(self._skipping)
+        self._skipping = ""
         self._pending_answer = None
         self._set_message("", "neutral")
         self.plan.question = response.message[:MAX_QUESTION]
@@ -73,6 +83,7 @@ class PanelPlanning:
     def show_error(self, message: str) -> None:
         self._busy = False
         self._pending_answer = None
+        self._skipping = ""
         self._set_message(message, "error")
         self._sync_buttons()
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from django.db.models import F
 from django.utils import timezone
 from learnharness_protocol import (
     CodeSubmission,
@@ -67,6 +68,10 @@ class TutorReviews:
         correct = all(results.values())
         per_item = [ReviewItem(id=key, correct=value) for key, value in results.items()]
         if not correct:
+            if record.solved_at is None:
+                ExerciseRecord.objects.filter(pk=record.pk).update(
+                    wrong_attempts=F("wrong_attempts") + 1
+                )
             return ReviewResult(
                 correct=False,
                 per_item=per_item,
@@ -84,7 +89,10 @@ class TutorReviews:
         if record.solved_at is None:
             record.solved_at = timezone.now()
             record.save(update_fields=["solved_at"])
-            self._raise_skill(record.skill_id)
+            if record.intent == "mission_step":
+                self._advance_topic(record.skill_id)
+            else:
+                self._raise_skill(record.skill_id)
         return ReviewResult(
             correct=True,
             per_item=per_item,
@@ -141,5 +149,8 @@ class TutorReviews:
         if child is None or skill_id not in harness.SKILLS:
             return
         current = child.skills.filter(skill_id=skill_id).first()
-        level = min(3, (current.level if current else 0) + 1)
+        before = current.level if current else 0
+        # Mission topics move up through their stages only, see _advance_topic.
+        ceiling = 1 if skill_id in harness.MISSION_TOPICS else 3
+        level = max(before, min(ceiling, before + 1))
         child.set_skill(skill_id, harness.SKILLS[skill_id], level)
