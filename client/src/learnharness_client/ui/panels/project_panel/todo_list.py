@@ -40,8 +40,21 @@ class PanelTodoList:
         self.todos.blockSignals(True)
         self._style_item(item, todo)
         self.todos.blockSignals(False)
+        self._mark_current()
         self._render_progress()
+        self._sync_buttons()
         self._save()
+
+    def _work_on_selected(self) -> None:
+        row = self.todos.currentRow()
+        if 0 <= row < len(self.plan.todos) and not self.plan.todos[row].done:
+            self.plan.select_todo(self.plan.todos[row])
+            self._changed()
+            self.todos.setCurrentRow(row)
+
+    def complete_current(self) -> None:
+        if self.plan.complete_current() is not None:
+            self._changed()
 
     def _move_current(self, step: int) -> None:
         row = self.todos.currentRow()

@@ -33,6 +33,7 @@ class ExplainMissionActions:
         message = StudentMessage(
             intent="explain",
             language=self.project.language,
+            **self._project_context(),
             session_id=self.session_id,
             project_id=self.project.project_id,
             experience_level=int(self.student_profile.experience_level),
@@ -58,7 +59,7 @@ class ExplainMissionActions:
         return StudentMessage(
             intent=intent,  # type: ignore[arg-type]
             language=self.project.language,
-            project_description=self._project_idea(),
+            **self._project_context(),
             session_id=self.session_id,
             project_id=self.project.project_id,
             experience_level=int(self.student_profile.experience_level),
@@ -89,6 +90,7 @@ class ExplainMissionActions:
 
     def _mission_completed(self, mission_id: str) -> None:
         """Report missions the teacher assigned; free-wish missions stay on this PC."""
+        self.todo_bar.ask_if_done()
         if self.admin_sync is None:
             return
         if not any(mission.id == mission_id for mission in self.mission_panel.assigned):

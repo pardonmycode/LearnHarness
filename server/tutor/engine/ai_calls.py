@@ -203,6 +203,7 @@ class AiCalls:
             **(
                 {
                     "language": message.language,
+                    "active_todo": bool(message.active_todo),
                     "game": harness.is_game_project(message.language, message.project_description),
                 }
                 if message

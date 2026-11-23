@@ -40,6 +40,9 @@ class StudentMessage(ProtocolModel):
     project_description: str | None = Field(default=None, max_length=2000)
     project_todos: list[TodoText] = Field(default_factory=list, max_length=30)
     project_question: str | None = Field(default=None, max_length=1000)
+    # The plan as context for every tab: finished steps and the one being worked on.
+    project_done_todos: list[TodoText] = Field(default_factory=list, max_length=30)
+    active_todo: TodoText | None = None
     message: str = Field(min_length=1, max_length=4000)
 
 

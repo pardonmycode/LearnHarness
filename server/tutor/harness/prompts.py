@@ -6,7 +6,16 @@ from learnharness_protocol import StudentMessage
 
 from ..models import AiSettings
 from .game_blueprint import game_blueprint
-from .rules import BASE_RULES, EXPERIENCE, INTENTS, LANGUAGES, LEVELS, SKILLS
+from .rules import (
+    ACTIVE_TODO_INTENTS,
+    ACTIVE_TODO_RULE,
+    BASE_RULES,
+    EXPERIENCE,
+    INTENTS,
+    LANGUAGES,
+    LEVELS,
+    SKILLS,
+)
 
 
 def system_prompt(
@@ -18,6 +27,7 @@ def system_prompt(
     hint_level: int = 1,
     language: str = "gdscript",
     game: bool = False,
+    active_todo: bool = False,
 ) -> str:
     words = LANGUAGES.get(language, LANGUAGES["gdscript"])
     parts = [
@@ -40,6 +50,8 @@ def system_prompt(
             try_step=words["try"],
         )
     )
+    if active_todo and intent in ACTIVE_TODO_INTENTS:
+        parts.append(ACTIVE_TODO_RULE)
     blueprint = game_blueprint(intent, language) if game else ""
     if blueprint:
         parts.append(blueprint)
@@ -72,11 +84,18 @@ def user_prompt(message: StudentMessage, *, task: str | None = None, extra: str 
         parts.append(f"Letzte Fehlermeldung aus {source}:\n" + _tag("fehler", message.last_error))
     if message.project_description:
         parts.append("Projektidee des Kindes:\n" + _tag("projekt", message.project_description))
-    if message.intent == "project_plan":
-        todos = "\n".join(f"- {todo}" for todo in message.project_todos)
-        parts.append("Schon auf der To-do-Liste:\n" + _tag("todos", todos))
-        if message.project_question:
-            parts.append("Deine letzte Rückfrage:\n" + _tag("frage", message.project_question))
+    if message.intent == "project_plan" or message.project_todos:
+        done = set(message.project_done_todos)
+        todos = "\n".join(
+            f"- [{'x' if todo in done else ' '}] {todo}" for todo in message.project_todos
+        )
+        parts.append("To-do-Liste des Kindes:\n" + _tag("todos", todos))
+    if message.active_todo:
+        parts.append(
+            "Daran arbeitet das Kind gerade:\n" + _tag("aktuelles_todo", message.active_todo)
+        )
+    if message.intent == "project_plan" and message.project_question:
+        parts.append("Deine letzte Rückfrage:\n" + _tag("frage", message.project_question))
     if message.skill_focus:
         label = SKILLS.get(message.skill_focus, message.skill_focus)
         parts.append(f"Übungsschwerpunkt: {label} (hier braucht das Kind noch Übung)")

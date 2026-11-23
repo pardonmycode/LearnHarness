@@ -126,6 +126,13 @@ class TutorPanel(QWidget):
         self.input.clear()
         self.message_submitted.emit(text)
 
+    def ask(self, text: str) -> None:
+        """Sends a question for the child, for example a hint request."""
+        if not self.send_button.isEnabled():
+            return
+        self.append_message(T.CHILD_NAME, text, QColor(colors().accent), markdown=False)
+        self.message_submitted.emit(text)
+
     def _begin_message(self, sender: str, color: QColor) -> QTextCursor:
         cursor = self.history.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)

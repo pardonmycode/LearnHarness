@@ -198,6 +198,7 @@ Die App auf dem Rechner des Kindes. Die Beschreibung ist jeweils der Kopfkomment
 | [projects.py](../client/src/learnharness_client/ui/main_window/projects.py) | Opening and creating projects and scripts, and the project plan. |
 | [responses.py](../client/src/learnharness_client/ui/main_window/responses.py) | Answers, connection state and progress from the learning server. |
 | [running.py](../client/src/learnharness_client/ui/main_window/running.py) | What the terminal needs from the main window. |
+| [todos.py](../client/src/learnharness_client/ui/main_window/todos.py) | Connects the project's to-do list with LearnAgent, missions and tutor. |
 | [window_dialogs.py](../client/src/learnharness_client/ui/main_window/window_dialogs.py) | Dialogs opened from the main window. |
 
 ## `client/src/learnharness_client/ui/panels/`
@@ -210,6 +211,7 @@ Die App auf dem Rechner des Kindes. Die Beschreibung ist jeweils der Kopfkomment
 | [explain_panel.py](../client/src/learnharness_client/ui/panels/explain_panel.py) | Interactive code explainer: questions about the selected code plus a check question. |
 | [problems_panel.py](../client/src/learnharness_client/ui/panels/problems_panel.py) | Problems from Godot, Python or server review. |
 | [progress_panel.py](../client/src/learnharness_client/ui/panels/progress_panel.py) | Per-skill progress without scores or rankings. |
+| [todo_bar.py](../client/src/learnharness_client/ui/panels/todo_bar.py) | Bar above all tabs: the to-do the child is working on and how to work on it. |
 | [terminal_console.py](../client/src/learnharness_client/ui/panels/terminal_console.py) | Text area that behaves like a console: only the current input line can be edited. |
 | [terminal_panel.py](../client/src/learnharness_client/ui/panels/terminal_panel.py) | Terminal without buttons: children type commands such as ``python main.py``. |
 | [tutor_panel.py](../client/src/learnharness_client/ui/panels/tutor_panel.py) | Tutor conversation without any apply-to-editor action. |

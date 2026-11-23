@@ -61,6 +61,7 @@ class ProjectActions:
         self._apply_language(project.language)
         saved_plan = self.settings.project_plan(self.student_profile.profile_id, project.project_id)
         self.project_panel.load(ProjectPlan.from_dict(saved_plan))
+        self._sync_todo_bar()
         self.settings.remember_project(project.root)
         self._refresh_recent_menu()
         self.script_tree.set_project(project)
@@ -139,19 +140,15 @@ class ProjectActions:
             session_id=self.session_id,
             project_id=self.project.project_id,
             experience_level=int(self.student_profile.experience_level),
-            project_description=plan.description,
-            project_todos=[item.text for item in plan.todos],
+            **self._project_context(),
             project_question=plan.question or None,
             message=text,
         )
         self.tutor_client.send_message(message)
-
-    def _project_idea(self) -> str | None:
-        """The child's idea, so the helper knows what the code is for."""
-        return self.project_panel.plan.description.strip() or None
 
     def _save_project_plan(self, data: dict[str, object]) -> None:
         if self.project:
             self.settings.save_project_plan(
                 self.student_profile.profile_id, self.project.project_id, data
             )
+        self._sync_todo_bar()

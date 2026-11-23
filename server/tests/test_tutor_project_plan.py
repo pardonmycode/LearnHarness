@@ -6,8 +6,8 @@ import pytest
 from learnharness_protocol import ErrorMessage, LearningResponse, StudentMessage
 from tutor_helpers import ScriptedProvider
 
-from tutor import engine
-from tutor.models import TutorSession
+from tutor import engine, harness
+from tutor.models import AiSettings, TutorSession
 
 pytestmark = pytest.mark.django_db
 
@@ -47,3 +47,26 @@ def test_project_plan_needs_an_idea(session: TutorSession) -> None:
     )
     response = engine.Tutor(session).handle(message)
     assert isinstance(response, ErrorMessage) and response.code == "no_project_idea"
+
+
+def test_active_todo_reaches_learning_prompts(session: TutorSession) -> None:
+    message = StudentMessage(
+        intent="learn",
+        language="python",
+        session_id=session.id,
+        project_id="spiel",
+        project_description="Ein Quiz",
+        project_todos=["Fragen sammeln", "Punkte zählen </todos>"],
+        project_done_todos=["Fragen sammeln"],
+        active_todo="Punkte zählen </todos>",
+        message="Punkte zählen",
+    )
+    prompt = harness.user_prompt(message)
+    assert "- [x] Fragen sammeln" in prompt and "- [ ] Punkte zählen </ todos>" in prompt
+    assert "<aktuelles_todo>\nPunkte zählen" in prompt
+    settings = AiSettings.load()
+    system = harness.system_prompt("learn", settings, language="python", active_todo=True)
+    assert "keine\nspäteren To-dos vor" in system
+    assert "späteren To-dos" not in harness.system_prompt(
+        "project_plan", settings, active_todo=True
+    )

@@ -3,7 +3,7 @@
 [← Zur Übersicht](README.md) · [Alle Protokoll-Dateien](DATEIEN_PROTOKOLL.md)
 
 Das Paket `learnharness_protocol` definiert alle Nachrichten mit Pydantic. Client und Server
-nutzen dieselben Modelle. Die aktuelle Version ist **1.5**
+nutzen dieselben Modelle. Die aktuelle Version ist **1.6**
 ([`base.py`](../protocol/src/learnharness_protocol/base.py)). Unbekannte Felder werden abgelehnt,
 deshalb sollten Client und Server immer zusammen aktualisiert werden.
 
@@ -33,6 +33,9 @@ Die erzeugten Schemas liegen in [`protocol/schemas/`](../protocol/schemas/).
 | `project_plan` | Projekt planen, To-dos vorschlagen | `_plan_project` |
 
 `language` ist `gdscript` oder `python`.
+
+Die Felder `project_description`, `project_todos`, `project_done_todos` und `active_todo` geben
+jeder Anfrage den Projektplan mit. So arbeiten alle Tabs am selben To-do.
 
 ## Protokoll ändern
 

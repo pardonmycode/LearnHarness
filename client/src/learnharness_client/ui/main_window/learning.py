@@ -32,7 +32,7 @@ class LearningActions:
         message = StudentMessage(
             intent="learn",
             language=self.project.language,
-            project_description=self._project_idea(),
+            **self._project_context(),
             session_id=self.session_id,
             project_id=self.project.project_id,
             experience_level=int(self.student_profile.experience_level),
@@ -62,15 +62,20 @@ class LearningActions:
             relative = document.path.relative_to(self.project.root).as_posix()
             end_line = start_line + max(0, excerpt.count("\n"))
             self.tutor_panel.set_context_description(
-                relative, start_line, end_line, with_idea=self._project_idea() is not None
+                relative,
+                start_line,
+                end_line,
+                with_idea=bool(self.project_panel.plan.description.strip()),
             )
+        context = self._project_context()
         message = StudentMessage(
             language=self.project.language,
-            project_description=self._project_idea(),
+            **context,
             session_id=self.session_id,
             project_id=self.project.project_id,
             experience_level=int(self.student_profile.experience_level),
-            current_task=self.current_task_id,
+            # An open to-do replaces the built-in example task.
+            current_task=None if context["active_todo"] else self.current_task_id,
             file=relative,
             code_excerpt=excerpt,
             excerpt_start_line=start_line,
@@ -121,6 +126,8 @@ class LearningActions:
                     explanations.append(generated.explanation)
             if review.generated_files:
                 self.learn_agent_panel.show_code_result(written_files, explanations)
+            if written_files:
+                self.todo_bar.ask_if_done()
             if written_files and len(written_files) == len(review.generated_files):
                 unlocked = self.settings.unlock_learning_level(
                     self.student_profile.profile_id,

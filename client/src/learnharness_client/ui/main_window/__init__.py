@@ -6,7 +6,15 @@ import logging
 
 from PyQt6.QtCore import QByteArray, Qt
 from PyQt6.QtGui import QCloseEvent
-from PyQt6.QtWidgets import QDockWidget, QLabel, QMainWindow, QSplitter, QTabWidget
+from PyQt6.QtWidgets import (
+    QDockWidget,
+    QLabel,
+    QMainWindow,
+    QSplitter,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
+)
 
 from learnharness_client.admin_sync import AdminSync
 from learnharness_client.config import AppSettings
@@ -26,6 +34,7 @@ from ..panels.problems_panel import ProblemsPanel
 from ..panels.progress_panel import ProgressPanel
 from ..panels.project_panel import ProjectPanel
 from ..panels.terminal_panel import TerminalPanel
+from ..panels.todo_bar import TodoBar
 from ..panels.tutor_panel import TutorPanel
 from ..script_tree import ScriptTree
 from ..theme import set_state
@@ -43,6 +52,7 @@ from .learning import LearningActions
 from .projects import ProjectActions
 from .responses import ServerResponses
 from .running import RunActions
+from .todos import TodoActions
 from .window_dialogs import WindowDialogs
 
 __all__ = [
@@ -67,6 +77,7 @@ class MainWindow(
     WindowDialogs,
     CheckActions,
     RunActions,
+    TodoActions,
     QMainWindow,
 ):
     def __init__(
@@ -122,6 +133,17 @@ class MainWindow(
         learning_tabs.addTab(self.tutor_panel, T.TAB_TUTOR)
         learning_tabs.addTab(self.progress_panel, T.TAB_PROGRESS)
         self.learning_tabs = learning_tabs
+        self.todo_bar = TodoBar()
+        self._todo_hint_level = 0
+        self._todo_hint_pending = False
+        # The current to-do stays visible above every tab.
+        learning_area = QWidget()
+        learning_layout = QVBoxLayout(learning_area)
+        learning_layout.setContentsMargins(0, 0, 0, 0)
+        learning_layout.setSpacing(6)
+        learning_layout.addWidget(self.todo_bar)
+        learning_layout.addWidget(learning_tabs, 1)
+        self.learning_area = learning_area
 
         self.terminal = TerminalPanel(self._save_open_files, self._godot_program)
         code_splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -143,7 +165,7 @@ class MainWindow(
         self.work_splitter = work_splitter
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(work_splitter)
-        splitter.addWidget(learning_tabs)
+        splitter.addWidget(learning_area)
         splitter.setStretchFactor(0, 47)
         splitter.setStretchFactor(1, 53)
         splitter.setChildrenCollapsible(False)

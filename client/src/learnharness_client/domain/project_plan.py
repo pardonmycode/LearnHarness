@@ -19,6 +19,7 @@ def clean_todo(text: str) -> str:
 class TodoItem:
     text: str
     done: bool = False
+    current: bool = False  # chosen by the child as the next thing to work on
 
 
 @dataclass(slots=True)
@@ -57,13 +58,34 @@ class ProjectPlan:
         self.suggestions.remove(text)
         return True
 
+    def current_todo(self) -> TodoItem | None:
+        """The chosen open to-do, otherwise the first open one."""
+        open_items = [item for item in self.todos if not item.done]
+        return next((item for item in open_items if item.current), None) or next(
+            iter(open_items), None
+        )
+
+    def select_todo(self, todo: TodoItem) -> None:
+        for item in self.todos:
+            item.current = item is todo
+
+    def complete_current(self) -> TodoItem | None:
+        todo = self.current_todo()
+        if todo is not None:
+            todo.done = True
+            todo.current = False
+        return todo
+
     def done_count(self) -> int:
         return sum(item.done for item in self.todos)
 
     def to_dict(self) -> dict[str, object]:
         return {
             "description": self.description,
-            "todos": [{"text": item.text, "done": item.done} for item in self.todos],
+            "todos": [
+                {"text": item.text, "done": item.done, "current": item.current}
+                for item in self.todos
+            ],
             "question": self.question,
             "suggestions": list(self.suggestions),
         }
@@ -82,6 +104,7 @@ class ProjectPlan:
             readable = isinstance(entry, dict) and isinstance(entry.get("text"), str)
             if readable and plan.add_todo(entry["text"]):
                 plan.todos[-1].done = entry.get("done") is True
+                plan.todos[-1].current = entry.get("current") is True
         suggestions = data.get("suggestions")
         if isinstance(suggestions, list):
             plan.set_suggestions([item for item in suggestions if isinstance(item, str)])

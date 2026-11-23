@@ -100,9 +100,11 @@ class WindowActions:
         self.learn_agent_panel.show_changes_toggled.connect(self._set_show_changes)
         self.editor_tabs.generated_file_applied.connect(self._generated_file_applied)
         self.tutor_panel.message_submitted.connect(self.send_tutor_message)
-        self.tutor_panel.next_hint_requested.connect(
-            lambda: self.tutor_client.request_next_hint(self.current_task_id)
-        )
+        self.tutor_panel.next_hint_requested.connect(self._next_hint)
+        self.todo_bar.learn_requested.connect(self._learn_current_todo)
+        self.todo_bar.mission_requested.connect(self._mission_for_current_todo)
+        self.todo_bar.tutor_requested.connect(self._ask_tutor_about_todo)
+        self.todo_bar.done_requested.connect(self._finish_current_todo)
         self.tutor_panel.cancel_requested.connect(self.tutor_client.cancel)
         self.problems_panel.problem_activated.connect(self.open_problem)
 

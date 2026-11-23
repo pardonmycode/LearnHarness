@@ -53,7 +53,7 @@ def test_terminal_sits_below_code_and_has_no_buttons(window: MainWindow) -> None
     left = window.splitter.widget(0)
     assert isinstance(left, QSplitter)
     assert left.widget(1) is window.terminal
-    assert window.splitter.widget(1) is window.learning_tabs
+    assert window.splitter.widget(1) is window.learning_area
     assert window.terminal.findChildren(QPushButton) == []
 
 

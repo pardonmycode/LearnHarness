@@ -72,7 +72,20 @@ class PanelRendering:
             self._style_item(item, todo)
             self.todos.addItem(item)
         self.todos.blockSignals(False)
+        self._mark_current()
         self._render_progress()
+
+    def _mark_current(self) -> None:
+        """The to-do that is up is bold, so the list and the bar above agree."""
+        current = self.plan.current_todo()
+        self.todos.blockSignals(True)
+        for row, todo in enumerate(self.plan.todos):
+            item = self.todos.item(row)
+            if item is not None:
+                font = item.font()
+                font.setBold(todo is current)
+                item.setFont(font)
+        self.todos.blockSignals(False)
 
     @staticmethod
     def _style_item(item: QListWidgetItem, todo: TodoItem) -> None:
@@ -104,6 +117,10 @@ class PanelRendering:
         self.up_button.setEnabled(row > 0)
         self.down_button.setEnabled(0 <= row < self.todos.count() - 1)
         self.remove_button.setEnabled(row >= 0)
+        selected = self.plan.todos[row] if 0 <= row < len(self.plan.todos) else None
+        self.work_button.setEnabled(
+            selected is not None and not selected.done and selected is not self.plan.current_todo()
+        )
 
     def _set_message(self, text: str, state: str) -> None:
         self.message.setText(text)

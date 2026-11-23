@@ -40,6 +40,7 @@ Alle Pfade liegen unter `client/src/learnharness_client/`.
 | Tutor | [`tutor_panel.py`](../client/src/learnharness_client/ui/panels/tutor_panel.py) |
 | Fortschritt | [`progress_panel.py`](../client/src/learnharness_client/ui/panels/progress_panel.py) |
 | Probleme (unten) | [`problems_panel.py`](../client/src/learnharness_client/ui/panels/problems_panel.py) |
+| To-do-Leiste (über allen Tabs) | [`todo_bar.py`](../client/src/learnharness_client/ui/panels/todo_bar.py), Ablauf in [`main_window/todos.py`](../client/src/learnharness_client/ui/main_window/todos.py) |
 | Terminal (unter dem Code) | [`terminal_panel.py`](../client/src/learnharness_client/ui/panels/terminal_panel.py), Eingabe in [`terminal_console.py`](../client/src/learnharness_client/ui/panels/terminal_console.py) |
 
 ## Editor: `ui/editor/`
