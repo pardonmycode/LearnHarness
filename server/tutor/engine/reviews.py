@@ -82,7 +82,12 @@ class TutorReviews:
             generated.append(
                 GeneratedFile(
                     path=record.generated_path,
-                    content=record.generated_content,
+                    content=harness.apply_typed_answers(
+                        record.generated_content,
+                        str(record.exercise.get("code") or ""),
+                        record.answers,
+                        submission.answers,
+                    ),
                     explanation="Die Kommentare im Code erklären jede neue Zeile.",
                 )
             )

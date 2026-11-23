@@ -39,6 +39,9 @@ Die Felder `project_description` und `project_done_missions` geben jeder Anfrage
 `description_suggestion` und `project_ready` enthalten. Die Beschreibung ändert sich erst, wenn das
 Kind den Vorschlag übernimmt.
 
+`mission_from_project` markiert eine Mission, die das Kind ohne eigenen Wunsch über den
+Projekt-Knopf startet. Dann gilt die Lernreihenfolge der Themen verbindlich.
+
 ## Protokoll ändern
 
 1. Modell in `protocol/src/learnharness_protocol/` anpassen.

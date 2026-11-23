@@ -5,7 +5,7 @@
       "description": "One question of the helper about the project and the child's answer.",
       "properties": {
         "protocol_version": {
-          "default": "1.8",
+          "default": "1.9",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -33,7 +33,7 @@
   "additionalProperties": false,
   "properties": {
     "protocol_version": {
-      "default": "1.8",
+      "default": "1.9",
       "title": "Protocol Version",
       "type": "string"
     },
@@ -193,6 +193,11 @@
       ],
       "default": null,
       "title": "Mission Step Id"
+    },
+    "mission_from_project": {
+      "default": false,
+      "title": "Mission From Project",
+      "type": "boolean"
     },
     "project_description": {
       "anyOf": [

@@ -18,7 +18,23 @@ class TutorMissions:
     """Missions."""
 
     def _plan_mission(self, message: StudentMessage) -> Response:
+        levels = self._topic_levels()
+        # Without a wish of its own the child follows the learning order.
+        topics = (
+            harness.reachable_topics(levels)
+            if message.mission_from_project
+            else list(harness.MISSION_TOPICS)
+        )
+        extra = harness.topic_levels(levels)
+        if message.mission_from_project:
+            extra += (
+                "\n\nDas Kind hat keinen eigenen Wunsch genannt. Wähle selbst den nächsten "
+                "Baustein für <projekt> mit einem dieser Themen: " + ", ".join(topics)
+            )
+
         def build(data: dict[str, Any]) -> tuple[Mission, str]:
+            if message.mission_from_project and data.get("skill") not in topics:
+                raise harness.HarnessRejected(f"Thema muss eines von diesen sein: {topics}")
             steps_data = [step for step in data.get("steps", []) if step.get("title")][:7]
             if len(steps_data) < 2:
                 raise harness.HarnessRejected("Mission braucht mindestens zwei Schritte")
@@ -44,12 +60,12 @@ class TutorMissions:
             )
             return mission, text.strip()
 
-        prompt = harness.user_prompt(message, extra=harness.topic_levels(self._topic_levels()))
+        prompt = harness.user_prompt(message, extra=extra)
         (mission, text), _ = self._call_json(
             "mission",
             self._system("mission", message),
             [{"role": "user", "content": prompt}],
-            harness.MISSION_SCHEMA,
+            harness.mission_schema(topics),
             build,
         )
         self.session.wish_missions = {

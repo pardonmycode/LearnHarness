@@ -92,7 +92,7 @@ def test_try_step_has_help_and_offers_the_next_project_mission(qtbot: QtBot) -> 
     help_clicks: list[bool] = []
     wishes: list[str] = []
     panel.help_requested.connect(lambda: help_clicks.append(True))
-    panel.mission_requested.connect(wishes.append)
+    panel.project_mission_requested.connect(lambda: wishes.append("Projekt"))
     panel.set_project_idea(True)
     panel.done = {"a", "b"}
     panel._render()
@@ -103,7 +103,7 @@ def test_try_step_has_help_and_offers_the_next_project_mission(qtbot: QtBot) -> 
     assert panel.complete and not panel.step_button.isVisible()
     assert panel.next_project_button.isVisible()
     panel.next_project_button.click()
-    assert panel.mission is None and wishes == [T.MISSION_PROJECT_WISH]
+    assert panel.mission is None and wishes == ["Projekt"]
 
 
 def test_failed_start_offers_the_same_step_again(qtbot: QtBot) -> None:

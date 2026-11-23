@@ -94,15 +94,19 @@ nötig ist. Erst nach einer richtigen Antwort schreibt der Server Code in die Da
 in "new_file_content" den kompletten neuen Inhalt der Datei aus <code> – mit möglichst wenigen
 Änderungen (höchstens {max_changed} geänderte Zeilen) und einem kurzen Kommentar (# …) über
 jeder neuen Zeile, der erklärt, was sie tut. Ist <code> leer, schreibe ein kleines neues Skript.""",
-    "mission": """Aufgabe: Plane aus dem Wunsch des Kindes eine kleine Lernmission mit 3 bis 5
-Schritten. Arten: "understand" (verstehen), "learn" (neues Konzept), "exercise" (Code ergänzen),
+    "mission": """Aufgabe: Plane eine kleine Lernmission mit 3 bis 5 Schritten. Sie entsteht aus dem
+Wunsch des Kindes in <kind>. Fehlt <kind>, entsteht sie aus <projekt>. Arten: "understand"
+(verstehen), "learn" (neues Konzept), "exercise" (Code ergänzen),
 und als letzter Schritt immer "try" ({try_step}). Titel kurz, Ziel in einem Satz. Gibt es
 <projekt>, dann wähle den kleinsten nächsten Baustein, der genau dieses Projekt weiterbringt, baue
 auf <fertige_missionen> auf und wiederhole nichts davon.""",
     "mission_step": """Aufgabe: Begleite einen Schritt einer Lernmission. Erkläre kurz, worum es
-in diesem Schritt geht, und stelle eine kleine Übung dazu. Nur bei Schritten der Art "exercise"
-liefere in "new_file_content" den neuen Dateiinhalt (höchstens {max_changed} geänderte Zeilen,
-mit erklärenden Kommentaren), sonst einen leeren Text. In <mission> steht der ganze Plan: [x] ist
+in diesem Schritt geht, und stelle eine kleine Übung dazu. Nutze in der Übung die Namen aus <code>
+und Dinge aus <projekt>, zum Beispiel muenzen statt x. Nur bei Schritten der Art "exercise" liefere
+in "new_file_content" den neuen Dateiinhalt (höchstens {max_changed} geänderte Zeilen), sonst einen
+leeren Text. Er setzt genau das um, was die Übung behandelt: Jede Zeile mit einer Lücke steht mit
+der richtigen Antwort genau so darin. Erklärende Kommentare stehen in einer eigenen Zeile darüber.
+In <mission> steht der ganze Plan: [x] ist
 erledigt, [>] ist jetzt dran, [ ] kommt später. Baue auf den erledigten Schritten auf, übe sie nicht
 noch einmal und nimm spätere Schritte nicht vorweg.""",
     "project_plan": """Aufgabe: Hilf dem Kind, sein Projekt genauer zu beschreiben. Das Kind ist der

@@ -45,6 +45,8 @@ class StudentMessage(ProtocolModel):
     skill_focus: str | None = Field(default=None, max_length=64)
     mission_id: str | None = Field(default=None, max_length=64)
     mission_step_id: str | None = Field(default=None, max_length=64)
+    # Started with the project button: the child named no wish of its own.
+    mission_from_project: bool = False
     project_description: str | None = Field(default=None, max_length=2000)
     project_question: str | None = Field(default=None, max_length=1000)
     project_turns: list[ProjectTurn] = Field(default_factory=list, max_length=12)

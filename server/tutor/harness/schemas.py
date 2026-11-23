@@ -82,6 +82,13 @@ PROJECT_PLAN_SCHEMA = _obj(
 )
 
 
+def mission_schema(topics: list[str]) -> dict[str, Any]:
+    """The mission format with only these topics to choose from."""
+    properties = dict(MISSION_SCHEMA["properties"])
+    properties["skill"] = {"type": "string", "enum": topics}
+    return _obj(properties)
+
+
 REVIEW_SCHEMA = _obj(
     {
         "correct": {"type": "boolean"},

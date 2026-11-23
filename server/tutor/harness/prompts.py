@@ -68,7 +68,12 @@ def _tag(name: str, text: str) -> str:
 
 def topic_levels(levels: dict[str, int]) -> str:
     """Server-side stages per topic, for planning a mission that fits the child."""
-    lines = [f"- {topic}: Stufe {stage_for(levels.get(topic, 1))}" for topic in MISSION_TOPICS]
+    lines = [
+        f"- {topic}: Stufe {stage_for(levels[topic])}"
+        if levels.get(topic, 0) >= 1
+        else f"- {topic}: noch nicht begonnen"
+        for topic in MISSION_TOPICS
+    ]
     return "Stufen des Kindes je Thema:\n" + "\n".join(lines)
 
 
@@ -119,8 +124,10 @@ def user_prompt(message: StudentMessage, *, task: str | None = None, extra: str 
     if extra:
         parts.append(extra)
     # Started by a button: the message is only a step id or repeats the description.
-    by_button = message.intent == "mission_step" or (
-        message.intent == "project_plan" and not message.project_question
+    by_button = (
+        message.intent == "mission_step"
+        or message.mission_from_project
+        or (message.intent == "project_plan" and not message.project_question)
     )
     if not by_button:
         parts.append("Nachricht des Kindes:\n" + _tag("kind", message.message))

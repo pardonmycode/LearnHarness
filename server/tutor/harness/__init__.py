@@ -26,6 +26,7 @@ from .checks import (
     clean_description,
 )
 from .game_blueprint import game_blueprint, is_game_project
+from .mission_code import apply_typed_answers, check_blanks_in_file
 from .prompts import mission_step_context, system_prompt, topic_levels, user_prompt
 from .rules import BASE_RULES, EXPERIENCE, INTENTS, LANGUAGES, LEVELS, SKILLS
 from .schemas import (
@@ -35,6 +36,7 @@ from .schemas import (
     PROJECT_PLAN_SCHEMA,
     REVIEW_SCHEMA,
     mission_exercise_schema,
+    mission_schema,
 )
 from .stream_guard import REPLACEMENT, StreamGuard, filter_text, looks_like_code
 from .topics import (
@@ -42,6 +44,7 @@ from .topics import (
     MISSION_TOPICS,
     STAGE_UP_AFTER,
     normalize_typed,
+    reachable_topics,
     stage_for,
     stage_instructions,
 )
@@ -64,7 +67,9 @@ __all__ = [
     "MISSION_TOPIC_GUIDE",
     "STAGE_UP_AFTER",
     "mission_exercise_schema",
+    "mission_schema",
     "normalize_typed",
+    "reachable_topics",
     "stage_for",
     "stage_instructions",
     "PROJECT_PLAN_SCHEMA",
@@ -72,9 +77,11 @@ __all__ = [
     "REVIEW_SCHEMA",
     "SKILLS",
     "StreamGuard",
+    "apply_typed_answers",
     "build_exercise",
     "changed_lines",
     "check_answers",
+    "check_blanks_in_file",
     "check_generated_code",
     "clean_description",
     "filter_text",

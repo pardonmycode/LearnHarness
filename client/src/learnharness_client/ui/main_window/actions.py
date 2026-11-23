@@ -121,6 +121,7 @@ class WindowActions:
         self.project_panel.plan_changed.connect(self._save_project_plan)
         self.project_panel.build_requested.connect(self._start_building)
         self.mission_panel.mission_requested.connect(self.request_mission)
+        self.mission_panel.project_mission_requested.connect(self.request_project_mission)
         self.mission_panel.step_requested.connect(self.request_mission_step)
         self.mission_panel.exercise_submitted.connect(self._submit_mission_exercise)
         self.mission_panel.progress_changed.connect(

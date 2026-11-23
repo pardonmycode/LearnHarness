@@ -48,7 +48,7 @@ class ExplainMissionActions:
         self._exercise_owner = "explain"
         self._submit_exercise(submission)
 
-    def _mission_message(self, intent: str, text: str, **extra: str) -> StudentMessage | None:
+    def _mission_message(self, intent: str, text: str, **extra: object) -> StudentMessage | None:
         if not self.project or not self.session_id:
             self.mission_panel.show_error(T.WAIT_FOR_SESSION)
             return None
@@ -73,6 +73,14 @@ class ExplainMissionActions:
 
     def request_mission(self, wish: str) -> None:
         message = self._mission_message("mission", wish)
+        if message is not None:
+            self._response_owner = "mission"
+            self.tutor_client.send_message(message)
+
+    def request_project_mission(self) -> None:
+        message = self._mission_message(
+            "mission", T.MISSION_PROJECT_WISH, mission_from_project=True
+        )
         if message is not None:
             self._response_owner = "mission"
             self.tutor_client.send_message(message)

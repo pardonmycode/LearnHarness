@@ -2,31 +2,37 @@
 
 from __future__ import annotations
 
-# Stable ids, shared with the progress in the administration.
+# Stable ids, shared with the progress in the administration. The order is the learning order.
 MISSION_TOPICS: dict[str, str] = {
     "variables": "Variablen speichern Informationen wie Namen, Punkte oder Leben: leben = 100",
+    "operators": "Operatoren rechnen und vergleichen: + - * /, == > <, and or not",
     "conditions": "Bedingungen (if/else) treffen Entscheidungen: wenn leben == 0: spiel_ende()",
     "loops": "Schleifen wiederholen Anweisungen: for (5-mal) oder while (solange etwas stimmt)",
     "functions": "Funktionen fassen Anweisungen zusammen, die man wiederverwendet: springen()",
     "arrays": 'Listen und Arrays speichern vieles zusammen: inventar = ["Schwert", "Apfel"]',
-    "operators": "Operatoren rechnen und vergleichen: + - * /, == > <, and or not",
     "classes": "Klassen und Objekte sind Baupläne: Klasse Spieler mit Leben und Position",
 }
 STAGE_UP_AFTER = 3  # mission exercises solved at the first try before the next stage starts
 MAX_STAGE = 3
+UNLOCK_NEXT_AT = 2  # stage a topic needs before the project button offers the next one
 STAGE_KINDS = {1: "multiple_choice", 2: "fill_blanks", 3: "text_blanks"}
 
 MISSION_TOPIC_GUIDE = (
-    'Wähle in "skill" genau das Thema, das diese Mission am meisten braucht:\n'
+    'Wähle in "skill" genau das Thema, das diese Mission am meisten braucht. '
+    "Die Themen stehen in Lernreihenfolge:\n"
     + "\n".join(f"- {topic}: {text}" for topic, text in MISSION_TOPICS.items())
-    + "\nDie ganze Mission übt dieses eine Thema. Richte die Schritte an der Stufe des Kindes "
+    + "\nWähle ein neues Thema erst, wenn alle Themen davor mindestens Stufe 2 erreicht haben. "
+    "Nur wenn das Kind ausdrücklich etwas wünscht, das ein späteres Thema braucht, wähle dieses. "
+    "Bleibt das Thema gleich, übe es an einem neuen Teil des Projekts.\n"
+    "Die ganze Mission übt dieses eine Thema. Richte die Schritte an der Stufe des Kindes "
     "in diesem Thema aus: 1 = erklären und leicht fragen, 2 = aus Möglichkeiten auswählen, "
     "3 = selbst eintippen."
 )
 
 _STAGE_RULES = {
     1: """Stufe 1 von 3 (Verstehen): Erkläre das Thema in "message" in 2 bis 4 einfachen Sätzen mit
-einem Bild aus dem Alltag und einem Mini-Beispiel. Stelle danach eine leichte Frage dazu.
+einem Bild aus dem Alltag und einem Mini-Beispiel. Stelle danach eine leichte Frage dazu. Das
+Beispiel zeigt einen anderen Fall als die Frage: Weder "message" noch "code" verraten die Antwort.
 Antworte als JSON. "kind": "multiple_choice". "prompt": die Frage. "code": ein kurzes Beispiel oder
 leer. "choices": 2 bis 4 Möglichkeiten, genau eine mit correct=true. "blanks" leer.""",
     2: """Stufe 2 von 3 (Auswählen): Das Kind wählt die richtige Lösung im Dropdown-Menü aus.
@@ -44,6 +50,16 @@ Ausdruck. "blanks" in der Reihenfolge der Lücken, je mit "answer" (höchstens 4
 def stage_for(level: int) -> int:
     """A stored skill level as stage; a topic that was never started begins at 1."""
     return max(1, min(MAX_STAGE, level))
+
+
+def reachable_topics(levels: dict[str, int]) -> list[str]:
+    """Topics in learning order, up to and including the first one below the unlock stage."""
+    reachable: list[str] = []
+    for topic in MISSION_TOPICS:
+        reachable.append(topic)
+        if levels.get(topic, 0) < UNLOCK_NEXT_AT:
+            break
+    return reachable
 
 
 def stage_instructions(topic: str | None, stage: int) -> str:

@@ -30,6 +30,7 @@ __all__ = ["MissionPanel"]
 
 class MissionPanel(MissionChoosing, MissionSteps, MissionStepView, QWidget):
     mission_requested = pyqtSignal(str)  # wish
+    project_mission_requested = pyqtSignal()
     step_requested = pyqtSignal(str, str)  # mission id, step id
     exercise_submitted = pyqtSignal(object)
     progress_changed = pyqtSignal(dict)  # JSON-ready state for saving

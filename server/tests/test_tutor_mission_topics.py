@@ -1,4 +1,4 @@
-"""Missions pick a topic and adapt the exercise to the child's stage in that topic."""
+"""Missions adapt the exercise to the child's stage in the mission's topic."""
 
 from __future__ import annotations
 
@@ -15,84 +15,13 @@ from learnharness_protocol import (
     Submission,
     TextBlanksExercise,
 )
+from mission_helpers import _answer, _level, _plan, _solve, _start
 from tutor_helpers import ScriptedProvider
 
 from tutor import engine, harness
 from tutor.models import AiSettings, ExerciseRecord, TutorSession
 
 pytestmark = pytest.mark.django_db
-
-
-def _answer(stage: int, skill: str = "loops") -> dict[str, Any]:
-    base: dict[str, Any] = {
-        "message": "Los",
-        "skill": skill,
-        "prompt": "Was fehlt?",
-        "code": "",
-        "choices": [],
-        "blanks": [],
-        "explanation_after_correct": "Gut",
-        "new_file_content": "",
-    }
-    if stage == 1:
-        base |= {
-            "kind": "multiple_choice",
-            "choices": [{"text": "a", "correct": True}, {"text": "b", "correct": False}],
-        }
-    elif stage == 2:
-        base |= {
-            "kind": "fill_blanks",
-            "code": "for i in {{1}}(5):",
-            "blanks": [{"options": ["range", "print"], "answer": "range"}],
-        }
-    else:
-        base |= {
-            "kind": "text_blanks",
-            "code": "for i in {{1}}:",
-            "blanks": [{"answer": "range(5)", "alternatives": ["range(0, 5)"]}],
-        }
-    return base
-
-
-def _start(session: TutorSession, topic: str | None = "loops") -> StudentMessage:
-    mission = Mission(
-        id="wunsch-1",
-        title="Fünf Münzen",
-        goal="Der Fuchs sammelt fünf Münzen.",
-        skill=topic,
-        steps=[
-            MissionStep(id="s1", title="Verstehen", kind="learn"),
-            MissionStep(id="s2", title="Ausprobieren", kind="try"),
-        ],
-    )
-    session.wish_missions = {mission.id: mission.model_dump(mode="json")}
-    session.save(update_fields=["wish_missions"])
-    return StudentMessage(
-        intent="mission_step",
-        language="python",
-        session_id=session.id,
-        project_id="spiel",
-        mission_id=mission.id,
-        mission_step_id="s1",
-        message="s1",
-    )
-
-
-def _solve(session: TutorSession, scripted: dict[str, ScriptedProvider], stage: int) -> Any:
-    scripted["provider"] = ScriptedProvider(json_answers=[_answer(stage)])
-    tutor = engine.Tutor(session)
-    response = tutor.handle(_start(session))
-    assert isinstance(response, LearningResponse) and response.exercise is not None
-    exercise = response.exercise
-    answers: dict[str, Any] = {"choice": "a"} if stage == 1 else {"b1": "range"}
-    if stage == 3:
-        answers = {"b1": "range( 5 )"}
-    assert tutor.review_submission(Submission(exercise_id=exercise.id, answers=answers)).correct
-    return exercise
-
-
-def _level(session: TutorSession, topic: str = "loops") -> int:
-    return session.child.skills.get(skill_id=topic).level
 
 
 def test_child_moves_through_the_three_stages(
@@ -190,37 +119,6 @@ def test_other_exercises_do_not_unlock_higher_stages(session: TutorSession) -> N
     for _ in range(3):
         tutor._raise_skill("movement")
     assert _level(session, "movement") == 3
-
-
-def test_mission_prompt_offers_the_topics_and_stages(
-    session: TutorSession, scripted: dict[str, ScriptedProvider]
-) -> None:
-    session.child.set_skill("loops", "Schleifen", 2)
-    scripted["provider"] = ScriptedProvider(
-        json_answers=[
-            {
-                "title": "Münzen",
-                "goal": "Zählen",
-                "message": "Los",
-                "skill": "arrays",
-                "steps": [
-                    {"title": "Verstehen", "kind": "learn"},
-                    {"title": "Probieren", "kind": "try"},
-                ],
-            }
-        ]
-    )
-    message = StudentMessage(
-        intent="mission", session_id=session.id, project_id="spiel", message="Inventar"
-    )
-    response = engine.Tutor(session).handle(message)
-    assert isinstance(response, LearningResponse) and response.mission.skill == "arrays"
-    system, messages = scripted["provider"].calls[0]
-    for topic in harness.MISSION_TOPICS:
-        assert f"- {topic}:" in system
-    assert "- loops: Stufe 2" in messages[0]["content"]
-    assert "- arrays: Stufe 1" in messages[0]["content"]
-    assert harness.MISSION_SCHEMA["properties"]["skill"]["enum"] == list(harness.MISSION_TOPICS)
 
 
 def test_old_mission_without_topic_starts_gently(

@@ -170,7 +170,7 @@ def test_start_button_leads_to_the_project_mission(qtbot: QtBot, window: MainWin
     missions.project_button.click()
     qtbot.waitUntil(lambda: missions.mission is not None)
     assert sent[0].intent == "mission" and sent[0].message == T.MISSION_PROJECT_WISH
-    assert sent[0].project_description == "Ein Mathe-Quiz"
+    assert sent[0].project_description == "Ein Mathe-Quiz" and sent[0].mission_from_project
 
 
 def test_finished_mission_is_remembered_for_the_next(qtbot: QtBot, window: MainWindow) -> None:
@@ -257,6 +257,7 @@ def test_project_idea_goes_along_with_learning_requests(qtbot: QtBot, window: Ma
     window.send_tutor_message("Wie fange ich an?")
     window.start_learning_round("Figur bewegen", 1)
     window.request_mission("Münzen sammeln")
+    assert not sent[-1].mission_from_project
     assert [message.project_description for message in sent] == ["Ein Spiel mit einem Fuchs"] * 3
     assert sent[0].current_task == window.current_task_id
     assert "Projektidee" in window.tutor_panel.context_label.text()

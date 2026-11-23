@@ -73,6 +73,13 @@ class TutorRounds:
                 )
                 if reason:
                     raise harness.HarnessRejected(f"Code nach der Übung abgelehnt: {reason}")
+                blanks_code = getattr(built.exercise, "code", None)
+                if stage and blanks_code:
+                    reason = harness.check_blanks_in_file(
+                        blanks_code, built.answers, built.new_file_content
+                    )
+                    if reason:
+                        raise harness.HarnessRejected(f"Code passt nicht zur Übung: {reason}")
             else:
                 built.new_file_content = ""
             return built

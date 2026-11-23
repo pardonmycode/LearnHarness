@@ -128,4 +128,6 @@ class MissionSteps:
         if self._busy or not self._online:
             return
         self.reset()
-        self.request_mission(T.MISSION_PROJECT_WISH)
+        self._set_busy(True)
+        self._set_message(T.MISSION_STARTING, "neutral")
+        self.project_mission_requested.emit()
