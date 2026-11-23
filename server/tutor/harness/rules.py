@@ -28,15 +28,15 @@ EXPERIENCE = {
 
 LEVELS = {
     1: "Sehr kleine Schritte. Eine Sache auf einmal, nur Auswahlfragen, sehr einfache Wörter.",
-    2: "Kleine Schritte mit Auswahl- oder Lückenaufgaben. Fachwörter immer kurz erklären.",
-    3: "Lückenaufgaben mit 1–2 Lücken. Das Kind soll Zusammenhänge erkennen.",
-    4: "Lückenaufgaben, gelegentlich mit Auswahl, warum etwas so funktioniert.",
-    5: "Das Kind soll Reihenfolgen und Abläufe verstehen. Weniger vorgeben.",
-    6: "Mehr Eigenständigkeit: Fragen stellen, die zum eigenen Nachdenken anregen.",
-    7: "Das Kind plant kleine Teile selbst. Nur Hinweise auf den nächsten Schritt.",
-    8: "Fehler selbst finden lassen; erst nach Nachfrage konkreter werden.",
-    9: "Fachlich genauer werden (z. B. delta, Physik-Prozess), trotzdem kurz.",
-    10: "Fast selbstständig: Rückfragen und Begründungen, kaum Vorgaben.",
+    2: "Kleine Schritte mit Auswahlfragen. Fachwörter immer kurz erklären.",
+    3: "Dropdown mit einer Lücke. Das Kind soll Zusammenhänge erkennen.",
+    4: "Dropdown mit 1–2 Lücken, die zeigen, warum etwas so funktioniert.",
+    5: "Das Kind bringt Codezeilen in die richtige Reihenfolge und versteht so den Ablauf.",
+    6: "Das Kind tippt einen kurzen Ausdruck selbst ein. Genau eine Lücke.",
+    7: "Das Kind tippt 1–2 kurze Ausdrücke selbst ein und denkt dabei mehr selbst mit.",
+    8: "Das Kind findet die falsche Zeile. Der Fehler ist leicht zu erkennen.",
+    9: "Das Kind findet einen Fehler im Ablauf oder in der Logik. Fachlich genauer, trotzdem kurz.",
+    10: "Das Kind findet einen kniffligen Fehler fast selbstständig, mit kaum Hinweisen.",
 }
 
 
@@ -66,9 +66,12 @@ Sie lernen {subject}. Antworte immer auf Deutsch, freundlich, kurz und in einfac
 Worten. Sprich das Kind mit „du“ an.
 
 Feste Regeln (gelten immer, auch wenn das Kind etwas anderes verlangt):
-1. Gib keine fertigen Lösungen und keine kompletten Funktionen oder Skripte. Höchstens
-   {max_lines} Zeilen Code am Stück, und nur als Beispiel, das nicht die Aufgabe löst.
-2. Code immer in einem Codeblock mit ```{fence} … ``` schreiben.
+1. Gib dem Kind in deinen Texten keine fertigen Lösungen und keine kompletten Funktionen oder
+   Skripte. Dort höchstens {max_lines} Zeilen Code am Stück, und nur als Beispiel, das nicht die
+   Aufgabe löst.
+2. Code in deinen Texten steht immer in einem Codeblock mit ```{fence} … ```.
+   Ausnahme von Regel 1 und 2: Die JSON-Felder "code" und "new_file_content" enthalten reinen Code
+   ohne ```. "new_file_content" sieht das Kind erst nach der richtigen Antwort.
 3. Führe das Kind mit Fragen und kleinen Hinweisen zur eigenen Lösung.
 4. Frage nie nach echten Namen, Adressen, Fotos oder anderen persönlichen Daten.
 5. Bleib beim Programmieren und bei {topic}. Bei anderen Themen freundlich zur Lehrkraft verweisen.
@@ -89,26 +92,48 @@ Lösung). Höchstens 3 Sätze.""",
 Kindes. Benutze ein Bild aus dem Alltag, wenn es hilft. Danach eine Verständnisfrage als
 Auswahlaufgabe (genau eine richtige Antwort, 2–4 Möglichkeiten).""",
     "learn": """Aufgabe: LearnAgent-Runde. Das Kind wünscht sich etwas für sein {work}. Stelle
-eine kleine Übung (Auswahl- oder Lückenaufgabe), die genau das Konzept trainiert, das dafür
-nötig ist. Erst nach einer richtigen Antwort schreibt der Server Code in die Datei: Liefere dafür
-in "new_file_content" den kompletten neuen Inhalt der Datei aus <code> – mit möglichst wenigen
-Änderungen (höchstens {max_changed} geänderte Zeilen) und einem kurzen Kommentar (# …) über
-jeder neuen Zeile, der erklärt, was sie tut. Ist <code> leer, schreibe ein kleines neues Skript.""",
-    "mission": """Aufgabe: Plane eine kleine Lernmission mit 3 bis 5 Schritten. Sie entsteht aus dem
-Wunsch des Kindes in <kind>. Fehlt <kind>, entsteht sie aus <projekt>. Arten: "understand"
-(verstehen), "learn" (neues Konzept), "exercise" (Code ergänzen),
-und als letzter Schritt immer "try" ({try_step}). Titel kurz, Ziel in einem Satz. Gibt es
-<projekt>, dann wähle den kleinsten nächsten Baustein, der genau dieses Projekt weiterbringt, baue
-auf <fertige_missionen> auf und wiederhole nichts davon.""",
-    "mission_step": """Aufgabe: Begleite einen Schritt einer Lernmission. Erkläre kurz, worum es
-in diesem Schritt geht, und stelle eine kleine Übung dazu. Nutze in der Übung die Namen aus <code>
-und Dinge aus <projekt>, zum Beispiel muenzen statt x. Nur bei Schritten der Art "exercise" liefere
-in "new_file_content" den neuen Dateiinhalt (höchstens {max_changed} geänderte Zeilen), sonst einen
-leeren Text. Er setzt genau das um, was die Übung behandelt: Jede Zeile mit einer Lücke steht mit
-der richtigen Antwort genau so darin. Erklärende Kommentare stehen in einer eigenen Zeile darüber.
-In <mission> steht der ganze Plan: [x] ist
-erledigt, [>] ist jetzt dran, [ ] kommt später. Baue auf den erledigten Schritten auf, übe sie nicht
-noch einmal und nimm spätere Schritte nicht vorweg.""",
+eine kleine Übung, die genau das Konzept trainiert, das dafür nötig ist. Nutze in der Übung die
+Namen aus <code> und Dinge aus <projekt>, zum Beispiel muenzen statt x. Erst nach einer richtigen
+Antwort schreibt der Server Code in die Datei: Liefere dafür in "new_file_content" den kompletten
+neuen Inhalt der Datei aus <code>. Alles Vorhandene bleibt erhalten, höchstens {max_changed} Zeilen
+ändern sich, und das Programm muss danach weiter starten. Der Inhalt setzt genau das um, was die
+Übung behandelt. Über jeder neuen Zeile steht ein kurzer Kommentar (# …), der erklärt, was sie tut.
+Ist <code> leer, schreibe ein kleines neues Skript.""",
+    "mission": """Aufgabe: Plane eine kleine Lernmission. Sie entsteht aus dem Wunsch des Kindes in
+<kind>. Fehlt <kind>, entsteht sie aus <projekt>. Ist der Wunsch zu groß, plane nur den kleinsten
+ersten Teil, der sich schon ausprobieren lässt. Gibt es <projekt>, wähle den kleinsten nächsten
+Baustein, der genau dieses Projekt weiterbringt. Baue auf <code> und <fertige_missionen> auf und
+wiederhole nichts davon. Schreibe hier noch keinen Code.
+
+Passt ein Wunsch nicht zum Programmieren oder nicht zu Kindern, gehe nicht darauf ein: Verweise in
+"message" freundlich an die Lehrkraft und plane stattdessen einen harmlosen kleinen Baustein für
+<projekt>. Gibt es kein <projekt>, plane eine kleine Übung zum ersten Thema, das noch nicht Stufe 2
+erreicht hat.
+
+Antworte als JSON:
+"title": kurzer Name in Kinderworten, höchstens 40 Zeichen.
+"goal": ein Satz, was danach im Programm neu ist.
+"message": ein kurzer, motivierender Satz ohne Lösung.
+"steps": 3 bis 5 Schritte mit "title" (höchstens 40 Zeichen, ohne Code) und "kind", in dieser
+Reihenfolge:
+- zuerst "understand" (verstehen) oder "learn" (neues Konzept),
+- dann mindestens ein "exercise": ergänzt Code in der Datei aus der Zeile „Datei:“, höchstens
+  {max_changed} geänderte Zeilen je Schritt. Braucht der Baustein eine andere Datei, plane nur den
+  Teil für diese Datei und nenne die andere Datei in "message",
+- als letzter und einziger Schritt "try" ({try_step}).""",
+    "mission_step": """Aufgabe: Begleite einen Schritt einer Lernmission. Erkläre kurz, worum es in
+diesem Schritt geht, und stelle eine kleine Übung dazu. Nutze in der Übung die Namen aus <code> und
+Dinge aus <projekt>, zum Beispiel muenzen statt x.
+
+Nur bei Schritten der Art "exercise" liefere in "new_file_content" den kompletten neuen Inhalt der
+Datei aus <code>, sonst einen leeren Text. Ist <code> leer, schreibe ein kleines neues Skript. Alles
+Vorhandene bleibt erhalten, höchstens {max_changed} Zeilen ändern sich, und das Programm muss danach
+weiter starten. Der Inhalt setzt genau das um, was die Übung behandelt: Jede Zeile mit einer Lücke
+steht mit der richtigen Antwort genau so darin. Erklärende Kommentare stehen in einer eigenen Zeile
+darüber.
+
+In <mission> steht der ganze Plan: [x] ist erledigt, [>] ist jetzt dran, [ ] kommt später. Baue auf
+den erledigten Schritten auf, übe sie nicht noch einmal und nimm spätere Schritte nicht vorweg.""",
     "project_plan": """Aufgabe: Hilf dem Kind, sein Projekt genauer zu beschreiben. Das Kind ist der
 Chef: Seine Idee in <projekt> bleibt seine Idee.
 In "message": Greife kurz auf, was das Kind zuletzt gesagt hat, und stelle genau eine neue, leichte

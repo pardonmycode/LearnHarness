@@ -40,6 +40,18 @@ class EditorTexts:
         "Der LearnAgent überschreibt keine ungespeicherten Änderungen. "
         "Speichere oder verwerfe sie und versuche es danach erneut."
     )
+    FILE_TOO_LONG_TITLE = "Dieses Skript ist sehr lang"
+    FILE_TOO_LONG = (
+        "Damit nichts von deinem Code verloren geht, schreibt der Lernhelfer hier nichts hinein. "
+        "Deine Antwort zählt trotzdem. Baue die Lösung selbst ein oder teile dein Skript in "
+        "kleinere Dateien auf."
+    )
+    FILE_CHANGED_TITLE = "Dein Skript hat sich geändert"
+    FILE_CHANGED = (
+        "Du hast dein Skript verändert, während die Übung offen war. Damit deine Änderung "
+        "erhalten bleibt, schreibt der Lernhelfer nichts hinein. Deine Antwort zählt trotzdem. "
+        "Baue die Lösung selbst ein oder starte eine neue Runde."
+    )
     SAVED = "Gespeichert: {file}"
     SAVE_FAILED_TITLE = "Speichern nicht möglich"
     SAVE_FAILED = "Dein Text bleibt im Editor und wurde als Entwurf gesichert.\n\n{error}"

@@ -93,6 +93,7 @@ class ExplainMissionActions:
             return
         # Like the LearnAgent: generated code may only go into the file chosen for this step.
         self._mission_target_file = message.file
+        self._mission_base_text = self._open_script_text()
         self._response_owner = "mission"
         self.tutor_client.send_message(message)
 
@@ -118,8 +119,11 @@ class ExplainMissionActions:
             if not is_target_file(generated.path, self._mission_target_file):
                 LOG.warning("Rejected generated file outside the mission target")
                 continue
-            if self.editor_tabs.apply_generated_file(generated.path, generated.content):
+            if self.editor_tabs.apply_generated_file(
+                generated.path, generated.content, self._mission_base_text
+            ):
                 written.append(generated.path)
         if written:
             self.statusBar().showMessage(T.AGENT_WROTE_FILE.format(file=", ".join(written)))
         self._mission_target_file = None
+        self._mission_base_text = None

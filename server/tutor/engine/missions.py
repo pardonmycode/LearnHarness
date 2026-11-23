@@ -33,23 +33,17 @@ class TutorMissions:
             )
 
         def build(data: dict[str, Any]) -> tuple[Mission, str]:
-            if message.mission_from_project and data.get("skill") not in topics:
-                raise harness.HarnessRejected(f"Thema muss eines von diesen sein: {topics}")
-            steps_data = [step for step in data.get("steps", []) if step.get("title")][:7]
-            if len(steps_data) < 2:
-                raise harness.HarnessRejected("Mission braucht mindestens zwei Schritte")
-            if steps_data[-1].get("kind") != "try":
-                title = (
-                    "Starte dein Programm"
-                    if message.language == "python"
-                    else "Probiere es in Godot aus"
-                )
-                steps_data.append({"title": title, "kind": "try"})
+            try_title = (
+                "Starte dein Programm"
+                if message.language == "python"
+                else "Probiere es in Godot aus"
+            )
+            steps_data = harness.check_mission_plan(data, topics, try_title)
             mission = Mission(
                 id=f"wunsch-{uuid4().hex[:10]}",
                 title=str(data.get("title", "Deine Mission"))[:120] or "Deine Mission",
                 goal=str(data.get("goal", "")),
-                skill=data.get("skill") if data.get("skill") in harness.MISSION_TOPICS else None,
+                skill=data["skill"],
                 steps=[
                     MissionStep(id=f"s{index}", title=str(step["title"])[:200], kind=step["kind"])
                     for index, step in enumerate(steps_data, start=1)
@@ -109,6 +103,7 @@ class TutorMissions:
             extra += f"\nHinweis der Lehrkraft für diesen Schritt: {step.note}"
         topic = mission.skill if mission.skill in harness.MISSION_TOPICS else None
         stage = self._start_topic(topic)
+        extra += "\n\n" + harness.known_topics_note(self._topic_levels(), topic)
         built = self._exercise_round(
             "mission_step",
             message,

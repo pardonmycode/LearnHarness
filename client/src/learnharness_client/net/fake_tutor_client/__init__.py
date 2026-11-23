@@ -5,7 +5,6 @@ from __future__ import annotations
 from functools import partial
 
 from learnharness_protocol import (
-    GeneratedFile,
     LearningResponse,
     ReviewItem,
     ReviewResult,
@@ -13,7 +12,6 @@ from learnharness_protocol import (
     Submission,
 )
 
-from .. import fake_content
 from ..tutor_client import ClientError
 from .base import FakeClientBase
 from .conversation import FakeConversation
@@ -81,25 +79,7 @@ class FakeTutorClient(FakeMissions, FakeLearning, FakeConversation, FakeClientBa
             self._submit_learning_exercise(submission)
             return
         if submission.exercise_id.startswith("learn_python_"):
-            correct = submission.answers.get("choice") == "right"
-            generated = (
-                [
-                    GeneratedFile(
-                        path=self._learn_file,
-                        content=fake_content.PYTHON_GREETING_CODE,
-                        explanation="Die Kommentare im Code erklären jede Zeile.",
-                    )
-                ]
-                if correct
-                else []
-            )
-            self._review(
-                correct,
-                "Richtig! print zeigt Text an. Jetzt schreibt der Agent den Code."
-                if correct
-                else "Das passt noch nicht. Welcher Befehl gibt etwas aus?",
-                generated,
-            )
+            self._submit_python_exercise(submission)
             return
         if submission.exercise_id.startswith("learn_focus_"):
             self._submit_focus_exercise(submission)

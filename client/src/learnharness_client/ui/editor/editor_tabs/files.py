@@ -6,6 +6,8 @@ from pathlib import Path
 
 from PyQt6.QtWidgets import QMessageBox
 
+from learnharness_client.domain.limits import MAX_FILE_CONTEXT
+
 from ....texts import T
 from ..code_editor import CodeEditor
 
@@ -52,8 +54,12 @@ class TabFiles:
             return None
         return self.open_file(document.path)
 
-    def apply_generated_file(self, relative_path: str, content: str) -> bool:
-        """Write server-generated code only after MainWindow has accepted a correct review."""
+    def apply_generated_file(
+        self, relative_path: str, content: str, expected_text: str | None = None
+    ) -> bool:
+        """Write server-generated code only after MainWindow has accepted a correct review.
+
+        expected_text is the script the code was made from; a script changed since then stays."""
         if not self.project or not self.store:
             return False
         try:
@@ -74,6 +80,12 @@ class TabFiles:
 
         editor = self.open_file(path)
         if editor is None:
+            return False
+        if len(editor.toPlainText()) > MAX_FILE_CONTEXT:
+            QMessageBox.warning(self, T.FILE_TOO_LONG_TITLE, T.FILE_TOO_LONG)
+            return False
+        if expected_text is not None and editor.toPlainText() != expected_text:
+            QMessageBox.warning(self, T.FILE_CHANGED_TITLE, T.FILE_CHANGED)
             return False
         document = self.documents[editor]
         if document.dirty:

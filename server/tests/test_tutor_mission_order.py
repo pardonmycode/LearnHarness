@@ -29,6 +29,7 @@ def test_mission_prompt_offers_the_topics_and_stages(
                 "skill": "arrays",
                 "steps": [
                     {"title": "Verstehen", "kind": "learn"},
+                    {"title": "Bauen", "kind": "exercise"},
                     {"title": "Probieren", "kind": "try"},
                 ],
             }
@@ -130,3 +131,19 @@ def test_mission_prompt_handles_wish_and_button() -> None:
     assert "Plane aus dem Wunsch" not in system
     assert "Fehlt <kind>, entsteht sie aus <projekt>" in system
     assert "mindestens Stufe 2" in system
+
+
+def test_mission_prompt_explains_every_field_and_its_limits() -> None:
+    system = harness.system_prompt("mission", AiSettings.load(), language="python", game=True)
+    for field in harness.MISSION_SCHEMA["properties"]:
+        assert f'"{field}":' in system
+    assert "nur den\n  Teil für diese Datei" in system
+    assert "nicht zu Kindern" in system
+    assert system.index("Nutze außer dem gewählten Thema") < system.index("Grundgerüst für")
+
+
+@pytest.mark.django_db
+def test_unsuitable_wish_has_one_clear_way() -> None:
+    system = harness.system_prompt("mission", AiSettings.load(), language="python")
+    assert 'Verweise in\n"message" freundlich an die Lehrkraft' in system
+    assert "Gibt es kein <projekt>, plane eine kleine Übung" in system

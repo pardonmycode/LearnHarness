@@ -121,6 +121,11 @@ class ProjectActions:
         text = editor.toPlainText() if editor is not None else ""
         return text[:MAX_FILE_CONTEXT] if text.strip() else None
 
+    def _open_script_text(self) -> str:
+        """The whole open script, to notice later whether it changed."""
+        editor = self.editor_tabs.current_editor()
+        return editor.toPlainText() if editor is not None else ""
+
     def _relative_current_file(self) -> str | None:
         document = self.editor_tabs.current_document()
         if document is None or self.project is None:

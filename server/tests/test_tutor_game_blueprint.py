@@ -72,9 +72,10 @@ def test_game_idea_reaches_the_ai_call(
                 "title": "Held",
                 "goal": "Held bauen",
                 "message": "Los",
-                "skill": "nodes",
+                "skill": "variables",
                 "steps": [
                     {"title": "Verstehen", "kind": "understand"},
+                    {"title": "Bauen", "kind": "exercise"},
                     {"title": "Probieren", "kind": "try"},
                 ],
             }

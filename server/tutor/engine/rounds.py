@@ -50,12 +50,20 @@ class TutorRounds:
         prefix: str,
         stage: int | None = None,
         topic: str | None = None,
+        level: int | None = None,
     ) -> harness.BuiltExercise:
         help_text = harness.stage_instructions(topic, stage) if stage else None
+        if level:
+            help_text = harness.level_instructions(level)
+        checked = intent in ("learn", "mission_step")
         system = (
             self._system(intent, message) + "\n\n" + (help_text or harness.EXERCISE_FORMAT_HELP)
         )
-        schema = harness.mission_exercise_schema(stage, topic) if stage else harness.EXERCISE_SCHEMA
+        schema = harness.EXERCISE_SCHEMA
+        if stage:
+            schema = harness.mission_exercise_schema(stage, topic)
+        elif level:
+            schema = harness.learn_exercise_schema(level)
         prompt = harness.user_prompt(message, extra=extra)
         before = message.code_excerpt or ""
 
@@ -66,15 +74,37 @@ class TutorRounds:
                 prefix=prefix,
                 stage=stage,
                 topic=topic,
+                level=level,
             )
+            if checked:
+                unclear = harness.check_blanks_are_clear(
+                    built.exercise, built.answers, built.message
+                )
+                if unclear:
+                    raise harness.HarnessRejected(f"Aufgabe nicht eindeutig: {unclear}")
             if allow_code:
+                built.new_file_content = harness.unwrap_code_fence(built.new_file_content)
+                if harness.has_stray_fence(built.new_file_content, before):
+                    raise harness.HarnessRejected("Code enthält Markdown-Codeblöcke")
                 reason = harness.check_generated_code(
                     before, built.new_file_content, self.settings.max_changed_lines
                 )
                 if reason:
                     raise harness.HarnessRejected(f"Code nach der Übung abgelehnt: {reason}")
+                if message.language == "python":
+                    reason = harness.check_python_syntax(before, built.new_file_content)
+                    if reason:
+                        raise harness.HarnessRejected(f"Code abgelehnt: {reason}")
+                reason = harness.check_keeps_code(before, built.new_file_content)
+                if reason:
+                    raise harness.HarnessRejected(f"Code abgelehnt: {reason}")
                 blanks_code = getattr(built.exercise, "code", None)
-                if stage and blanks_code:
+                reason = harness.check_kind_in_file(
+                    built.exercise, built.answers, before, built.new_file_content
+                )
+                if reason:
+                    raise harness.HarnessRejected(f"Code passt nicht zur Übung: {reason}")
+                if checked and blanks_code:
                     reason = harness.check_blanks_in_file(
                         blanks_code, built.answers, built.new_file_content
                     )
@@ -103,7 +133,14 @@ class TutorRounds:
     def _learn(self, message: StudentMessage) -> Response:
         if not message.file:
             return _error("no_file", "Öffne zuerst das Skript, in das der Code soll.")
-        built = self._exercise_round("learn", message, allow_code=True, prefix="learn")
+        built = self._exercise_round(
+            "learn",
+            message,
+            extra=harness.learn_topics_note(self._topic_levels()),
+            allow_code=True,
+            prefix="learn",
+            level=message.learning_level,
+        )
         return LearningResponse(
             mode="exercise",
             message=built.message or "Beantworte diese Frage, dann schreibe ich den Code.",

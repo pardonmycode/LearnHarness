@@ -50,15 +50,15 @@ class LearningTexts:
     LEVEL_DESCRIPTIONS = {
         1: "Einfache Verständnisfragen. Erst nach einer richtigen Antwort schreibt der Agent "
         "den Code.",
-        2: "Einfache Code-Lücken mit einem Dropdown-Menü.",
-        3: "Schwierigere Code-Lücken mit mehreren Dropdown-Menüs.",
-        4: "Code-Lücken ohne Auswahl: Du trägst kurze Begriffe selbst ein.",
-        5: "Bringe fertige Code-Bausteine in die richtige Reihenfolge.",
-        6: "Finde einen Fehler in einem kurzen Code-Beispiel.",
-        7: "Ergänze wichtige Ausdrücke mit kleinen Hinweisen.",
-        8: "Plane eine Funktion und ergänze mehrere zusammenhängende Teile.",
-        9: "Entscheide selbst über den Lösungsweg und begründe ihn.",
-        10: "Beschreibe eine eigene Funktion und prüfe den Plan des Agenten.",
+        2: "Auswahlfragen zu deinem Code mit kurzen Erklärungen.",
+        3: "Eine Code-Lücke mit einem Dropdown-Menü.",
+        4: "Schwierigere Code-Lücken mit einem oder zwei Dropdown-Menüs.",
+        5: "Bringe fertige Code-Zeilen in die richtige Reihenfolge.",
+        6: "Tippe einen kurzen Ausdruck selbst ein.",
+        7: "Tippe ein oder zwei kurze Ausdrücke selbst ein.",
+        8: "Finde die falsche Zeile in einem kurzen Code-Beispiel.",
+        9: "Finde einen Fehler im Ablauf oder in der Logik.",
+        10: "Finde einen kniffligen Fehler fast ohne Hinweise.",
     }
 
     # Progress panel

@@ -105,6 +105,9 @@ class MainWindow(
         self._response_owner: str | None = None
         self._exercise_owner = "agent"
         self._mission_target_file: str | None = None
+        # The script each pending code change was made from.
+        self._learn_base_text: str | None = None
+        self._mission_base_text: str | None = None
         self.setWindowTitle(T.APP_TITLE)
         self.resize(*design.MAIN_WINDOW_SIZE)
 

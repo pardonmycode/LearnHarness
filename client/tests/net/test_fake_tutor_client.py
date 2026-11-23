@@ -83,27 +83,6 @@ def test_learn_agent_writes_code_only_after_correct_answer(qtbot: QtBot) -> None
     assert "extends Node2D" in review.generated_files[0].content
 
 
-def test_levels_one_to_four_have_requested_exercise_types(qtbot: QtBot) -> None:
-    client = FakeTutorClient(delay_ms=1)
-    expected = {
-        1: "multiple_choice",
-        2: "fill_blanks",
-        3: "fill_blanks",
-        4: "text_blanks",
-    }
-    for level, kind in expected.items():
-        message = StudentMessage(
-            session_id="session",
-            project_id="project",
-            learning_level=level,
-            file="player.gd",
-            message="Figur bewegen",
-        )
-        with qtbot.waitSignal(client.stream_finished, timeout=1000) as signal:
-            client.send_message(message)
-        assert signal.args[0].exercise.kind == kind
-
-
 def test_fourth_hint_produces_exercise(qtbot: QtBot) -> None:
     client = FakeTutorClient(delay_ms=1)
     for _ in range(3):

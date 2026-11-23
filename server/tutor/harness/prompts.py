@@ -96,7 +96,7 @@ def user_prompt(message: StudentMessage, *, task: str | None = None, extra: str 
     if message.code_excerpt:
         start = message.excerpt_start_line or 1
         parts.append(f"Code ab Zeile {start}:\n" + _tag("code", message.code_excerpt))
-    elif message.intent in ("learn", "mission_step"):
+    elif message.intent in ("learn", "mission", "mission_step"):
         parts.append("Code der Datei:\n" + _tag("code", ""))
     if message.last_error:
         source = LANGUAGES[message.language]["error_source"]

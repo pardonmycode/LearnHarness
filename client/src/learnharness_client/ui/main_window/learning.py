@@ -29,6 +29,7 @@ class LearningActions:
         self.active_learning_level = level
         relative = document.path.relative_to(self.project.root).as_posix()
         self._learn_target_file = relative
+        self._learn_base_text = self._open_script_text()
         message = StudentMessage(
             intent="learn",
             language=self.project.language,
@@ -119,7 +120,9 @@ class LearningActions:
                     # The agent may only write the file the child chose for this round.
                     LOG.warning("Rejected generated file outside the active LearnAgent target")
                     continue
-                if self.editor_tabs.apply_generated_file(generated.path, generated.content):
+                if self.editor_tabs.apply_generated_file(
+                    generated.path, generated.content, self._learn_base_text
+                ):
                     written_files.append(generated.path)
                     explanations.append(generated.explanation)
             if review.generated_files:

@@ -17,14 +17,13 @@ from learnharness_protocol import (
 )
 from learnharness_protocol.exercises import Exercise
 
+from .code_fence import unwrap_code_fence
+from .errors import HarnessRejected
+from .exercise_kinds import build_find_bug, build_ordering
+from .learn_levels import LEVEL_KINDS
 from .rules import SKILLS
 from .stream_guard import filter_text, looks_like_code
 from .topics import MISSION_TOPICS, STAGE_KINDS, normalize_typed
-
-
-class HarnessRejected(Exception):
-    """The AI output breaks a rule; the reason goes to the log."""
-
 
 MAX_DESCRIPTION_LENGTH = 2000
 MAX_TYPED_BLANKS = 2
@@ -48,7 +47,7 @@ def clean_description(text: Any, current: str) -> str | None:
 @dataclass
 class BuiltExercise:
     exercise: Exercise
-    answers: dict[str, str | list[str]]
+    answers: dict[str, Any]
     message: str
     skill_id: str
     explanation: str
@@ -94,23 +93,29 @@ def build_exercise(
     prefix: str,
     stage: int | None = None,
     topic: str | None = None,
+    level: int | None = None,
 ) -> BuiltExercise:
     """Turn structured AI output into a protocol exercise; answers stay on the server.
 
-    With a stage, only the exercise kind of that stage is accepted."""
+    With a stage or a LearnAgent level, only the kind of exercise it uses is accepted."""
     exercise: Exercise
     exercise_id = f"{prefix}_{uuid4().hex[:12]}"
     allowed = MISSION_TOPICS if stage else SKILLS
     skill_id = topic or (data.get("skill") if data.get("skill") in allowed else "variables")
-    if stage and data.get("kind") != STAGE_KINDS[stage]:
-        raise HarnessRejected(f"Stufe {stage} verlangt die Aufgabenart {STAGE_KINDS[stage]}")
+    required = STAGE_KINDS[stage] if stage else LEVEL_KINDS.get(level or 0)
+    if required and data.get("kind") != required:
+        raise HarnessRejected(f"Hier ist nur die Aufgabenart {required} erlaubt")
     message, notes = filter_text(str(data.get("message", "")).strip(), max_lines)
     prompt = str(data.get("prompt", "")).strip()
-    code = str(data.get("code", "")).rstrip()
+    code = unwrap_code_fence(str(data.get("code", ""))).rstrip()
     if not prompt:
         raise HarnessRejected("Übung ohne Aufgabentext")
-    answers: dict[str, str | list[str]]
-    if data.get("kind") == "text_blanks" and stage == 3:
+    answers: dict[str, Any]
+    if required == "ordering":
+        exercise, answers = build_ordering(data, exercise_id, SKILLS[skill_id], prompt)
+    elif required == "find_bug":
+        exercise, answers = build_find_bug(data, exercise_id, SKILLS[skill_id], prompt)
+    elif required == "text_blanks":
         exercise, answers = _text_blanks(data, exercise_id, skill_id, prompt, code)
     elif data.get("kind") == "fill_blanks":
         blanks_data = data.get("blanks") or []
@@ -186,7 +191,10 @@ def check_generated_code(before: str, after: str, max_changed: int) -> str | Non
     return None
 
 
-def _answer_matches(expected: str | list[str], given: Any) -> bool:
+def _answer_matches(expected: Any, given: Any) -> bool:
+    if isinstance(expected, dict):  # sorted items or chosen lines: the exact list counts
+        wanted = [str(item) for item in expected["exact"]]
+        return isinstance(given, list) and [str(item) for item in given] == wanted
     text = str(given if given is not None else "").strip()
     if isinstance(expected, list):  # typed by the child: several spellings are right
         return bool(text) and normalize_typed(text) in {normalize_typed(v) for v in expected}

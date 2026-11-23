@@ -24,7 +24,7 @@ def test_learn_round_releases_code_only_after_correct_answer(
         intent="learn",
         session_id=session.id,
         project_id="spiel",
-        learning_level=2,
+        learning_level=3,
         file="player.gd",
         code_excerpt=PLAYER,
         excerpt_start_line=1,
@@ -35,7 +35,7 @@ def test_learn_round_releases_code_only_after_correct_answer(
     exercise_id = response.exercise.id
     system, messages = scripted["provider"].calls[0]
     assert (
-        "Lernstufe 2 von 10" in system
+        "Lernstufe 3 von 10" in system
         and "<kind>\nMeine Figur soll springen" in (messages[0]["content"])
     )
 
@@ -73,7 +73,7 @@ def test_too_much_generated_code_is_retried_then_refused(
         intent="learn",
         session_id=session.id,
         project_id="spiel",
-        learning_level=1,
+        learning_level=3,
         file="player.gd",
         code_excerpt=PLAYER,
         message="Bau mir das ganze Spiel",
@@ -131,7 +131,7 @@ def test_wish_mission_is_planned_and_its_steps_work(
                 "title": "Münzen sammeln",
                 "goal": "Sammle Münzen ein.",
                 "message": "Los geht's!",
-                "skill": "signals",
+                "skill": "variables",
                 "steps": [
                     {"title": "Was ist ein Signal?", "kind": "understand"},
                     {"title": "Zähler anlegen", "kind": "exercise"},
@@ -159,3 +159,24 @@ def test_wish_mission_is_planned_and_its_steps_work(
         )
     )
     assert isinstance(step, LearningResponse) and step.exercise is not None
+
+
+def test_learn_round_rejects_code_that_drops_the_childs_lines(
+    session: TutorSession, scripted: dict[str, ScriptedProvider]
+) -> None:
+    scripted["provider"] = ScriptedProvider(
+        json_answers=[_exercise_json(new_file_content="# nur neu\nprint(1)\n"), _exercise_json()]
+    )
+    message = StudentMessage(
+        intent="learn",
+        session_id=session.id,
+        project_id="spiel",
+        file="player.gd",
+        code_excerpt=PLAYER,
+        message="Lass die Figur springen",
+    )
+    response = engine.Tutor(session).handle(message)
+    assert isinstance(response, LearningResponse) and response.exercise is not None
+    assert "vorhandene Zeilen" in scripted["provider"].calls[1][1][-1]["content"]
+    record = ExerciseRecord.objects.get(pk=response.exercise.id)
+    assert record.generated_content.startswith(PLAYER)

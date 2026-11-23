@@ -85,3 +85,46 @@ def test_prompts_bind_the_exercise_to_project_and_hide_the_answer() -> None:
     system = harness.system_prompt("mission_step", AiSettings.load(), language="python")
     assert "Namen aus <code>" in system and "Jede Zeile mit einer Lücke" in system
     assert "verraten die Antwort" in harness.stage_instructions("loops", 1)
+
+
+def test_snippet_instead_of_the_whole_file_is_rejected(
+    session: TutorSession, scripted: dict[str, ScriptedProvider]
+) -> None:
+    session.child.set_skill("loops", "Schleifen", 3)
+    before = "muenzen = 0\nleben = 3\nname = 'Fuchs'\nprint(name)\n"
+    snippet = "for i in range(5):\n    muenzen += 1\n"
+    scripted["provider"] = ScriptedProvider(
+        json_answers=[_typed_code(snippet), _typed_code(before + snippet)]
+    )
+    message = _code_step(session).model_copy(update={"code_excerpt": before})
+    response = engine.Tutor(session).handle(message)
+    assert isinstance(response.exercise, TextBlanksExercise)
+    assert "vorhandene Zeilen" in scripted["provider"].calls[1][1][-1]["content"]
+
+
+def test_keeping_code_allows_small_real_changes() -> None:
+    before = "muenzen = 0\nleben = 3\nprint(muenzen)\nprint(leben)\n"
+    assert harness.check_keeps_code(before, before + "muenzen += 1\n") is None
+    assert harness.check_keeps_code(before, before.replace("leben = 3", "leben = 5")) is None
+    assert harness.check_keeps_code("", "x = 1\n") is None
+    assert harness.check_keeps_code("muenzen = 0\n", "ganz_anders()\n") is not None
+    assert harness.check_keeps_code(before, "muenzen = 0\n") is not None
+
+
+def test_step_knows_which_topics_the_child_has_met(
+    session: TutorSession, scripted: dict[str, ScriptedProvider]
+) -> None:
+    session.child.set_skill("variables", "Variablen", 2)
+    scripted["provider"] = ScriptedProvider(json_answers=[_answer(1)])
+    engine.Tutor(session).handle(_start(session))
+    prompt = scripted["provider"].calls[0][1][0]["content"]
+    assert "kennt das Kind schon: variables, loops." in prompt
+    assert "classes" not in prompt
+    assert "Nutze nur die einfachsten" in harness.known_topics_note({}, None)
+
+
+def test_stage_one_only_introduces_the_topic_once() -> None:
+    rule = harness.stage_instructions("loops", 1)
+    assert "noch kein [x]" in rule and "nur, was in diesem Schritt neu ist" in rule
+    system = harness.system_prompt("mission_step", AiSettings.load(), language="python")
+    assert "kompletten neuen Inhalt" in system

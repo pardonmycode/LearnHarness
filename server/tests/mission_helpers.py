@@ -95,5 +95,9 @@ def _plan(skill: str) -> dict[str, Any]:
         "goal": "Zählen",
         "message": "Los",
         "skill": skill,
-        "steps": [{"title": "Verstehen", "kind": "learn"}, {"title": "Probieren", "kind": "try"}],
+        "steps": [
+            {"title": "Verstehen", "kind": "learn"},
+            {"title": "Bauen", "kind": "exercise"},
+            {"title": "Probieren", "kind": "try"},
+        ],
     }

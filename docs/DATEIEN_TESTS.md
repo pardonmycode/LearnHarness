@@ -30,6 +30,7 @@ Alle Testdateien. Die Beschreibung ist jeweils der Kopfkommentar der Datei.
 | [test_admin_sync.py](../client/tests/net/test_admin_sync.py) | Syncing profiles and level unlocks. |
 | [test_admin_sync_missions.py](../client/tests/net/test_admin_sync_missions.py) | Assigned missions from the administration. |
 | [test_fake_tutor_client.py](../client/tests/net/test_fake_tutor_client.py) |  |
+| [test_fake_levels.py](../client/tests/net/test_fake_levels.py) | The offline helper uses the same kind of exercise per level as the learning server. |
 | [test_http_token.py](../client/tests/net/test_http_token.py) | The device token only goes to the learning server when it is the administration itself. |
 | [test_reconnect.py](../client/tests/net/test_reconnect.py) | WebSocket reconnect backoff and adaptive health-check interval. |
 
@@ -44,6 +45,7 @@ Alle Testdateien. Die Beschreibung ist jeweils der Kopfkommentar der Datei.
 | [test_explain_and_missions.py](../client/tests/ui/test_explain_and_missions.py) | End-to-end through the main window with the built-in fake server. |
 | [test_gdscript_highlighter.py](../client/tests/ui/test_gdscript_highlighter.py) | The highlighter colors example GDScript lines in the expected ranges. |
 | [test_generated_code_gate.py](../client/tests/ui/test_generated_code_gate.py) |  |
+| [test_generated_code_base.py](../client/tests/ui/test_generated_code_base.py) | Generated code is only written into the script it was made from. |
 | [test_learn_agent_panel.py](../client/tests/ui/test_learn_agent_panel.py) |  |
 | [test_login_dialog.py](../client/tests/ui/test_login_dialog.py) |  |
 | [test_open_items.py](../client/tests/ui/test_open_items.py) | Tests for the formerly open TODO items: Markdown chat, backups, Godot helpers, startup. |
@@ -76,7 +78,12 @@ Alle Testdateien. Die Beschreibung ist jeweils der Kopfkommentar der Datei.
 | [test_tutor_project_plan.py](../server/tests/test_tutor_project_plan.py) | The helper asks about the project and proposes a clearer description. |
 | [test_tutor_mission_topics.py](../server/tests/test_tutor_mission_topics.py) | Missions adapt the exercise to the child's stage in the mission's topic. |
 | [test_tutor_mission_order.py](../server/tests/test_tutor_mission_order.py) | Missions pick a topic and follow the learning order. |
+| [test_tutor_mission_plan.py](../server/tests/test_tutor_mission_plan.py) | A mission plan has a clear structure before a child gets to see it. |
 | [test_tutor_mission_code.py](../server/tests/test_tutor_mission_code.py) | The code released after a mission exercise matches the exercise and the child. |
+| [test_tutor_mission_blanks.py](../server/tests/test_tutor_mission_blanks.py) | Mission exercises must not mark a right answer as wrong. |
+| [test_tutor_mission_safety.py](../server/tests/test_tutor_mission_safety.py) | Mission exercises stay small, do not give the answer away and keep Python runnable. |
+| [test_tutor_code_fence.py](../server/tests/test_tutor_code_fence.py) | Markdown fences never end up in a child's script. |
+| [test_tutor_learn_levels.py](../server/tests/test_tutor_learn_levels.py) | Each LearnAgent level has its own kind of exercise, checked by the server. |
 | [mission_helpers.py](../server/tests/mission_helpers.py) | Shared helpers for the tests of mission topics and stages. |
 | [test_tutor_providers.py](../server/tests/test_tutor_providers.py) | Provider switch, health and session access. |
 | [test_tutor_rounds.py](../server/tests/test_tutor_rounds.py) | Learning rounds and missions. |

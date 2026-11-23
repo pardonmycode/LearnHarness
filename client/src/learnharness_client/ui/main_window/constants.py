@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from pathlib import PurePosixPath
 
+from learnharness_client.domain.limits import MAX_FILE_CONTEXT
 from learnharness_client.domain.path_guard import fold_case
 
-MAX_FILE_CONTEXT = 16_000  # characters of the open script sent along with learn rounds
+__all__ = ["GODOT_TASK_ID", "MAX_FILE_CONTEXT", "PYTHON_TASK_ID", "is_target_file"]
+
 
 GODOT_TASK_ID = "move_player_right"
 

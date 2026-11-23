@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 from learnharness_protocol import (
-    Choice,
     CodeSubmission,
     GeneratedFile,
     LearningResponse,
-    MultipleChoiceExercise,
     ReviewResult,
     StudentMessage,
     Submission,
@@ -16,6 +14,7 @@ from learnharness_protocol.exercises import Exercise
 
 from .. import fake_content
 from .base import FakeClientBase
+from .level_content import FILL_LEVELS, is_right, level_exercise
 
 
 class FakeLearning(FakeClientBase):
@@ -28,7 +27,7 @@ class FakeLearning(FakeClientBase):
             self._start_python_round(message.learning_level or 1)
             return
         focus = fake_content.FOCUS_ROUNDS.get(message.skill_focus or "")
-        if focus is not None:
+        if focus is not None and message.learning_level in FILL_LEVELS:
             exercise: Exercise = focus.exercise.model_copy(
                 update={"id": f"learn_focus_{message.skill_focus}_{message.learning_level}"}
             )
@@ -56,16 +55,7 @@ class FakeLearning(FakeClientBase):
         self._later(lambda: self.stream_finished.emit(response))
 
     def _start_python_round(self, level: int) -> None:
-        exercise = MultipleChoiceExercise(
-            id=f"learn_python_{level}",
-            skill="Variablen",
-            difficulty=min(5, max(1, (level + 1) // 2)),
-            prompt="Welcher Befehl zeigt Text auf dem Bildschirm an?",
-            choices=[
-                Choice(id="right", text="print"),
-                Choice(id="wrong", text="input"),
-            ],
-        )
+        exercise = level_exercise("python", level)
         response = LearningResponse(
             mode="exercise",
             message=(
@@ -102,21 +92,7 @@ class FakeLearning(FakeClientBase):
             level = int(submission.exercise_id.rsplit("_", 1)[1])
         except (ValueError, IndexError):
             level = self._learn_level or 1
-        lines = submission.answers.get("lines", [])
-        expected: dict[int, bool] = {
-            1: submission.answers.get("choice") == "x_axis",
-            2: submission.answers.get("axis") == "x",
-            3: submission.answers.get("axis") == "x" and submission.answers.get("value") == "speed",
-            4: submission.answers.get("axis") == "x" and submission.answers.get("value") == "speed",
-            5: submission.answers.get("order") == ["extends", "speed", "process", "move"],
-            6: isinstance(lines, list) and 4 in lines,
-            7: submission.answers.get("axis") == "x" and submission.answers.get("value") == "speed",
-            8: submission.answers.get("function") in {"_process", "_physics_process"}
-            and submission.answers.get("axis") == "x",
-            9: submission.answers.get("choice") == "use_delta",
-            10: submission.answers.get("choice") == "explain_and_test",
-        }
-        correct = expected.get(level, False)
+        correct = is_right("godot", level, submission.answers)
         generated = []
         if correct:
             generated = [
@@ -133,14 +109,39 @@ class FakeLearning(FakeClientBase):
         result = ReviewResult(
             correct=correct,
             feedback=(
-                "Richtig! X ist die waagerechte Achse. Jetzt darf der Agent den vollständigen "
-                "Code schreiben und erklärt anschließend jeden Teil."
+                "Richtig! Jetzt darf der Agent den vollständigen Code schreiben und erklärt "
+                "anschließend jeden Teil."
                 if correct
                 else "Das passt noch nicht. Lies die Erklärung und versuche dieselbe Frage erneut."
             ),
             generated_files=generated,
         )
         self._later(lambda: self.review_received.emit(result))
+
+    def _submit_python_exercise(self, submission: Submission) -> None:
+        try:
+            level = int(submission.exercise_id.rsplit("_", 1)[1])
+        except (ValueError, IndexError):
+            level = self._learn_level or 1
+        correct = is_right("python", level, submission.answers)
+        generated = (
+            [
+                GeneratedFile(
+                    path=self._learn_file,
+                    content=fake_content.PYTHON_GREETING_CODE,
+                    explanation="Die Kommentare im Code erklären jede Zeile.",
+                )
+            ]
+            if correct
+            else []
+        )
+        self._review(
+            correct,
+            "Richtig! Jetzt schreibt der Agent den Code."
+            if correct
+            else "Das passt noch nicht. Schau dir die Aufgabe noch einmal an.",
+            generated,
+        )
 
     def submit_code(self, submission: CodeSubmission) -> None:
         has_position = "position" in submission.content

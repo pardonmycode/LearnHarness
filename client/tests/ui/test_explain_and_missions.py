@@ -64,7 +64,7 @@ def test_skill_focus_round_writes_code_after_correct_answer(
     qtbot: QtBot, window: MainWindow
 ) -> None:
     qtbot.waitUntil(lambda: window.learn_agent_panel.current_focus == "conditions", timeout=3_000)
-    window.start_learning_round("Mach was mit if", 1)
+    window.start_learning_round("Mach was mit if", 3)
     agent = window.learn_agent_panel
     qtbot.waitUntil(lambda: agent.exercise_widget is not None, timeout=3_000)
     window._submit_agent_exercise(
@@ -75,7 +75,7 @@ def test_skill_focus_round_writes_code_after_correct_answer(
     editor = window.editor_tabs.current_editor()
     assert editor is not None
     qtbot.waitUntil(lambda: "else:" in editor.toPlainText(), timeout=3_000)
-    assert window.settings.max_unlocked_learning_level(window.student_profile.profile_id) == 2
+    assert window.settings.max_unlocked_learning_level(window.student_profile.profile_id) == 4
 
 
 def test_mission_runs_step_by_step_and_is_remembered(qtbot: QtBot, window: MainWindow) -> None:

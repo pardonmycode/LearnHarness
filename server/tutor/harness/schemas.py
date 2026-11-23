@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .learn_levels import LEVEL_KINDS
 from .rules import SKILLS
 from .topics import MISSION_TOPICS, STAGE_KINDS
 
@@ -80,6 +81,28 @@ PROJECT_PLAN_SCHEMA = _obj(
         "ready": {"type": "boolean"},
     }
 )
+
+
+def learn_exercise_schema(level: int) -> dict[str, Any]:
+    """The exercise format of one LearnAgent level."""
+    kind = LEVEL_KINDS[level]
+    properties = dict(EXERCISE_SCHEMA["properties"])
+    properties["kind"] = {"type": "string", "enum": [kind]}
+    if kind == "text_blanks":
+        properties["blanks"] = {
+            "type": "array",
+            "items": _obj({"answer": _STR, "alternatives": {"type": "array", "items": _STR}}),
+        }
+    if kind in ("ordering", "find_bug"):
+        for unused in ("code", "choices", "blanks"):
+            del properties[unused]
+    lines = {"type": "array", "items": _STR}
+    if kind == "ordering":
+        properties["ordered_lines"] = lines
+    if kind == "find_bug":
+        properties["buggy_lines"] = lines
+        properties["bug_line"] = {"type": "integer"}
+    return _obj(properties)
 
 
 def mission_schema(topics: list[str]) -> dict[str, Any]:

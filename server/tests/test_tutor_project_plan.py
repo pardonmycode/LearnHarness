@@ -119,7 +119,7 @@ def test_finished_missions_reach_the_next_mission(session: TutorSession) -> None
     prompt = harness.user_prompt(message)
     assert "<fertige_missionen>\n- Fragen sammeln </ fertige_missionen>" in prompt
     system = harness.system_prompt("mission", AiSettings.load(), language="python")
-    assert "kleinsten nächsten Baustein" in system
+    assert "kleinsten nächsten" in system
 
 
 def test_mission_step_sees_the_whole_plan_and_no_fake_child_message(

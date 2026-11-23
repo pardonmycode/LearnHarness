@@ -36,6 +36,7 @@ Die App auf dem Rechner des Kindes. Die Beschreibung ist jeweils der Kopfkomment
 | [code_questions.py](../client/src/learnharness_client/domain/code_questions.py) | Suggest child-friendly questions about a piece of GDScript or Python. |
 | [file_store.py](../client/src/learnharness_client/domain/file_store.py) | Load and atomically save guarded script documents. |
 | [learning_focus.py](../client/src/learnharness_client/domain/learning_focus.py) | Choose what a child should practise next, based on the skills already learned. |
+| [limits.py](../client/src/learnharness_client/domain/limits.py) | Limits shared by the editor and the requests to the learning server. |
 | [path_guard.py](../client/src/learnharness_client/domain/path_guard.py) | Centralized project-bound path validation. |
 | [profile.py](../client/src/learnharness_client/domain/profile.py) | Local pseudonymous child profiles and experience levels. |
 | [project.py](../client/src/learnharness_client/domain/project.py) | Project discovery and metadata for Godot and Python projects. |
@@ -85,6 +86,7 @@ Die App auf dem Rechner des Kindes. Die Beschreibung ist jeweils der Kopfkomment
 | [base.py](../client/src/learnharness_client/net/fake_tutor_client/base.py) | Timing, health, session and streaming of the fake server. |
 | [conversation.py](../client/src/learnharness_client/net/fake_tutor_client/conversation.py) | Explanations, project plans, hints, tasks and progress. |
 | [learning.py](../client/src/learnharness_client/net/fake_tutor_client/learning.py) | LearnAgent rounds of the fake server. |
+| [level_content.py](../client/src/learnharness_client/net/fake_tutor_client/level_content.py) | Offline exercises for the ten LearnAgent levels, in Godot and in Python. |
 | [level_exercises.py](../client/src/learnharness_client/net/fake_tutor_client/level_exercises.py) | Exercises and code of the fake LearnAgent levels. |
 | [missions.py](../client/src/learnharness_client/net/fake_tutor_client/missions.py) | Missions of the fake server. |
 
