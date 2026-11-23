@@ -24,7 +24,7 @@ from .mission_parts import (
     generic_mission_step,
 )
 from .missions import MISSIONS, find_mission
-from .plans import PLAN_FIRST_QUESTION, PLAN_FOLLOW_UP, PLAN_STEPS
+from .plans import PLAN_QUESTIONS
 
 __all__ = [
     "COIN_CODE",
@@ -37,9 +37,7 @@ __all__ = [
     "MISSIONS",
     "MissionContent",
     "MissionStepContent",
-    "PLAN_FIRST_QUESTION",
-    "PLAN_FOLLOW_UP",
-    "PLAN_STEPS",
+    "PLAN_QUESTIONS",
     "PYTHON_EXPLANATION",
     "PYTHON_GREETING_CODE",
     "explanation_question",

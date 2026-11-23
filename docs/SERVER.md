@@ -28,7 +28,7 @@ Der Server ist ein Django-Projekt mit zwei Apps:
 | [`prompts.py`](../server/tutor/harness/prompts.py) | Baut System- und Nutzer-Prompt |
 | [`stream_guard.py`](../server/tutor/harness/stream_guard.py) | Hält längeren Code beim Streamen zurück |
 | [`schemas.py`](../server/tutor/harness/schemas.py) | JSON-Formate der KI-Antworten |
-| [`checks.py`](../server/tutor/harness/checks.py) | Prüft Übungen, To-dos und generierten Code |
+| [`checks.py`](../server/tutor/harness/checks.py) | Prüft Übungen, Beschreibungsvorschläge und generierten Code |
 | [`game_blueprint.py`](../server/tutor/harness/game_blueprint.py) | Grundgerüst und Architektur für Spiele |
 
 ## KI-Anbieter: `tutor/providers/`

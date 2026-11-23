@@ -5,6 +5,8 @@ from __future__ import annotations
 from learnharness_protocol import ProgressUpdate
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
+from learnharness_client import design
+
 from ...texts import T
 
 LEVEL_WORDS = T.LEVEL_WORDS
@@ -14,8 +16,8 @@ class ProgressPanel(QWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(16, 16, 16, 16)
-        self.layout.setSpacing(10)
+        self.layout.setContentsMargins(*design.PANEL_MARGINS)
+        self.layout.setSpacing(design.PANEL_SPACING_TIGHT)
         heading = QLabel(T.PROGRESS_HEADING)
         heading.setProperty("role", "heading")
         intro = QLabel(T.PROGRESS_INTRO)
@@ -42,7 +44,7 @@ class ProgressPanel(QWidget):
             row = QFrame()
             row.setProperty("card", "true")
             row_layout = QHBoxLayout(row)
-            row_layout.setContentsMargins(14, 10, 14, 10)
+            row_layout.setContentsMargins(*design.PROGRESS_ROW_MARGINS)
             name = QLabel(skill.label)
             name.setProperty("role", "subheading")
             symbols = QLabel("●" * level + "○" * (3 - level))

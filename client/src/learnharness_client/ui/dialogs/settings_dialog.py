@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
+from learnharness_client import design
 from learnharness_client.config import AppSettings
 from learnharness_client.ui.theme import THEME_CHOICES
 
@@ -33,7 +34,7 @@ class SettingsDialog(QDialog):
         self.fake_server = QCheckBox(T.SETTINGS_FAKE_SERVER)
         self.fake_server.setChecked(settings.use_fake_server)
         self.font_size = QSpinBox()
-        self.font_size.setRange(11, 28)
+        self.font_size.setRange(design.FONT_SIZE_MIN, design.FONT_SIZE_MAX)
         self.font_size.setValue(settings.font_size)
         self.theme = QComboBox()
         for value, label in THEME_CHOICES:

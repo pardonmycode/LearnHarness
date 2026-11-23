@@ -30,12 +30,14 @@ Die erzeugten Schemas liegen in [`protocol/schemas/`](../protocol/schemas/).
 | `explain` | Code erklären | `_explain` |
 | `mission` | Mission aus einem Wunsch planen | `_plan_mission` |
 | `mission_step` | Einen Missionsschritt bearbeiten | `_mission_step` |
-| `project_plan` | Projekt planen, To-dos vorschlagen | `_plan_project` |
+| `project_plan` | Fragen zum Projekt stellen, Beschreibung vorschlagen | `_plan_project` |
 
 `language` ist `gdscript` oder `python`.
 
-Die Felder `project_description`, `project_todos`, `project_done_todos` und `active_todo` geben
-jeder Anfrage den Projektplan mit. So arbeiten alle Tabs am selben To-do.
+Die Felder `project_description` und `project_done_missions` geben jeder Anfrage das Projekt mit.
+`project_turns` und `project_question` tragen das Fragegespräch. Die Antwort kann
+`description_suggestion` und `project_ready` enthalten. Die Beschreibung ändert sich erst, wenn das
+Kind den Vorschlag übernimmt.
 
 ## Protokoll ändern
 

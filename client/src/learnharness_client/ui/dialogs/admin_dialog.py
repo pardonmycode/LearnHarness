@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
+from learnharness_client import design
 from learnharness_client.admin_sync import AdminSync, SyncResult
 from learnharness_client.config import AppSettings
 from learnharness_client.net.admin_client import AdminClient
@@ -33,7 +34,7 @@ class AdminDialog(QDialog):
         self.settings = settings
         self.last_result: SyncResult | None = None
         self.setWindowTitle(T.ADMIN_TITLE)
-        self.resize(560, 300)
+        self.resize(*design.ADMIN_DIALOG_SIZE)
         layout = QVBoxLayout(self)
         intro = QLabel(T.ADMIN_INTRO)
         intro.setWordWrap(True)

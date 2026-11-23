@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from learnharness_protocol import Mission, MissionStep
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -16,21 +16,25 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from learnharness_client import design
+
 from ....texts import T
 from ..exercise_host import ExerciseHost
 from ..learn_agent_panel import card
 from .choosing import MissionChoosing
+from .step_view import READY, MissionStepView
 from .steps import MissionSteps
 
 __all__ = ["MissionPanel"]
 
 
-class MissionPanel(MissionChoosing, MissionSteps, QWidget):
+class MissionPanel(MissionChoosing, MissionSteps, MissionStepView, QWidget):
     mission_requested = pyqtSignal(str)  # wish
     step_requested = pyqtSignal(str, str)  # mission id, step id
     exercise_submitted = pyqtSignal(object)
     progress_changed = pyqtSignal(dict)  # JSON-ready state for saving
     mission_completed = pyqtSignal(str)  # mission id
+    help_requested = pyqtSignal()
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -39,11 +43,19 @@ class MissionPanel(MissionChoosing, MissionSteps, QWidget):
         self.active_step: MissionStep | None = None
         self._online = True
         self._busy = False
+        self._phase = READY
+        self._shown_step: MissionStep | None = None
+        self._has_project_idea = False
+        self._reveal_target: QWidget | None = None
+        self._reveal_timer = QTimer(self)
+        self._reveal_timer.setSingleShot(True)
+        self._reveal_timer.setInterval(0)
+        self._reveal_timer.timeout.connect(self._scroll_to_target)
 
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(12)
+        layout.setContentsMargins(*design.PANEL_MARGINS)
+        layout.setSpacing(design.PANEL_SPACING)
         heading = QLabel(T.MISSION_HEADING)
         heading.setProperty("role", "heading")
         self.language = "gdscript"
@@ -58,6 +70,16 @@ class MissionPanel(MissionChoosing, MissionSteps, QWidget):
         self.assigned_buttons = QVBoxLayout()
         assigned_layout.addLayout(self.assigned_buttons)
         self.assigned_card.hide()
+
+        self.project_card, project_layout = card(T.MISSION_PROJECT_HEADING)
+        project_text = QLabel(T.MISSION_PROJECT_TEXT)
+        project_text.setWordWrap(True)
+        self.project_button = QPushButton(T.MISSION_PROJECT_BUTTON)
+        self.project_button.setProperty("primary", "true")
+        self.project_button.clicked.connect(self._next_project_mission)
+        project_layout.addWidget(project_text)
+        project_layout.addWidget(self.project_button)
+        self.project_card.hide()
 
         self.choose_card, choose_layout = card(T.MISSION_OWN_HEADING)
         self._suggestions: dict[str, list[QPushButton]] = {"gdscript": [], "python": []}
@@ -93,15 +115,11 @@ class MissionPanel(MissionChoosing, MissionSteps, QWidget):
         self.progress.setTextVisible(False)
         self.progress.setAccessibleName(T.MISSION_PROGRESS.format(done=0, total=0))
         self.steps_box = QVBoxLayout()
-        self.step_button = QPushButton(T.MISSION_DO_STEP)
-        self.step_button.setProperty("primary", "true")
-        self.step_button.clicked.connect(self._start_step)
         self.new_button = QPushButton(T.MISSION_NEW)
         self.new_button.clicked.connect(self.reset)
         buttons = QHBoxLayout()
         buttons.addWidget(self.new_button)
         buttons.addStretch(1)
-        buttons.addWidget(self.step_button)
         mission_layout.addWidget(self.goal)
         mission_layout.addWidget(self.progress_label)
         mission_layout.addWidget(self.progress)
@@ -117,13 +135,41 @@ class MissionPanel(MissionChoosing, MissionSteps, QWidget):
         self.exercises = ExerciseHost(self)
         self.exercises.submitted.connect(self.exercise_submitted)
 
+        # Everything about the current step, with its one next action at the bottom.
+        self.step_card, step_layout = card("")
+        self.step_title = step_layout.itemAt(0).widget()
+        self.answer_hint = QLabel(T.MISSION_ANSWER_HINT)
+        self.answer_hint.setWordWrap(True)
+        self.answer_hint.setProperty("role", "muted")
+        self.help_button = QPushButton(T.MISSION_TRY_HELP)
+        self.help_button.clicked.connect(self.help_requested)
+        self.next_project_button = QPushButton(T.MISSION_PROJECT_BUTTON)
+        self.next_project_button.setProperty("primary", "true")
+        self.next_project_button.clicked.connect(self._next_project_mission)
+        self.step_button = QPushButton()
+        self.step_button.setProperty("primary", "true")
+        self.step_button.clicked.connect(self._continue)
+        action_row = QHBoxLayout()
+        action_row.addWidget(self.help_button)
+        action_row.addStretch(1)
+        action_row.addWidget(self.next_project_button)
+        action_row.addWidget(self.step_button)
+        step_layout.addWidget(self.message)
+        step_layout.addWidget(self.exercises.widget)
+        step_layout.addWidget(self.answer_hint)
+        step_layout.addLayout(action_row)
+        self.step_card.hide()
+        self.help_button.hide()
+        self.next_project_button.hide()
+        self.answer_hint.hide()
+
         layout.addWidget(heading)
         layout.addWidget(intro)
+        layout.addWidget(self.project_card)
         layout.addWidget(self.assigned_card)
         layout.addWidget(self.choose_card)
         layout.addWidget(self.mission_card)
-        layout.addWidget(self.message)
-        layout.addWidget(self.exercises.widget)
+        layout.addWidget(self.step_card)
         layout.addStretch(1)
 
         scroll = QScrollArea()

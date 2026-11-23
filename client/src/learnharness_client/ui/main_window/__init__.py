@@ -12,10 +12,9 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QSplitter,
     QTabWidget,
-    QVBoxLayout,
-    QWidget,
 )
 
+from learnharness_client import design
 from learnharness_client.admin_sync import AdminSync
 from learnharness_client.config import AppSettings
 from learnharness_client.domain.profile import StudentProfile
@@ -34,7 +33,6 @@ from ..panels.problems_panel import ProblemsPanel
 from ..panels.progress_panel import ProgressPanel
 from ..panels.project_panel import ProjectPanel
 from ..panels.terminal_panel import TerminalPanel
-from ..panels.todo_bar import TodoBar
 from ..panels.tutor_panel import TutorPanel
 from ..script_tree import ScriptTree
 from ..theme import set_state
@@ -42,17 +40,16 @@ from .actions import WindowActions
 from .checks import CheckActions
 from .constants import (
     GODOT_TASK_ID,
-    LEARNING_TABS_SHARE,
     MAX_FILE_CONTEXT,
     PYTHON_TASK_ID,
     is_target_file,
 )
 from .explain_missions import ExplainMissionActions
 from .learning import LearningActions
+from .project_flow import ProjectFlow
 from .projects import ProjectActions
 from .responses import ServerResponses
 from .running import RunActions
-from .todos import TodoActions
 from .window_dialogs import WindowDialogs
 
 __all__ = [
@@ -77,7 +74,7 @@ class MainWindow(
     WindowDialogs,
     CheckActions,
     RunActions,
-    TodoActions,
+    ProjectFlow,
     QMainWindow,
 ):
     def __init__(
@@ -109,7 +106,7 @@ class MainWindow(
         self._exercise_owner = "agent"
         self._mission_target_file: str | None = None
         self.setWindowTitle(T.APP_TITLE)
-        self.resize(1380, 840)
+        self.resize(*design.MAIN_WINDOW_SIZE)
 
         self.script_tree = ScriptTree()
         self.editor_tabs = EditorTabs(settings)
@@ -133,45 +130,34 @@ class MainWindow(
         learning_tabs.addTab(self.tutor_panel, T.TAB_TUTOR)
         learning_tabs.addTab(self.progress_panel, T.TAB_PROGRESS)
         self.learning_tabs = learning_tabs
-        self.todo_bar = TodoBar()
-        self._todo_hint_level = 0
-        self._todo_hint_pending = False
-        # The current to-do stays visible above every tab.
-        learning_area = QWidget()
-        learning_layout = QVBoxLayout(learning_area)
-        learning_layout.setContentsMargins(0, 0, 0, 0)
-        learning_layout.setSpacing(6)
-        learning_layout.addWidget(self.todo_bar)
-        learning_layout.addWidget(learning_tabs, 1)
-        self.learning_area = learning_area
 
         self.terminal = TerminalPanel(self._save_open_files, self._godot_program)
         code_splitter = QSplitter(Qt.Orientation.Horizontal)
         code_splitter.addWidget(self.script_tree)
         code_splitter.addWidget(self.editor_tabs)
-        code_splitter.setStretchFactor(0, 1)
-        code_splitter.setStretchFactor(1, 4)
+        code_splitter.setStretchFactor(0, design.CODE_STRETCH[0])
+        code_splitter.setStretchFactor(1, design.CODE_STRETCH[1])
         code_splitter.setChildrenCollapsible(False)
-        code_splitter.setSizes([220, 700])
+        code_splitter.setSizes(list(design.CODE_SPLIT))
         self.code_splitter = code_splitter
         # The terminal sits below tree and code; the learning tabs keep the full height.
         work_splitter = QSplitter(Qt.Orientation.Vertical)
         work_splitter.addWidget(code_splitter)
         work_splitter.addWidget(self.terminal)
-        work_splitter.setStretchFactor(0, 4)
-        work_splitter.setStretchFactor(1, 1)
+        work_splitter.setStretchFactor(0, design.WORK_STRETCH[0])
+        work_splitter.setStretchFactor(1, design.WORK_STRETCH[1])
         work_splitter.setChildrenCollapsible(False)
-        work_splitter.setSizes([590, 210])
+        work_splitter.setSizes(list(design.WORK_SPLIT))
         self.work_splitter = work_splitter
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(work_splitter)
-        splitter.addWidget(learning_area)
-        splitter.setStretchFactor(0, 47)
-        splitter.setStretchFactor(1, 53)
+        splitter.addWidget(learning_tabs)
+        splitter.setStretchFactor(0, design.MAIN_STRETCH[0])
+        splitter.setStretchFactor(1, design.MAIN_STRETCH[1])
         splitter.setChildrenCollapsible(False)
-        splitter.setHandleWidth(8)
-        learning_tabs.setMinimumWidth(320)
-        work_splitter.setMinimumWidth(420)
+        splitter.setHandleWidth(design.SPLITTER_HANDLE)
+        learning_tabs.setMinimumWidth(design.LEARNING_TABS_MIN_WIDTH)
+        work_splitter.setMinimumWidth(design.WORK_AREA_MIN_WIDTH)
         self.splitter = splitter
         self.setCentralWidget(splitter)
 
@@ -226,7 +212,7 @@ class MainWindow(
             if isinstance(sizes, list) and len(sizes) == splitter.count():
                 splitter.setSizes([int(size) for size in sizes])
             elif splitter is self.splitter:
-                tabs = round(self.width() * LEARNING_TABS_SHARE)
+                tabs = round(self.width() * design.LEARNING_TABS_SHARE)
                 splitter.setSizes([self.width() - tabs, tabs])
 
     def _saved_splitters(self) -> tuple[tuple[str, QSplitter], ...]:

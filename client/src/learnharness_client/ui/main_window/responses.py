@@ -48,7 +48,6 @@ class ServerResponses:
             self.learn_agent_panel.show_response(response)
             return
         self.tutor_panel.finish_stream(response)
-        self._show_todo_hint_level()
         if response.exercise is not None:
             self._exercise_received(response.exercise)
 

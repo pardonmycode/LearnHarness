@@ -27,7 +27,7 @@ def _delivered(result: Any) -> str:
     if isinstance(result, ReviewResult):
         return result.feedback
     if isinstance(result, LearningResponse):
-        return "\n".join([result.message, *result.todo_suggestions])
+        return "\n".join(filter(None, [result.message, result.description_suggestion]))
     return ""
 
 
@@ -203,7 +203,6 @@ class AiCalls:
             **(
                 {
                     "language": message.language,
-                    "active_todo": bool(message.active_todo),
                     "game": harness.is_game_project(message.language, message.project_description),
                 }
                 if message

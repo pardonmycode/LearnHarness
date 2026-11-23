@@ -4,7 +4,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -32,7 +32,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -56,7 +56,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -112,7 +112,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -168,7 +168,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -229,7 +229,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -281,7 +281,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -349,7 +349,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -373,7 +373,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -424,7 +424,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -448,7 +448,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -504,7 +504,7 @@
   "additionalProperties": false,
   "properties": {
     "protocol_version": {
-      "default": "1.6",
+      "default": "1.7",
       "title": "Protocol Version",
       "type": "string"
     },
@@ -594,15 +594,23 @@
       ],
       "default": null
     },
-    "todo_suggestions": {
-      "items": {
-        "maxLength": 120,
-        "minLength": 1,
-        "type": "string"
-      },
-      "maxItems": 8,
-      "title": "Todo Suggestions",
-      "type": "array"
+    "description_suggestion": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description Suggestion"
+    },
+    "project_ready": {
+      "default": false,
+      "title": "Project Ready",
+      "type": "boolean"
     },
     "code_changes": {
       "items": {

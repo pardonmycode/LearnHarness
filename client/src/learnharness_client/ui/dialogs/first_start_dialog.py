@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
+from learnharness_client import design
 from learnharness_client.config import AppSettings
 
 from ...texts import T
@@ -40,7 +41,7 @@ class FirstStartDialog(QDialog):
         self.network = QNetworkAccessManager(self)
         self._reply: QNetworkReply | None = None
         self.setWindowTitle(T.FIRST_START_TITLE)
-        self.setMinimumWidth(520)
+        self.setMinimumWidth(design.FIRST_START_MIN_WIDTH)
 
         layout = QVBoxLayout(self)
         heading = QLabel(T.FIRST_START_TITLE)

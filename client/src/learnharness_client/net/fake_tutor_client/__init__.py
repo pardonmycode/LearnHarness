@@ -59,8 +59,6 @@ class FakeTutorClient(FakeMissions, FakeLearning, FakeConversation, FakeClientBa
         text = questions.get(self.experience_level, questions[0])
         if message.language == "python":
             text = "Was soll dein Programm als Erstes auf dem Bildschirm anzeigen?"
-        if message.active_todo:
-            text = f"Zu deinem To-do „{message.active_todo}“: Was ist der kleinste erste Schritt?"
         words = [
             word + (" " if index < len(text.split()) - 1 else "")
             for index, word in enumerate(text.split())

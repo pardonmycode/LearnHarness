@@ -4,7 +4,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -32,7 +32,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -56,7 +56,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -112,7 +112,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -168,7 +168,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -236,7 +236,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -260,7 +260,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -311,7 +311,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -335,7 +335,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.6",
+          "default": "1.7",
           "title": "Protocol Version",
           "type": "string"
         },

@@ -1,37 +1,35 @@
-"""Describe the project and build its to-do list together with the learning helper."""
+"""Describe the project and make the idea clearer by answering the helper's questions."""
 
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
-    QAbstractItemView,
     QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QListWidget,
     QPlainTextEdit,
-    QProgressBar,
     QPushButton,
     QScrollArea,
     QVBoxLayout,
     QWidget,
 )
 
-from learnharness_client.domain.project_plan import MAX_TODO_LENGTH, ProjectPlan
+from learnharness_client import design
+from learnharness_client.domain.project_plan import MAX_ANSWER, ProjectPlan
 
 from ....texts import T
 from ..learn_agent_panel import card
 from .planning import PanelPlanning
 from .rendering import PanelRendering
-from .todo_list import PanelTodoList
 
 __all__ = ["ProjectPanel"]
 
 
-class ProjectPanel(PanelPlanning, PanelTodoList, PanelRendering, QWidget):
+class ProjectPanel(PanelPlanning, PanelRendering, QWidget):
     plan_requested = pyqtSignal(str)  # the description or the child's answer
     plan_changed = pyqtSignal(dict)  # JSON-ready state for saving
+    build_requested = pyqtSignal()
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -39,11 +37,13 @@ class ProjectPanel(PanelPlanning, PanelTodoList, PanelRendering, QWidget):
         self._online = True
         self._busy = False
         self._has_project = False
+        self._pending_answer: str | None = None
+        self._asked_description = ""
 
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(12)
+        layout.setContentsMargins(*design.PANEL_MARGINS)
+        layout.setSpacing(design.PANEL_SPACING)
         heading = QLabel(T.PLAN_HEADING)
         heading.setProperty("role", "heading")
         intro = QLabel(T.PLAN_INTRO)
@@ -55,13 +55,19 @@ class ProjectPanel(PanelPlanning, PanelTodoList, PanelRendering, QWidget):
         self.description.setAccessibleName(T.PLAN_IDEA_A11Y)
         self.description.setPlaceholderText(T.PLAN_IDEA_PLACEHOLDER)
         self.description.setTabChangesFocus(True)
-        self.description.setFixedHeight(110)
+        self.description.setMinimumHeight(design.PROJECT_DESCRIPTION_MIN_HEIGHT)
         self.description.textChanged.connect(self._description_changed)
         self.plan_button = QPushButton(T.PLAN_START)
-        self.plan_button.setProperty("primary", "true")
         self.plan_button.clicked.connect(self._request_from_description)
+        self.build_button = QPushButton(T.PLAN_BUILD)
+        self.build_button.setToolTip(T.PLAN_BUILD_TIP)
+        self.build_button.clicked.connect(self.build_requested)
+        idea_row = QHBoxLayout()
+        idea_row.addStretch(1)
+        idea_row.addWidget(self.plan_button)
+        idea_row.addWidget(self.build_button)
         idea_layout.addWidget(self.description)
-        idea_layout.addWidget(self.plan_button, 0, Qt.AlignmentFlag.AlignRight)
+        idea_layout.addLayout(idea_row)
 
         self.message = QLabel()
         self.message.setWordWrap(True)
@@ -69,82 +75,52 @@ class ProjectPanel(PanelPlanning, PanelTodoList, PanelRendering, QWidget):
         self.message.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.message.hide()
 
+        self.suggestion_card, suggestion_layout = card(T.PLAN_SUGGESTION_SECTION)
+        self.suggestion = QLabel()
+        self.suggestion.setWordWrap(True)
+        self.suggestion.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.accept_button = QPushButton(T.PLAN_ACCEPT)
+        self.accept_button.setProperty("primary", "true")
+        self.accept_button.clicked.connect(self._accept_suggestion)
+        self.reject_button = QPushButton(T.PLAN_REJECT)
+        self.reject_button.clicked.connect(self._reject_suggestion)
+        suggestion_row = QHBoxLayout()
+        suggestion_row.addStretch(1)
+        suggestion_row.addWidget(self.reject_button)
+        suggestion_row.addWidget(self.accept_button)
+        suggestion_layout.addWidget(self.suggestion)
+        suggestion_layout.addLayout(suggestion_row)
+
         self.helper_card, helper_layout = card(T.PLAN_HELPER_SECTION)
         self.question = QLabel()
         self.question.setWordWrap(True)
+        self.question.setProperty("role", "subheading")
         self.question.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        self.suggestion_rows = QVBoxLayout()
-        self.accept_all_button = QPushButton(T.PLAN_ACCEPT_ALL)
-        self.accept_all_button.clicked.connect(self._accept_all)
+        self.ready_label = QLabel(T.PLAN_READY)
+        self.ready_label.setWordWrap(True)
+        self.ready_label.setProperty("callout", "success")
         reply_row = QHBoxLayout()
         self.reply = QLineEdit()
         self.reply.setPlaceholderText(T.PLAN_REPLY_PLACEHOLDER)
         self.reply.setAccessibleName(T.PLAN_REPLY_A11Y)
-        self.reply.setMaxLength(1000)
+        self.reply.setMaxLength(MAX_ANSWER)
         self.reply.returnPressed.connect(self._send_reply)
         self.reply.textChanged.connect(lambda _text: self._sync_buttons())
         self.reply_button = QPushButton(T.PLAN_REPLY_SEND)
+        self.reply_button.setProperty("primary", "true")
         self.reply_button.clicked.connect(self._send_reply)
         reply_row.addWidget(self.reply, 1)
         reply_row.addWidget(self.reply_button)
         helper_layout.addWidget(self.question)
-        helper_layout.addLayout(self.suggestion_rows)
-        helper_layout.addWidget(self.accept_all_button, 0, Qt.AlignmentFlag.AlignRight)
+        helper_layout.addWidget(self.ready_label)
         helper_layout.addLayout(reply_row)
-
-        todo_card, todo_layout = card(T.PLAN_TODO_SECTION)
-        self.progress_label = QLabel()
-        self.progress_label.setProperty("role", "subheading")
-        self.progress = QProgressBar()
-        self.progress.setTextVisible(False)
-        self.todos = QListWidget()
-        self.todos.setAccessibleName(T.PLAN_TODO_A11Y)
-        self.todos.setMinimumHeight(170)
-        self.todos.setEditTriggers(
-            QAbstractItemView.EditTrigger.DoubleClicked
-            | QAbstractItemView.EditTrigger.EditKeyPressed
-        )
-        self.todos.itemChanged.connect(self._item_changed)
-        self.todos.currentRowChanged.connect(lambda _row: self._sync_buttons())
-        add_row = QHBoxLayout()
-        self.new_todo = QLineEdit()
-        self.new_todo.setPlaceholderText(T.PLAN_ADD_PLACEHOLDER)
-        self.new_todo.setAccessibleName(T.PLAN_ADD_A11Y)
-        self.new_todo.setMaxLength(MAX_TODO_LENGTH)
-        self.new_todo.returnPressed.connect(self._add_own_todo)
-        self.new_todo.textChanged.connect(lambda _text: self._sync_buttons())
-        self.add_button = QPushButton(T.PLAN_ADD)
-        self.add_button.clicked.connect(self._add_own_todo)
-        add_row.addWidget(self.new_todo, 1)
-        add_row.addWidget(self.add_button)
-        actions = QHBoxLayout()
-        self.up_button = QPushButton(T.PLAN_MOVE_UP)
-        self.up_button.setAccessibleName(T.PLAN_MOVE_UP_A11Y)
-        self.up_button.clicked.connect(lambda: self._move_current(-1))
-        self.down_button = QPushButton(T.PLAN_MOVE_DOWN)
-        self.down_button.setAccessibleName(T.PLAN_MOVE_DOWN_A11Y)
-        self.down_button.clicked.connect(lambda: self._move_current(1))
-        self.work_button = QPushButton(T.PLAN_WORK_ON)
-        self.work_button.clicked.connect(self._work_on_selected)
-        self.remove_button = QPushButton(T.PLAN_REMOVE)
-        self.remove_button.clicked.connect(self._remove_current)
-        actions.addWidget(self.up_button)
-        actions.addWidget(self.down_button)
-        actions.addStretch(1)
-        actions.addWidget(self.work_button)
-        actions.addWidget(self.remove_button)
-        todo_layout.addWidget(self.progress_label)
-        todo_layout.addWidget(self.progress)
-        todo_layout.addWidget(self.todos)
-        todo_layout.addLayout(add_row)
-        todo_layout.addLayout(actions)
 
         layout.addWidget(heading)
         layout.addWidget(intro)
         layout.addWidget(idea_card)
         layout.addWidget(self.message)
+        layout.addWidget(self.suggestion_card)
         layout.addWidget(self.helper_card)
-        layout.addWidget(todo_card)
         layout.addStretch(1)
 
         scroll = QScrollArea()
@@ -163,12 +139,12 @@ class ProjectPanel(PanelPlanning, PanelTodoList, PanelRendering, QWidget):
         self.plan = plan
         self._has_project = True
         self._busy = False
+        self._pending_answer = None
         self.content.setEnabled(True)
         self.description.blockSignals(True)
         self.description.setPlainText(plan.description)
         self.description.blockSignals(False)
         self.reply.clear()
-        self.new_todo.clear()
         self._set_message("", "neutral")
         self._render_all()
 

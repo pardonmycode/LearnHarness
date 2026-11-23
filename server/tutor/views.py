@@ -23,7 +23,7 @@ INTENT_LABELS = {
     "learn": "LearnAgent-Runde",
     "mission": "Mission aus einem Wunsch planen",
     "mission_step": "Missionsschritt",
-    "project_plan": "Projekt und To-do-Liste planen",
+    "project_plan": "Fragen zur Projektbeschreibung",
     "review": "Code-Abgabe prüfen",
 }
 SCHEMAS = {

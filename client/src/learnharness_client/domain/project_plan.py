@@ -1,4 +1,4 @@
-"""A child's project idea and to-do list. The child decides what goes on the list."""
+"""A child's project description and the conversation that makes it clearer."""
 
 from __future__ import annotations
 
@@ -6,106 +6,79 @@ from dataclasses import dataclass, field
 
 MAX_DESCRIPTION = 2000
 MAX_QUESTION = 1000
-MAX_TODOS = 30
-MAX_TODO_LENGTH = 120
-MAX_SUGGESTIONS = 8
-
-
-def clean_todo(text: str) -> str:
-    return " ".join(text.split())[:MAX_TODO_LENGTH].strip()
+MAX_ANSWER = 1000
+MAX_TURNS = 12
+MAX_FINISHED_MISSIONS = 30
+MAX_MISSION_TITLE = 120
 
 
 @dataclass(slots=True)
-class TodoItem:
-    text: str
-    done: bool = False
-    current: bool = False  # chosen by the child as the next thing to work on
+class PlanTurn:
+    question: str
+    answer: str
 
 
 @dataclass(slots=True)
 class ProjectPlan:
     description: str = ""
-    todos: list[TodoItem] = field(default_factory=list)
-    question: str = ""  # the helper's last question, so the child can answer it later
-    suggestions: list[str] = field(default_factory=list)  # not on the list until accepted
+    question: str = ""  # the helper's open question, so the child can answer it later
+    suggestion: str = ""  # a better description; only used when the child accepts it
+    ready: bool = False  # the helper knows enough to start building
+    turns: list[PlanTurn] = field(default_factory=list)
+    finished_missions: list[str] = field(default_factory=list)
+    # To-dos of older versions are kept untouched in the saved data.
+    old_todos: object = None
 
-    def has_todo(self, text: str, *, ignore: TodoItem | None = None) -> bool:
-        wanted = clean_todo(text).casefold()
-        return any(item is not ignore and item.text.casefold() == wanted for item in self.todos)
+    def add_turn(self, question: str, answer: str) -> None:
+        question, answer = question.strip()[:MAX_QUESTION], answer.strip()[:MAX_ANSWER]
+        if question and answer:
+            self.turns = [*self.turns, PlanTurn(question, answer)][-MAX_TURNS:]
 
-    def add_todo(self, text: str) -> bool:
-        clean = clean_todo(text)
-        if not clean or len(self.todos) >= MAX_TODOS or self.has_todo(clean):
-            return False
-        self.todos.append(TodoItem(clean))
-        return True
+    def forget_talk(self) -> None:
+        self.question = ""
+        self.suggestion = ""
+        self.ready = False
+        self.turns = []
 
-    def set_suggestions(self, suggestions: list[str]) -> None:
-        fresh: list[str] = []
-        for text in suggestions:
-            clean = clean_todo(text)
-            known = {item.casefold() for item in fresh}
-            if clean and clean.casefold() not in known and not self.has_todo(clean):
-                fresh.append(clean)
-        self.suggestions = fresh[:MAX_SUGGESTIONS]
-
-    def accept_suggestion(self, text: str) -> bool:
-        """False when the list is full; the suggestion then stays available."""
-        if text not in self.suggestions:
-            return False
-        if not self.has_todo(text) and not self.add_todo(text):
-            return False
-        self.suggestions.remove(text)
-        return True
-
-    def current_todo(self) -> TodoItem | None:
-        """The chosen open to-do, otherwise the first open one."""
-        open_items = [item for item in self.todos if not item.done]
-        return next((item for item in open_items if item.current), None) or next(
-            iter(open_items), None
-        )
-
-    def select_todo(self, todo: TodoItem) -> None:
-        for item in self.todos:
-            item.current = item is todo
-
-    def complete_current(self) -> TodoItem | None:
-        todo = self.current_todo()
-        if todo is not None:
-            todo.done = True
-            todo.current = False
-        return todo
-
-    def done_count(self) -> int:
-        return sum(item.done for item in self.todos)
+    def add_finished_mission(self, title: str) -> None:
+        clean = " ".join(title.split())[:MAX_MISSION_TITLE].strip()
+        if clean and clean not in self.finished_missions:
+            self.finished_missions = [*self.finished_missions, clean][-MAX_FINISHED_MISSIONS:]
 
     def to_dict(self) -> dict[str, object]:
-        return {
+        data: dict[str, object] = {
             "description": self.description,
-            "todos": [
-                {"text": item.text, "done": item.done, "current": item.current}
-                for item in self.todos
-            ],
             "question": self.question,
-            "suggestions": list(self.suggestions),
+            "suggestion": self.suggestion,
+            "ready": self.ready,
+            "turns": [{"question": t.question, "answer": t.answer} for t in self.turns],
+            "finished_missions": list(self.finished_missions),
         }
+        if self.old_todos is not None:
+            data["todos"] = self.old_todos
+        return data
 
     @classmethod
     def from_dict(cls, data: dict[str, object]) -> ProjectPlan:
         """Tolerates damaged settings: whatever cannot be read is left out."""
         description = data.get("description")
         question = data.get("question")
+        suggestion = data.get("suggestion")
         plan = cls(
             description=description[:MAX_DESCRIPTION] if isinstance(description, str) else "",
             question=question[:MAX_QUESTION] if isinstance(question, str) else "",
+            suggestion=suggestion[:MAX_DESCRIPTION] if isinstance(suggestion, str) else "",
+            ready=data.get("ready") is True,
+            old_todos=data.get("todos"),
         )
-        todos = data.get("todos")
-        for entry in todos if isinstance(todos, list) else []:
-            readable = isinstance(entry, dict) and isinstance(entry.get("text"), str)
-            if readable and plan.add_todo(entry["text"]):
-                plan.todos[-1].done = entry.get("done") is True
-                plan.todos[-1].current = entry.get("current") is True
-        suggestions = data.get("suggestions")
-        if isinstance(suggestions, list):
-            plan.set_suggestions([item for item in suggestions if isinstance(item, str)])
+        turns = data.get("turns")
+        for entry in turns if isinstance(turns, list) else []:
+            if isinstance(entry, dict):
+                asked, answered = entry.get("question"), entry.get("answer")
+                if isinstance(asked, str) and isinstance(answered, str):
+                    plan.add_turn(asked, answered)
+        missions = data.get("finished_missions")
+        for title in missions if isinstance(missions, list) else []:
+            if isinstance(title, str):
+                plan.add_finished_mission(title)
         return plan

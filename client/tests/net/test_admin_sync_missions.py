@@ -92,7 +92,8 @@ def test_assigned_mission_runs_in_the_main_window_and_is_reported(
         Submission(exercise_id="mission_schatz_verstehen", answers={"choice": "right"})
     )
     qtbot.waitUntil(lambda: "verstehen" in panel.done, timeout=3_000)
-    panel.step_button.click()  # tried it in Godot
+    panel.step_button.click()  # on to the try step
+    panel.step_button.click()  # it worked
     assert panel.complete
 
     qtbot.waitUntil(lambda: state.completed.get(profile.profile_id) == {"schatz"}, timeout=3_000)

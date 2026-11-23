@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from learnharness_client import design
 from learnharness_client.config import AppSettings
 
 from ....texts import T
@@ -28,7 +29,7 @@ class PasswordDialog(QDialog):
         self.settings = settings
         self.create = create
         self.setWindowTitle(T.TEACHER_TITLE)
-        self.setMinimumWidth(420)
+        self.setMinimumWidth(design.TEACHER_PASSWORD_MIN_WIDTH)
         layout = QVBoxLayout(self)
         if create:
             intro = QLabel(T.TEACHER_SET_PASSWORD_INTRO)

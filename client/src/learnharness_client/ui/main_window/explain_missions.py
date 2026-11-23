@@ -90,7 +90,8 @@ class ExplainMissionActions:
 
     def _mission_completed(self, mission_id: str) -> None:
         """Report missions the teacher assigned; free-wish missions stay on this PC."""
-        self.todo_bar.ask_if_done()
+        if self.mission_panel.mission is not None:
+            self.project_panel.add_finished_mission(self.mission_panel.mission.title)
         if self.admin_sync is None:
             return
         if not any(mission.id == mission_id for mission in self.mission_panel.assigned):

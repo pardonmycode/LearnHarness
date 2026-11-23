@@ -18,26 +18,21 @@ class HarnessRejected(Exception):
     """The AI output breaks a rule; the reason goes to the log."""
 
 
-MAX_TODO_SUGGESTIONS = 5
+MAX_DESCRIPTION_LENGTH = 2000
+PLAN_MIN_ANSWERS = 3  # the AI may call the idea clear from here on
+PLAN_ENOUGH_ANSWERS = 5  # from here on the child is always told it can start
 
 
-MAX_TODO_LENGTH = 120
-
-
-def clean_todo_suggestions(items: Any, existing: list[str]) -> list[str]:
-    """Keep short, new, code-free to-dos; anything else is dropped."""
-    seen = {todo.casefold() for todo in existing}
-    result: list[str] = []
-    for item in items if isinstance(items, list) else []:
-        if not isinstance(item, str) or "`" in item or "\n" in item.strip():
-            continue
-        text = " ".join(item.split())
-        if not text or len(text) > MAX_TODO_LENGTH or looks_like_code(text):
-            continue
-        if text.casefold() not in seen:
-            seen.add(text.casefold())
-            result.append(text)
-    return result[:MAX_TODO_SUGGESTIONS]
+def clean_description(text: Any, current: str) -> str | None:
+    """A proposal for the description, or None if it is empty, unchanged or contains code."""
+    if not isinstance(text, str):
+        return None
+    clean = text.strip()
+    if not clean or len(clean) > MAX_DESCRIPTION_LENGTH or "`" in clean:
+        return None
+    if any(looks_like_code(line.strip()) for line in clean.splitlines()):
+        return None
+    return None if clean.casefold() == current.strip().casefold() else clean
 
 
 @dataclass

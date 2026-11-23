@@ -100,26 +100,34 @@ class TutorRounds:
         return LearningResponse(mode="explanation", message=built.message, exercise=built.exercise)
 
     def _plan_project(self, message: StudentMessage) -> Response:
-        if not (message.project_description or "").strip():
+        description = (message.project_description or "").strip()
+        if not description:
             return _error("no_project_idea", "Beschreibe zuerst kurz dein Projekt.")
+        answered = len(message.project_turns) + bool(message.project_question)
+        extra = f"Das Kind hat schon {answered} Fragen beantwortet."
+        if answered >= harness.PLAN_ENOUGH_ANSWERS:
+            extra += " Das reicht: Sag, dass es loslegen kann, und biete eine freiwillige Frage an."
 
         def build(data: dict[str, Any]) -> LearningResponse:
             text, _ = harness.filter_text(
                 str(data.get("message", "")), self.settings.max_code_lines_in_chat
             )
-            todos = harness.clean_todo_suggestions(data.get("todos"), message.project_todos)
-            if not text.strip() and not todos:
-                raise harness.HarnessRejected("Plan ohne Rückfrage und ohne To-dos")
+            if not text.strip():
+                raise harness.HarnessRejected("Projektgespräch ohne Frage")
+            clear = data.get("ready") is True and answered >= harness.PLAN_MIN_ANSWERS
             return LearningResponse(
                 mode="project_plan",
-                message=text.strip() or "Welchen Schritt möchtest du zuerst machen?",
-                todo_suggestions=todos,
+                message=text.strip(),
+                description_suggestion=harness.clean_description(
+                    data.get("description"), description
+                ),
+                project_ready=clear or answered >= harness.PLAN_ENOUGH_ANSWERS,
             )
 
         response, _ = self._call_json(
             "project_plan",
             self._system("project_plan", message),
-            [{"role": "user", "content": harness.user_prompt(message)}],
+            [{"role": "user", "content": harness.user_prompt(message, extra=extra)}],
             harness.PROJECT_PLAN_SCHEMA,
             build,
         )

@@ -15,6 +15,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from learnharness_client import design
+
 from ...domain.code_questions import code_questions
 from ...texts import T
 from ..exercises.base import code_view
@@ -39,8 +41,8 @@ class ExplainPanel(QWidget):
 
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(12)
+        layout.setContentsMargins(*design.PANEL_MARGINS)
+        layout.setSpacing(design.PANEL_SPACING)
         heading = QLabel(T.EXPLAIN_HEADING)
         heading.setProperty("role", "heading")
         intro = QLabel(T.EXPLAIN_INTRO)
@@ -119,7 +121,8 @@ class ExplainPanel(QWidget):
         self.code_view.setPlainText(code)
         lines = min(10, max(1, code.count("\n") + 1))
         # + frame padding and room for the horizontal scroll bar
-        self.code_view.setFixedHeight(self.code_view.fontMetrics().lineSpacing() * lines + 46)
+        line_height = self.code_view.fontMetrics().lineSpacing()
+        self.code_view.setFixedHeight(line_height * lines + design.EXPLAIN_CODE_EXTRA_HEIGHT)
         self.code_card.show()
         while self.question_buttons.count():
             item = self.question_buttons.takeAt(0)

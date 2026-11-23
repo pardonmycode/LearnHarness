@@ -1,12 +1,11 @@
-"""Working through the steps of a mission."""
+"""Working through the steps of a mission, one clear action at a time."""
 
 from __future__ import annotations
 
 from learnharness_protocol import LearningResponse, MissionList, MissionStep, ReviewResult
-from PyQt6.QtWidgets import QLabel
 
 from ....texts import T
-from ...theme import set_state
+from .step_view import ANSWERING, EXPLAINED, LOADING, PASSED, READY
 
 
 class MissionSteps:
@@ -24,56 +23,49 @@ class MissionSteps:
     def _emit_progress(self) -> None:
         self.progress_changed.emit(self.state())
 
-    def _render(self) -> None:
-        self.choose_card.setVisible(self.mission is None)
-        self.assigned_card.setVisible(self.mission is None and bool(self.assigned))
-        self.mission_card.setVisible(self.mission is not None)
-        while self.steps_box.count():
-            item = self.steps_box.takeAt(0)
-            if item is not None and item.widget() is not None:
-                item.widget().deleteLater()  # type: ignore[union-attr]
-        if self.mission is None:
-            return
-        if isinstance(self.mission_title, QLabel):
-            self.mission_title.setText(self.mission.title)
-        self.goal.setText(self.mission.goal)
-        total = len(self.mission.steps)
-        text = T.MISSION_PROGRESS.format(done=len(self.done), total=total)
-        self.progress_label.setText(text)
-        self.progress.setRange(0, total)
-        self.progress.setValue(len(self.done))
-        self.progress.setAccessibleName(text)
-        current = self.next_step()
-        for step in self.mission.steps:
-            mark = "☑" if step.id in self.done else ("➜" if step is current else "☐")
-            label = QLabel(f"{mark}  {step.title}")
-            label.setWordWrap(True)
-            if step is current:
-                label.setProperty("role", "subheading")
-            self.steps_box.addWidget(label)
-        if current is None:
-            self.step_button.hide()
-            self._set_message(T.MISSION_COMPLETE.format(title=self.mission.title), "success")
-            return
-        self.step_button.show()
-        try_done = T.MISSION_TRY_DONE_PYTHON if self.language == "python" else T.MISSION_TRY_DONE
-        self.step_button.setText(try_done if current.kind == "try" else T.MISSION_DO_STEP)
-        self._sync_buttons()
-
-    def _start_step(self) -> None:
+    def _continue(self) -> None:
+        """The one main button: what it does depends on where the child is."""
         step = self.next_step()
-        if step is None or self.mission is None or self._busy:
+        if self.mission is None or self._busy:
             return
-        if step.kind == "try":
-            # Trying it in Godot cannot be checked by the server; the child confirms it.
+        if self._phase == PASSED:
+            self._advance()
+        elif step is None:
+            return
+        elif self._phase == EXPLAINED:
+            self._finish_step(self.active_step or step)
+            self._advance()
+        elif step.kind == "try":
+            # Trying it out cannot be checked by the server; the child confirms it.
             self._finish_step(step)
+            self._advance()
+        elif self._phase == READY:
+            self._request_step(step)
+
+    def _advance(self) -> None:
+        step = self.next_step()
+        if step is None:
             return
-        if not self._online:
+        self.exercises.clear()
+        self._phase = READY
+        if step.kind == "try":
+            self._shown_step = step
+            self._render()
+            self._reveal(self.step_button)
+        else:
+            self._request_step(step)
+
+    def _request_step(self, step: MissionStep) -> None:
+        if not self._online or self.mission is None:
+            self._render()
             return
         self.active_step = step
+        self._shown_step = step
         self.exercises.clear()
+        self._phase = LOADING
+        self._set_message(T.MISSION_STEP_LOADING, "neutral")
         self._set_busy(True)
-        self._set_message(T.MISSION_STARTING, "neutral")
+        self._render()
         self.step_requested.emit(self.mission.id, step.id)
 
     def show_step_response(self, response: LearningResponse) -> None:
@@ -84,31 +76,34 @@ class MissionSteps:
             return
         self._set_message(response.message, "info")
         if response.exercise is not None:
-            widget = self.exercises.show(response.exercise)
-            self._scroll.ensureWidgetVisible(widget)
-        elif self.active_step is not None and self.active_step.kind != "exercise":
-            # Pure explanation without a question: reading it completes the step.
-            self._finish_step(self.active_step)
+            self._phase = ANSWERING
+            self._render()
+            self._reveal(self.exercises.show(response.exercise))
+            return
+        # A pure explanation stays on screen until the child has read it.
+        explained = self.active_step is not None and self.active_step.kind != "exercise"
+        self._phase = EXPLAINED if explained else READY
+        self._render()
+        self._reveal(self.step_button)
 
     def show_review(self, review: ReviewResult) -> None:
         self.exercises.show_result(review)
         if review.correct and self.active_step is not None:
-            self._finish_step(self.active_step, review.feedback)
+            self._finish_step(self.active_step)
         elif not review.correct:
             self._set_message(T.MISSION_NOT_YET, "error")
 
-    def _finish_step(self, step: MissionStep, feedback: str = "") -> None:
+    def _finish_step(self, step: MissionStep) -> None:
         self.done.add(step.id)
         self.active_step = None
-        self._render()  # shows the completion message when this was the last step
+        self._shown_step = step
         following = self.next_step()
+        self._phase = PASSED if following is not None else READY
         if following is not None:
-            text = f"{T.MISSION_STEP_DONE} {feedback}".strip()
-            if following.kind == "try":
-                text += "\n\n" + (
-                    T.MISSION_TRY_TEXT_PYTHON if self.language == "python" else T.MISSION_TRY_TEXT
-                )
-            self._set_message(text, "success")
+            # The exercise itself shows the feedback right below.
+            self._set_message(T.MISSION_STEP_DONE, "success")
+        self._render()  # shows the completion message when this was the last step
+        self._reveal(self.step_button)
         self._emit_progress()
         if following is None and self.mission is not None:
             self.completed_ids.add(self.mission.id)
@@ -119,24 +114,18 @@ class MissionSteps:
     def show_error(self, message: str) -> None:
         self._set_busy(False)
         self.exercises.submission_failed()
+        if self._phase == LOADING:
+            self._phase = READY  # the button offers the same step again
+            self._render()
         self._set_message(message, "error")
 
-    def _set_message(self, text: str, state: str) -> None:
-        self.message.setText(text)
-        self.message.setVisible(bool(text))
-        set_state(self.message, callout=state)
+    def set_project_idea(self, has_idea: bool) -> None:
+        if has_idea != self._has_project_idea:
+            self._has_project_idea = has_idea
+            self._render()
 
-    def _set_busy(self, busy: bool) -> None:
-        self._busy = busy
-        self._sync_buttons()
-
-    def set_available(self, online: bool) -> None:
-        self._online = online
-        self._sync_buttons()
-
-    def _sync_buttons(self) -> None:
-        enabled = self._online and not self._busy
-        self.start_button.setEnabled(enabled)
-        step = self.next_step()
-        offline_ok = bool(step and step.kind == "try")  # needs no server
-        self.step_button.setEnabled(not self._busy and (enabled or offline_ok))
+    def _next_project_mission(self) -> None:
+        if self._busy or not self._online:
+            return
+        self.reset()
+        self.request_mission(T.MISSION_PROJECT_WISH)

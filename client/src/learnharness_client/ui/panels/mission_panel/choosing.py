@@ -7,6 +7,7 @@ from pydantic import ValidationError
 from PyQt6.QtWidgets import QPushButton
 
 from ....texts import T
+from .step_view import READY
 
 
 class MissionChoosing:
@@ -61,6 +62,8 @@ class MissionChoosing:
         self.mission = mission
         self.done = {step.id for step in mission.steps} & (done or set())
         self.active_step = None
+        self._phase = READY
+        self._shown_step = None
         self.exercises.clear()
         self.message.hide()
         self.wish.clear()
@@ -71,6 +74,8 @@ class MissionChoosing:
         self.mission = None
         self.done = set()
         self.active_step = None
+        self._phase = READY
+        self._shown_step = None
         self.exercises.clear()
         self.message.hide()
         self._render()

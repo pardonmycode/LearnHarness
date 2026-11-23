@@ -16,6 +16,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from learnharness_client import design
+
 from ...texts import T
 from ..editor.gdscript_highlighter import GDScriptHighlighter
 from ..theme import colors, monospace_font, set_state
@@ -32,7 +34,9 @@ def code_view(text: str, *, accessible_name: str, max_lines: int = 8) -> QPlainT
     view.setAccessibleName(accessible_name)
     view._highlighter = GDScriptHighlighter(view.document())  # type: ignore[attr-defined]
     lines = min(max_lines, max(1, text.count("\n") + 1))
-    view.setFixedHeight(view.fontMetrics().lineSpacing() * lines + 28)
+    view.setFixedHeight(
+        view.fontMetrics().lineSpacing() * lines + design.EXERCISE_CODE_EXTRA_HEIGHT
+    )
     return view
 
 
@@ -78,12 +82,12 @@ def inline_blanks_view(
         f" QFrame#inlineCode QLabel {{ color: {c.text}; }}"
     )
     rows = QVBoxLayout(frame)
-    rows.setContentsMargins(12, 10, 12, 10)
-    rows.setSpacing(4)
+    rows.setContentsMargins(*design.FEEDBACK_MARGINS)
+    rows.setSpacing(design.FEEDBACK_SPACING)
     used: set[str] = set()
     for line in code.splitlines() or [""]:
         row = QHBoxLayout()
-        row.setSpacing(2)
+        row.setSpacing(design.FEEDBACK_ROW_SPACING)
         position = 0
         for match in _PLACEHOLDER.finditer(line):
             blank_id = match.group(1)
@@ -126,8 +130,8 @@ class ExerciseWidget(QFrame):
         self.exercise = exercise
         self.setProperty("card", "true")
         self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(16, 14, 16, 14)
-        self.layout.setSpacing(10)
+        self.layout.setContentsMargins(*design.CARD_MARGINS)
+        self.layout.setSpacing(design.EXERCISE_SPACING)
         tag = QLabel(T.EXERCISE_TAG.format(skill=exercise.skill))
         tag.setProperty("role", "section")
         self.layout.addWidget(tag)

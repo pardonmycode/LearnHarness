@@ -101,9 +101,12 @@ def test_mission_runs_step_by_step_and_is_remembered(qtbot: QtBot, window: MainW
     editor = window.editor_tabs.current_editor()
     assert editor is not None
     qtbot.waitUntil(lambda: "jumps_left" in editor.toPlainText(), timeout=3_000)
-    assert "Godot" in panel.message.text()  # hint for the last step
+    assert panel.step_button.text().startswith("Weiter zu Schritt 4")
+    panel.step_button.click()
+    assert "Godot" in panel.message.text()  # instructions for the last step
+    assert panel.help_button.isVisibleTo(panel)
 
-    panel.step_button.click()  # "Ich habe es in Godot ausprobiert"
+    panel.step_button.click()  # "Hat geklappt"
     assert panel.complete
     assert "Mission erfüllt" in panel.message.text()
 

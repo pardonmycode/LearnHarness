@@ -18,6 +18,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from learnharness_client import design
+
 from ...texts import T
 from ..markdown import insert_markdown
 from ..theme import colors
@@ -46,8 +48,8 @@ class TutorPanel(QWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(10)
+        layout.setContentsMargins(*design.PANEL_MARGINS)
+        layout.setSpacing(design.PANEL_SPACING_TIGHT)
         heading = QLabel(T.TUTOR_NAME)
         heading.setProperty("role", "heading")
         layout.addWidget(heading)
@@ -60,7 +62,7 @@ class TutorPanel(QWidget):
         self.history.setAccessibleName(T.TUTOR_HISTORY_A11Y)
         self.input = MessageInput()
         self.input.setPlaceholderText(T.TUTOR_INPUT_PLACEHOLDER)
-        self.input.setMaximumHeight(110)
+        self.input.setMaximumHeight(design.TUTOR_INPUT_MAX_HEIGHT)
         self.input.setAccessibleName(T.TUTOR_INPUT_A11Y)
         self.counter = QLabel("0 / 2000")
         self.hint_progress = QProgressBar()

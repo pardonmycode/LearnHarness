@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from learnharness_client import design
+
 from .base import SettingsBase
 
 
@@ -28,11 +30,13 @@ class PreferenceSettings(SettingsBase):
 
     @property
     def font_size(self) -> int:
-        return int(self._settings.value("appearance/font_size", 14))
+        return int(self._settings.value("appearance/font_size", design.FONT_SIZE))
 
     @font_size.setter
     def font_size(self, value: int) -> None:
-        self._settings.setValue("appearance/font_size", max(11, min(28, value)))
+        self._settings.setValue(
+            "appearance/font_size", max(design.FONT_SIZE_MIN, min(design.FONT_SIZE_MAX, value))
+        )
 
     @property
     def theme(self) -> str:

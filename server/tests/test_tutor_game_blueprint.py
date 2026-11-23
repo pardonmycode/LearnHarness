@@ -48,7 +48,7 @@ def test_godot_projects_are_always_games() -> None:
 
 def test_blueprint_matches_the_language_and_keeps_the_rules() -> None:
     settings = AiSettings.load()
-    godot = harness.system_prompt("project_plan", settings, game=True)
+    godot = harness.system_prompt("mission", settings, game=True)
     python = harness.system_prompt("learn", settings, language="python", game=True)
     assert "Call down, signal up" in godot and "game.py" not in godot
     assert "Eingabe, Aktualisieren, Zeichnen" in python and "move_and_slide" not in python
@@ -60,16 +60,28 @@ def test_no_blueprint_without_a_game_or_for_explanations() -> None:
     settings = AiSettings.load()
     assert "Grundgerüst" not in harness.system_prompt("learn", settings, language="python")
     assert "Grundgerüst" not in harness.system_prompt("explain", settings, game=True)
+    assert "Grundgerüst" not in harness.system_prompt("project_plan", settings, game=True)
 
 
 def test_game_idea_reaches_the_ai_call(
     session: TutorSession, scripted: dict[str, ScriptedProvider]
 ) -> None:
     scripted["provider"] = ScriptedProvider(
-        json_answers=[{"message": "Wer ist dein Held?", "todos": []}]
+        json_answers=[
+            {
+                "title": "Held",
+                "goal": "Held bauen",
+                "message": "Los",
+                "skill": "nodes",
+                "steps": [
+                    {"title": "Verstehen", "kind": "understand"},
+                    {"title": "Probieren", "kind": "try"},
+                ],
+            }
+        ]
     )
     message = StudentMessage(
-        intent="project_plan",
+        intent="mission",
         language="python",
         session_id=session.id,
         project_id="spiel",
@@ -82,8 +94,8 @@ def test_game_idea_reaches_the_ai_call(
 
 
 def test_blueprint_contains_a_folder_structure_for_each_language() -> None:
-    godot = harness.game_blueprint("project_plan", "gdscript")
-    python = harness.game_blueprint("project_plan", "python")
+    godot = harness.game_blueprint("mission", "gdscript")
+    python = harness.game_blueprint("mission", "python")
     for folder in ("entities/", "components/", "autoload/", "levels/", "assets/"):
         assert folder in godot
     for folder in ("game/", "states/", "entities/", "systems/"):

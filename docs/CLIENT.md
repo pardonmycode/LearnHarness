@@ -40,7 +40,8 @@ Alle Pfade liegen unter `client/src/learnharness_client/`.
 | Tutor | [`tutor_panel.py`](../client/src/learnharness_client/ui/panels/tutor_panel.py) |
 | Fortschritt | [`progress_panel.py`](../client/src/learnharness_client/ui/panels/progress_panel.py) |
 | Probleme (unten) | [`problems_panel.py`](../client/src/learnharness_client/ui/panels/problems_panel.py) |
-| To-do-Leiste (über allen Tabs) | [`todo_bar.py`](../client/src/learnharness_client/ui/panels/todo_bar.py), Ablauf in [`main_window/todos.py`](../client/src/learnharness_client/ui/main_window/todos.py) |
+| Projektbeschreibung in allen Tabs | [`main_window/project_flow.py`](../client/src/learnharness_client/ui/main_window/project_flow.py) |
+| Aussehen: Schrift, Farben, Abstände, Fenstergrößen | [`design.py`](../client/src/learnharness_client/design.py) |
 | Terminal (unter dem Code) | [`terminal_panel.py`](../client/src/learnharness_client/ui/panels/terminal_panel.py), Eingabe in [`terminal_console.py`](../client/src/learnharness_client/ui/panels/terminal_console.py) |
 
 ## Editor: `ui/editor/`
@@ -63,7 +64,7 @@ Alle Pfade liegen unter `client/src/learnharness_client/`.
 | [`backup.py`](../client/src/learnharness_client/domain/backup.py) | Sicherungen vor dem Speichern |
 | [`recovery.py`](../client/src/learnharness_client/domain/recovery.py) | Entwürfe für den Absturzfall |
 | [`python_check.py`](../client/src/learnharness_client/domain/python_check.py) | Python-Syntaxprüfung ohne Ausführung |
-| [`project_plan.py`](../client/src/learnharness_client/domain/project_plan.py) | Projektidee und To-do-Liste |
+| [`project_plan.py`](../client/src/learnharness_client/domain/project_plan.py) | Projektbeschreibung, Fragegespräch und geschaffte Missionen |
 | [`terminal_commands.py`](../client/src/learnharness_client/domain/terminal_commands.py) | Befehle des Terminals (`python`, `ls`, `cd` …) |
 | [`run_target.py`](../client/src/learnharness_client/domain/run_target.py) | Findet Python und beschreibt das zu startende Programm |
 

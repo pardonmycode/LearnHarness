@@ -6,6 +6,8 @@ from PyQt6.QtCore import QRect, QSize, Qt
 from PyQt6.QtGui import QColor, QPainter, QPaintEvent
 from PyQt6.QtWidgets import QPlainTextEdit, QWidget
 
+from learnharness_client import design
+
 from ...theme import colors
 
 
@@ -26,7 +28,9 @@ class EditorGutter:
 
     def line_number_area_width(self) -> int:
         digits = len(str(max(1, self.blockCount())))
-        return 30 + self.fontMetrics().horizontalAdvance("9") * max(2, digits)
+        return design.GUTTER_EXTRA_WIDTH + self.fontMetrics().horizontalAdvance("9") * max(
+            2, digits
+        )
 
     def _update_margin(self, _count: int = 0) -> None:
         self.setViewportMargins(self.line_number_area_width(), 0, 0, 0)
@@ -59,7 +63,12 @@ class EditorGutter:
                     radius = max(3, line_height // 5)
                     painter.setPen(Qt.PenStyle.NoPen)
                     painter.setBrush(QColor(palette.danger))
-                    painter.drawEllipse(8, top + line_height // 2 - radius, radius * 2, radius * 2)
+                    painter.drawEllipse(
+                        design.GUTTER_MARK_LEFT,
+                        top + line_height // 2 - radius,
+                        radius * 2,
+                        radius * 2,
+                    )
                 if is_error:
                     pen = QColor(palette.danger)
                 elif line_number == current_line:
@@ -70,7 +79,7 @@ class EditorGutter:
                 painter.drawText(
                     0,
                     top,
-                    self.line_number_area.width() - 10,
+                    self.line_number_area.width() - design.GUTTER_NUMBER_RIGHT,
                     line_height,
                     Qt.AlignmentFlag.AlignRight,
                     str(line_number),

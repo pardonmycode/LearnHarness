@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from learnharness_protocol import SessionInfo, StudentMessage
+from learnharness_protocol import ProjectTurn, SessionInfo, StudentMessage
 from PyQt6.QtWidgets import QInputDialog, QMessageBox
 
 from learnharness_client.domain.project import Project
@@ -61,7 +61,7 @@ class ProjectActions:
         self._apply_language(project.language)
         saved_plan = self.settings.project_plan(self.student_profile.profile_id, project.project_id)
         self.project_panel.load(ProjectPlan.from_dict(saved_plan))
-        self._sync_todo_bar()
+        self._sync_project_idea()
         self.settings.remember_project(project.root)
         self._refresh_recent_menu()
         self.script_tree.set_project(project)
@@ -141,7 +141,10 @@ class ProjectActions:
             project_id=self.project.project_id,
             experience_level=int(self.student_profile.experience_level),
             **self._project_context(),
-            project_question=plan.question or None,
+            project_question=self.project_panel.open_question,
+            project_turns=[
+                ProjectTurn(question=turn.question, answer=turn.answer) for turn in plan.turns
+            ],
             message=text,
         )
         self.tutor_client.send_message(message)
@@ -151,4 +154,4 @@ class ProjectActions:
             self.settings.save_project_plan(
                 self.student_profile.profile_id, self.project.project_id, data
             )
-        self._sync_todo_bar()
+        self._sync_project_idea()

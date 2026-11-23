@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
+from learnharness_client import design
 from learnharness_client.config import AppSettings
 from learnharness_client.domain.profile import StudentProfile
 
@@ -36,7 +37,7 @@ class TeacherDialog(QDialog):
         self.settings = settings
         self.current_profile_id = current_profile_id
         self.setWindowTitle(T.TEACHER_TITLE)
-        self.resize(620, 440)
+        self.resize(*design.TEACHER_DIALOG_SIZE)
         layout = QVBoxLayout(self)
         heading = QLabel(T.TEACHER_TITLE)
         heading.setProperty("role", "heading")

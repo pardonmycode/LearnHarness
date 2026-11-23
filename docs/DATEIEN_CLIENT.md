@@ -12,6 +12,7 @@ Die App auf dem Rechner des Kindes. Die Beschreibung ist jeweils der Kopfkomment
 | [__main__.py](../client/src/learnharness_client/__main__.py) |  |
 | [admin_sync.py](../client/src/learnharness_client/admin_sync.py) | Keep the local child profiles in step with the central administration. |
 | [app.py](../client/src/learnharness_client/app.py) | Application startup, logging, and last-resort recovery. |
+| [design.py](../client/src/learnharness_client/design.py) | Every value that decides how the app looks: fonts, colors, spacing and window sizes. |
 | [qtcompat.py](../client/src/learnharness_client/qtcompat.py) | Small typing helpers around PyQt6 stubs. |
 
 ## `client/src/learnharness_client/config/`
@@ -38,7 +39,7 @@ Die App auf dem Rechner des Kindes. Die Beschreibung ist jeweils der Kopfkomment
 | [path_guard.py](../client/src/learnharness_client/domain/path_guard.py) | Centralized project-bound path validation. |
 | [profile.py](../client/src/learnharness_client/domain/profile.py) | Local pseudonymous child profiles and experience levels. |
 | [project.py](../client/src/learnharness_client/domain/project.py) | Project discovery and metadata for Godot and Python projects. |
-| [project_plan.py](../client/src/learnharness_client/domain/project_plan.py) | A child's project idea and to-do list. The child decides what goes on the list. |
+| [project_plan.py](../client/src/learnharness_client/domain/project_plan.py) | A child's project description and the conversation that makes it clearer. |
 | [python_check.py](../client/src/learnharness_client/domain/python_check.py) | Syntax check for Python scripts. The code is only parsed, never executed. |
 | [run_target.py](../client/src/learnharness_client/domain/run_target.py) | The programs the terminal may start: a Python script of the project or the Godot game. |
 | [terminal_commands.py](../client/src/learnharness_client/domain/terminal_commands.py) | The few commands children can type. Nothing here reaches a system shell. |
@@ -198,7 +199,7 @@ Die App auf dem Rechner des Kindes. Die Beschreibung ist jeweils der Kopfkomment
 | [projects.py](../client/src/learnharness_client/ui/main_window/projects.py) | Opening and creating projects and scripts, and the project plan. |
 | [responses.py](../client/src/learnharness_client/ui/main_window/responses.py) | Answers, connection state and progress from the learning server. |
 | [running.py](../client/src/learnharness_client/ui/main_window/running.py) | What the terminal needs from the main window. |
-| [todos.py](../client/src/learnharness_client/ui/main_window/todos.py) | Connects the project's to-do list with LearnAgent, missions and tutor. |
+| [project_flow.py](../client/src/learnharness_client/ui/main_window/project_flow.py) | Connects the project description with the other tabs. |
 | [window_dialogs.py](../client/src/learnharness_client/ui/main_window/window_dialogs.py) | Dialogs opened from the main window. |
 
 ## `client/src/learnharness_client/ui/panels/`
@@ -211,7 +212,6 @@ Die App auf dem Rechner des Kindes. Die Beschreibung ist jeweils der Kopfkomment
 | [explain_panel.py](../client/src/learnharness_client/ui/panels/explain_panel.py) | Interactive code explainer: questions about the selected code plus a check question. |
 | [problems_panel.py](../client/src/learnharness_client/ui/panels/problems_panel.py) | Problems from Godot, Python or server review. |
 | [progress_panel.py](../client/src/learnharness_client/ui/panels/progress_panel.py) | Per-skill progress without scores or rankings. |
-| [todo_bar.py](../client/src/learnharness_client/ui/panels/todo_bar.py) | Bar above all tabs: the to-do the child is working on and how to work on it. |
 | [terminal_console.py](../client/src/learnharness_client/ui/panels/terminal_console.py) | Text area that behaves like a console: only the current input line can be edited. |
 | [terminal_panel.py](../client/src/learnharness_client/ui/panels/terminal_panel.py) | Terminal without buttons: children type commands such as ``python main.py``. |
 | [tutor_panel.py](../client/src/learnharness_client/ui/panels/tutor_panel.py) | Tutor conversation without any apply-to-editor action. |
@@ -231,16 +231,16 @@ Die App auf dem Rechner des Kindes. Die Beschreibung ist jeweils der Kopfkomment
 |---|---|
 | [__init__.py](../client/src/learnharness_client/ui/panels/mission_panel/__init__.py) | Learning missions: a small goal worked through step by step. |
 | [choosing.py](../client/src/learnharness_client/ui/panels/mission_panel/choosing.py) | Choosing, restoring and resetting a mission. |
-| [steps.py](../client/src/learnharness_client/ui/panels/mission_panel/steps.py) | Working through the steps of a mission. |
+| [step_view.py](../client/src/learnharness_client/ui/panels/mission_panel/step_view.py) | Shows the current step and exactly one next action for it. |
+| [steps.py](../client/src/learnharness_client/ui/panels/mission_panel/steps.py) | Working through the steps of a mission, one clear action at a time. |
 
 ## `client/src/learnharness_client/ui/panels/project_panel/`
 
 | Datei | Inhalt |
 |---|---|
-| [__init__.py](../client/src/learnharness_client/ui/panels/project_panel/__init__.py) | Describe the project and build its to-do list together with the learning helper. |
-| [planning.py](../client/src/learnharness_client/ui/panels/project_panel/planning.py) | Asking the helper and deciding on its suggestions. |
-| [rendering.py](../client/src/learnharness_client/ui/panels/project_panel/rendering.py) | Drawing suggestions, the list and the buttons. |
-| [todo_list.py](../client/src/learnharness_client/ui/panels/project_panel/todo_list.py) | Adding, editing, moving and removing to-dos. |
+| [__init__.py](../client/src/learnharness_client/ui/panels/project_panel/__init__.py) | Describe the project and make the idea clearer by answering the helper's questions. |
+| [planning.py](../client/src/learnharness_client/ui/panels/project_panel/planning.py) | Asking the helper and deciding on its proposal for the description. |
+| [rendering.py](../client/src/learnharness_client/ui/panels/project_panel/rendering.py) | Keeps description, question, proposal and buttons in step with the plan. |
 
 ## `client/src/learnharness_client/ui/theme/`
 

@@ -14,15 +14,16 @@ data) and checks what comes back before a child sees it:
 from __future__ import annotations
 
 from .checks import (
-    MAX_TODO_LENGTH,
-    MAX_TODO_SUGGESTIONS,
+    MAX_DESCRIPTION_LENGTH,
+    PLAN_ENOUGH_ANSWERS,
+    PLAN_MIN_ANSWERS,
     BuiltExercise,
     HarnessRejected,
     build_exercise,
     changed_lines,
     check_answers,
     check_generated_code,
-    clean_todo_suggestions,
+    clean_description,
 )
 from .game_blueprint import game_blueprint, is_game_project
 from .prompts import system_prompt, user_prompt
@@ -46,8 +47,9 @@ __all__ = [
     "INTENTS",
     "LANGUAGES",
     "LEVELS",
-    "MAX_TODO_LENGTH",
-    "MAX_TODO_SUGGESTIONS",
+    "MAX_DESCRIPTION_LENGTH",
+    "PLAN_ENOUGH_ANSWERS",
+    "PLAN_MIN_ANSWERS",
     "MISSION_SCHEMA",
     "PROJECT_PLAN_SCHEMA",
     "REPLACEMENT",
@@ -58,7 +60,7 @@ __all__ = [
     "changed_lines",
     "check_answers",
     "check_generated_code",
-    "clean_todo_suggestions",
+    "clean_description",
     "filter_text",
     "game_blueprint",
     "is_game_project",

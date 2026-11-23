@@ -48,7 +48,7 @@ Alle Testdateien. Die Beschreibung ist jeweils der Kopfkommentar der Datei.
 | [test_login_dialog.py](../client/tests/ui/test_login_dialog.py) |  |
 | [test_open_items.py](../client/tests/ui/test_open_items.py) | Tests for the formerly open TODO items: Markdown chat, backups, Godot helpers, startup. |
 | [test_project_choice.py](../client/tests/ui/test_project_choice.py) | Finding Godot's known projects and choosing one at first start. |
-| [test_project_panel.py](../client/tests/ui/test_project_panel.py) | The Projekt tab: idea, suggestions the child decides on, and a saved to-do list. |
+| [test_project_panel.py](../client/tests/ui/test_project_panel.py) | The Projekt tab: a description that gets clearer through the helper's questions. |
 | [test_python_editor.py](../client/tests/ui/test_python_editor.py) | Editing Python: indentation, highlighting, and the LearnAgent writing Python only. |
 | [test_review_fixes.py](../client/tests/ui/test_review_fixes.py) | Regression tests for fixes from the TODO_CLAUDE review. |
 | [test_teacher_and_changes.py](../client/tests/ui/test_teacher_and_changes.py) | Teacher area, LearnAgent changes view and optional autosave. |

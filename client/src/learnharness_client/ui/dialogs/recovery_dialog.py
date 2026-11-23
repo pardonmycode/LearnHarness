@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QLabel, QPlainTextEdit, QVBoxLayout
 
+from learnharness_client import design
+
 from ...texts import T
 
 
@@ -16,7 +18,7 @@ class RecoveryDialog(QDialog):
         super().__init__(parent)
         self.choice = self.LATER
         self.setWindowTitle(T.RECOVERY_TITLE)
-        self.resize(700, 480)
+        self.resize(*design.RECOVERY_DIALOG_SIZE)
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel(T.RECOVERY_INTRO.format(file=relative_path)))
         view = QPlainTextEdit(content)

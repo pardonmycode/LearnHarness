@@ -6,6 +6,8 @@ from PyQt6.QtCore import QRect, Qt, pyqtSignal
 from PyQt6.QtGui import QContextMenuEvent, QKeyEvent, QTextCursor, QWheelEvent
 from PyQt6.QtWidgets import QPlainTextEdit
 
+from learnharness_client import design
+
 from ....texts import T
 from ...theme import monospace_font
 from ..highlighters import create_highlighter
@@ -21,7 +23,9 @@ class CodeEditor(EditorGutter, EditorSelections, EditorIndentation, QPlainTextEd
     cursor_location_changed = pyqtSignal(int, int)
     font_size_changed = pyqtSignal(int)
 
-    def __init__(self, parent=None, *, font_size: int = 14, language: str = "gdscript") -> None:
+    def __init__(
+        self, parent=None, *, font_size: int = design.FONT_SIZE, language: str = "gdscript"
+    ) -> None:
         super().__init__(parent)
         self.language = language
         # GDScript uses tabs; Python uses four spaces unless the file already uses tabs.
@@ -125,7 +129,7 @@ class CodeEditor(EditorGutter, EditorSelections, EditorIndentation, QPlainTextEd
         super().keyPressEvent(event)
 
     def _change_font_size(self, delta: int) -> None:
-        size = max(11, min(28, self.font().pointSize() + delta))
+        size = max(design.FONT_SIZE_MIN, min(design.FONT_SIZE_MAX, self.font().pointSize() + delta))
         font = self.font()
         font.setPointSize(size)
         self.setFont(font)

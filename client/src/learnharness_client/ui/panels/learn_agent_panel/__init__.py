@@ -16,6 +16,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from learnharness_client import design
+
 from ....texts import T
 from .cards import card
 from .levels import LEVEL_DESCRIPTIONS, AgentLevels
@@ -38,8 +40,8 @@ class LearnAgentPanel(AgentLevels, AgentRounds, QWidget):
 
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(12)
+        layout.setContentsMargins(*design.PANEL_MARGINS)
+        layout.setSpacing(design.PANEL_SPACING)
 
         heading = QLabel(T.AGENT_HEADING)
         heading.setProperty("role", "heading")
@@ -51,7 +53,7 @@ class LearnAgentPanel(AgentLevels, AgentRounds, QWidget):
         level_row = QHBoxLayout()
         self.level_choice = QComboBox()
         self.level_choice.setAccessibleName(T.AGENT_LEVEL_A11Y)
-        self.level_choice.setMinimumWidth(150)
+        self.level_choice.setMinimumWidth(design.LEVEL_CHOICE_MIN_WIDTH)
         for level in range(1, 11):
             self.level_choice.addItem(T.AGENT_LEVEL.format(level=level), level)
         self.unlocked_label = QLabel()
@@ -83,7 +85,7 @@ class LearnAgentPanel(AgentLevels, AgentRounds, QWidget):
         wish_card, wish_layout = card(T.AGENT_WISH_SECTION)
         self.prompt = QPlainTextEdit()
         self.prompt.setPlaceholderText(T.AGENT_WISH_PLACEHOLDER)
-        self.prompt.setFixedHeight(90)
+        self.prompt.setFixedHeight(design.LEARN_PROMPT_HEIGHT)
         self.prompt.setAccessibleName(T.AGENT_WISH_A11Y)
         self.prompt.setTabChangesFocus(True)
         self.start_button = QPushButton(T.AGENT_START)

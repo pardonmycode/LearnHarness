@@ -30,15 +30,15 @@ class FakeConversation(FakeClientBase):
         self._stream_text(explanation.text, response)
 
     def _plan_project(self, message: StudentMessage) -> None:
-        known = {todo.casefold() for todo in message.project_todos}
-        steps = fake_content.PLAN_STEPS.get(message.language, ())
-        fresh = [step for step in steps if step.casefold() not in known][:4]
+        answered = len(message.project_turns) + bool(message.project_question)
+        questions = fake_content.PLAN_QUESTIONS
+        description = (message.project_description or "").strip()
+        proposal = f"{description} {message.message.strip()}"[:2000] if answered else None
         response = LearningResponse(
             mode="project_plan",
-            message=fake_content.PLAN_FOLLOW_UP
-            if message.project_question
-            else fake_content.PLAN_FIRST_QUESTION,
-            todo_suggestions=fresh,
+            message=questions[min(answered, len(questions) - 1)],
+            description_suggestion=proposal,
+            project_ready=answered >= 5,
         )
         self._later(lambda: self.stream_finished.emit(response))
 

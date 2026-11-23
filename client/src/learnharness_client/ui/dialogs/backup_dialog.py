@@ -19,6 +19,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
+from learnharness_client import design
+
 from ...texts import T
 from ..editor.highlighters import highlighter_for_file
 from ..theme import monospace_font
@@ -44,7 +46,7 @@ class BackupDialog(QDialog):
         super().__init__(parent)
         self.restored_text: str | None = None
         self.setWindowTitle(T.BACKUP_TITLE.format(file=file_name))
-        self.resize(900, 560)
+        self.resize(*design.BACKUP_DIALOG_SIZE)
         layout = QVBoxLayout(self)
         intro = QLabel(T.BACKUP_INTRO)
         intro.setWordWrap(True)
@@ -54,7 +56,7 @@ class BackupDialog(QDialog):
         row = QHBoxLayout()
         self.versions = QListWidget()
         self.versions.setAccessibleName(T.BACKUP_LIST_A11Y)
-        self.versions.setMaximumWidth(230)
+        self.versions.setMaximumWidth(design.BACKUP_LIST_MAX_WIDTH)
         for path in backups:
             item = QListWidgetItem(backup_label(path))
             item.setData(Qt.ItemDataRole.UserRole, str(path))

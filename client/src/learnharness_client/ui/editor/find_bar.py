@@ -5,6 +5,8 @@ from __future__ import annotations
 from PyQt6.QtGui import QTextCursor
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QPushButton, QWidget
 
+from learnharness_client import design
+
 from ...texts import T
 from .code_editor import CodeEditor
 
@@ -14,7 +16,7 @@ class FindBar(QWidget):
         super().__init__(parent)
         self.editor: CodeEditor | None = None
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(4, 2, 4, 2)
+        layout.setContentsMargins(*design.FIND_BAR_MARGINS)
         self.find_edit = QLineEdit()
         self.find_edit.setPlaceholderText(T.FIND_PLACEHOLDER)
         self.replace_edit = QLineEdit()

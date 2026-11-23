@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from PyQt6.QtWidgets import QDialog, QHBoxLayout, QMessageBox
 
+from learnharness_client import design
+
 from ...texts import T
 from ..dialogs.backup_dialog import BackupDialog
 from ..dialogs.changes_dialog import ChangesDialog
@@ -27,7 +29,7 @@ class WindowDialogs:
     def show_diagnostics(self) -> None:
         dialog = QDialog(self)
         dialog.setWindowTitle(T.DIAGNOSTICS)
-        dialog.resize(560, 300)
+        dialog.resize(*design.LOG_DIALOG_SIZE)
         layout = QHBoxLayout(dialog)
         panel = DiagnosticsPanel(self.server_url)
         panel.server.setText(self.diagnostics.server.text())

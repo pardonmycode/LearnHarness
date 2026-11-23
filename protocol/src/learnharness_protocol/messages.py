@@ -12,11 +12,18 @@ from .missions import Mission
 
 # chat: tutor chat · learn: LearnAgent round · explain: explain selected code
 # mission: start a mission from a wish · mission_step: work on one mission step
-# project_plan: plan the project and suggest to-dos together with the child
+# project_plan: ask the child questions so its project description gets clearer
 StudentIntent = Literal[
     "chat", "learn", "explain", "mission", "mission_step", "project_plan"
 ]
-TodoText = Annotated[str, Field(min_length=1, max_length=120)]
+MissionTitle = Annotated[str, Field(min_length=1, max_length=120)]
+
+
+class ProjectTurn(ProtocolModel):
+    """One question of the helper about the project and the child's answer."""
+
+    question: str = Field(min_length=1, max_length=1000)
+    answer: str = Field(min_length=1, max_length=1000)
 
 
 class StudentMessage(ProtocolModel):
@@ -38,11 +45,10 @@ class StudentMessage(ProtocolModel):
     mission_id: str | None = Field(default=None, max_length=64)
     mission_step_id: str | None = Field(default=None, max_length=64)
     project_description: str | None = Field(default=None, max_length=2000)
-    project_todos: list[TodoText] = Field(default_factory=list, max_length=30)
     project_question: str | None = Field(default=None, max_length=1000)
-    # The plan as context for every tab: finished steps and the one being worked on.
-    project_done_todos: list[TodoText] = Field(default_factory=list, max_length=30)
-    active_todo: TodoText | None = None
+    project_turns: list[ProjectTurn] = Field(default_factory=list, max_length=12)
+    # Finished missions, so the next one builds on them instead of repeating them.
+    project_done_missions: list[MissionTitle] = Field(default_factory=list, max_length=30)
     message: str = Field(min_length=1, max_length=4000)
 
 
@@ -67,8 +73,9 @@ class LearningResponse(ProtocolModel):
     hints: list[str] = Field(default_factory=list)
     exercise: Exercise | None = None
     mission: Mission | None = None
-    # Only proposals: a to-do is added when the child accepts it.
-    todo_suggestions: list[TodoText] = Field(default_factory=list, max_length=8)
+    # Only a proposal: the description changes when the child accepts it.
+    description_suggestion: str | None = Field(default=None, max_length=2000)
+    project_ready: bool = False
     code_changes: list[dict[str, object]] = Field(default_factory=list)
 
 

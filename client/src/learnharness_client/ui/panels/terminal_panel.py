@@ -9,6 +9,7 @@ from collections.abc import Callable
 from PyQt6.QtCore import QProcess, QProcessEnvironment, QTimer
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
+from learnharness_client import design
 from learnharness_client.domain.project import Project
 from learnharness_client.domain.run_target import RunTarget
 from learnharness_client.domain.terminal_commands import CommandShell
@@ -51,11 +52,11 @@ class TerminalPanel(QWidget):
         self.console.line_entered.connect(self._line_entered)
         self.console.interrupt_requested.connect(self._interrupt)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 6, 8, 8)
-        layout.setSpacing(4)
+        layout.setContentsMargins(*design.TERMINAL_MARGINS)
+        layout.setSpacing(design.TERMINAL_SPACING)
         layout.addWidget(heading)
         layout.addWidget(self.console, 1)
-        self.setMinimumHeight(130)
+        self.setMinimumHeight(design.TERMINAL_MIN_HEIGHT)
         self.setFocusProxy(self.console)
         self.console.write(T.TERMINAL_NO_PROJECT + "\n")
 

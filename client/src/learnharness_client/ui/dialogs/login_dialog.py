@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
+from learnharness_client import design
 from learnharness_client.config import AppSettings
 from learnharness_client.domain.profile import (
     EXPERIENCE_LABELS,
@@ -32,7 +33,7 @@ class LoginDialog(QDialog):
         self.selected_profile: StudentProfile | None = None
         self.profiles = {profile.profile_id: profile for profile in settings.student_profiles}
         self.setWindowTitle(T.LOGIN_TITLE)
-        self.setMinimumWidth(480)
+        self.setMinimumWidth(design.LOGIN_MIN_WIDTH)
 
         layout = QVBoxLayout(self)
         heading = QLabel(T.LOGIN_HEADING)

@@ -67,15 +67,13 @@ class LearningActions:
                 end_line,
                 with_idea=bool(self.project_panel.plan.description.strip()),
             )
-        context = self._project_context()
         message = StudentMessage(
             language=self.project.language,
-            **context,
+            **self._project_context(),
             session_id=self.session_id,
             project_id=self.project.project_id,
             experience_level=int(self.student_profile.experience_level),
-            # An open to-do replaces the built-in example task.
-            current_task=None if context["active_todo"] else self.current_task_id,
+            current_task=self.current_task_id,
             file=relative,
             code_excerpt=excerpt,
             excerpt_start_line=start_line,
@@ -126,8 +124,6 @@ class LearningActions:
                     explanations.append(generated.explanation)
             if review.generated_files:
                 self.learn_agent_panel.show_code_result(written_files, explanations)
-            if written_files:
-                self.todo_bar.ask_if_done()
             if written_files and len(written_files) == len(review.generated_files):
                 unlocked = self.settings.unlock_learning_level(
                     self.student_profile.profile_id,

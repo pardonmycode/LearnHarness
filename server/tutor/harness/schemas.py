@@ -62,7 +62,8 @@ MISSION_SCHEMA = _obj(
 PROJECT_PLAN_SCHEMA = _obj(
     {
         "message": _STR,
-        "todos": {"type": "array", "items": _STR},
+        "description": _STR,
+        "ready": {"type": "boolean"},
     }
 )
 

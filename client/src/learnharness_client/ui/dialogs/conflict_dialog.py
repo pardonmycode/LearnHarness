@@ -6,6 +6,8 @@ import difflib
 
 from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QLabel, QPlainTextEdit, QVBoxLayout
 
+from learnharness_client import design
+
 from ...texts import T
 
 
@@ -18,7 +20,7 @@ class ConflictDialog(QDialog):
         super().__init__(parent)
         self.choice = self.CANCEL
         self.setWindowTitle(T.CONFLICT_TITLE)
-        self.resize(760, 520)
+        self.resize(*design.CONFLICT_DIALOG_SIZE)
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel(T.CONFLICT_INTRO))
         diff = "".join(

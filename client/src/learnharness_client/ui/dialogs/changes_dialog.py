@@ -15,6 +15,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
+from learnharness_client import design
+
 from ...texts import T
 from ..editor.highlighters import highlighter_for_file
 from ..theme import colors, monospace_font
@@ -68,7 +70,7 @@ class ChangesDialog(QDialog):
     def __init__(self, file_name: str, old: str, new: str, parent=None) -> None:
         super().__init__(parent)
         self.setWindowTitle(T.CHANGES_TITLE.format(file=file_name))
-        self.resize(1100, 620)
+        self.resize(*design.CHANGES_DIALOG_SIZE)
         self.changes = line_changes(old, new)
         layout = QVBoxLayout(self)
         intro = QLabel(T.CHANGES_INTRO)

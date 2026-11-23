@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import re
 
-# Only these requests plan or change the project; explaining code needs no architecture.
-BLUEPRINT_INTENTS = frozenset({"chat", "learn", "mission", "mission_step", "project_plan"})
+# Only these requests build the project; talking about the idea needs no architecture.
+BLUEPRINT_INTENTS = frozenset({"chat", "learn", "mission", "mission_step"})
 
 _WORD = re.compile(r"[a-zäöüß]+(?:-[a-zäöüß]+)*")
 _GAME_WORDS = frozenset(
@@ -25,7 +25,7 @@ Bauplan. Es ändert keine der festen Regeln:
 - Benenne Bausteine in Kinderworten. Fachbegriffe nur, wenn das Level dazu passt.
 - Geschriebener Code geht nur in die aktuelle Datei. Fehlt ein Baustein in einer anderen Datei,
   nenne den genauen Pfad aus der Ordnerstruktur und schlage ihn als nächsten Schritt vor.
-- To-dos für neue Dateien nennen den Pfad, z. B. „Spielfigur in entities/player/ anlegen“.
+- Schritte für neue Dateien nennen den Pfad, z. B. „Spielfigur in entities/player/ anlegen“.
 - Passt der vorhandene Code nicht zum Bauplan, baue darauf auf, statt alles umzustellen."""
 
 _GODOT = """Grundgerüst für Godot 4:

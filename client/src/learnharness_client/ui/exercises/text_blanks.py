@@ -5,6 +5,8 @@ from __future__ import annotations
 from learnharness_protocol import Submission, TextBlanksExercise
 from PyQt6.QtWidgets import QLineEdit, QWidget
 
+from learnharness_client import design
+
 from ...texts import T
 from ..theme import monospace_font
 from .base import ExerciseWidget, chain_tab_order, inline_blanks_view
@@ -20,7 +22,9 @@ class TextBlanksWidget(ExerciseWidget):
             field = QLineEdit()
             field.setFont(monospace_font())
             field.setPlaceholderText(blanks[blank_id].placeholder)
-            field.setMinimumWidth(field.fontMetrics().horizontalAdvance("M") * 10)
+            field.setMinimumWidth(
+                field.fontMetrics().horizontalAdvance("M") * design.TEXT_BLANK_WIDTH_CHARS
+            )
             field.setMaxLength(200)
             field.setAccessibleName(T.BLANK.format(index=index))
             field.setToolTip(T.BLANK.format(index=index))
