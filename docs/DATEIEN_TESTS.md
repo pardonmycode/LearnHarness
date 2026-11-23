@@ -48,7 +48,9 @@ Alle Testdateien. Die Beschreibung ist jeweils der Kopfkommentar der Datei.
 | [test_login_dialog.py](../client/tests/ui/test_login_dialog.py) |  |
 | [test_open_items.py](../client/tests/ui/test_open_items.py) | Tests for the formerly open TODO items: Markdown chat, backups, Godot helpers, startup. |
 | [test_project_choice.py](../client/tests/ui/test_project_choice.py) | Finding Godot's known projects and choosing one at first start. |
-| [test_project_panel.py](../client/tests/ui/test_project_panel.py) | The Projekt tab: a description that gets clearer through the helper's questions. |
+| [test_project_panel.py](../client/tests/ui/test_project_panel.py) | The Projekt tab: description, saved state and the way into the other tabs. |
+| [test_project_talk.py](../client/tests/ui/test_project_talk.py) | The helper's questions make the project description clearer. |
+| [project_tab_helpers.py](../client/tests/ui/project_tab_helpers.py) | Shared helpers for the tests of the Projekt tab. |
 | [test_python_editor.py](../client/tests/ui/test_python_editor.py) | Editing Python: indentation, highlighting, and the LearnAgent writing Python only. |
 | [test_review_fixes.py](../client/tests/ui/test_review_fixes.py) | Regression tests for fixes from the TODO_CLAUDE review. |
 | [test_teacher_and_changes.py](../client/tests/ui/test_teacher_and_changes.py) | Teacher area, LearnAgent changes view and optional autosave. |
@@ -71,7 +73,11 @@ Alle Testdateien. Die Beschreibung ist jeweils der Kopfkommentar der Datei.
 | [test_overview.py](../server/tests/test_overview.py) | Group overview for teachers (/uebersicht/). |
 | [test_tutor_channels.py](../server/tests/test_tutor_channels.py) | WebSocket, admin pages and prompt logging. |
 | [test_tutor_harness.py](../server/tests/test_tutor_harness.py) | Rules of the harness: filters, prompts, exercises. |
-| [test_tutor_project_plan.py](../server/tests/test_tutor_project_plan.py) | Planning a project with the helper. |
+| [test_tutor_project_plan.py](../server/tests/test_tutor_project_plan.py) | The helper asks about the project and proposes a clearer description. |
+| [test_tutor_mission_topics.py](../server/tests/test_tutor_mission_topics.py) | Missions adapt the exercise to the child's stage in the mission's topic. |
+| [test_tutor_mission_order.py](../server/tests/test_tutor_mission_order.py) | Missions pick a topic and follow the learning order. |
+| [test_tutor_mission_code.py](../server/tests/test_tutor_mission_code.py) | The code released after a mission exercise matches the exercise and the child. |
+| [mission_helpers.py](../server/tests/mission_helpers.py) | Shared helpers for the tests of mission topics and stages. |
 | [test_tutor_providers.py](../server/tests/test_tutor_providers.py) | Provider switch, health and session access. |
 | [test_tutor_rounds.py](../server/tests/test_tutor_rounds.py) | Learning rounds and missions. |
 | [tutor_helpers.py](../server/tests/tutor_helpers.py) | Shared helpers of the tutor tests. |

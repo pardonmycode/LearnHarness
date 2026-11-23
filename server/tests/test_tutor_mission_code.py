@@ -6,20 +6,16 @@ from typing import Any
 
 import pytest
 from learnharness_protocol import (
-    FillBlanksExercise,
-    LearningResponse,
     Mission,
-    MissionStep,
-    MultipleChoiceExercise,
     StudentMessage,
     Submission,
     TextBlanksExercise,
 )
-from mission_helpers import _answer, _level, _plan, _solve, _start
+from mission_helpers import _answer, _start
 from tutor_helpers import ScriptedProvider
 
 from tutor import engine, harness
-from tutor.models import AiSettings, ExerciseRecord, TutorSession
+from tutor.models import AiSettings, TutorSession
 
 pytestmark = pytest.mark.django_db
 

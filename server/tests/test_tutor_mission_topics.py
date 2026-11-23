@@ -2,20 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 from learnharness_protocol import (
     FillBlanksExercise,
     LearningResponse,
-    Mission,
-    MissionStep,
     MultipleChoiceExercise,
-    StudentMessage,
     Submission,
     TextBlanksExercise,
 )
-from mission_helpers import _answer, _level, _plan, _solve, _start
+from mission_helpers import _answer, _level, _solve, _start
 from tutor_helpers import ScriptedProvider
 
 from tutor import engine, harness

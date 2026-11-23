@@ -1,60 +1,23 @@
-"""The Projekt tab: a description that gets clearer through the helper's questions."""
+"""The Projekt tab: description, saved state and the way into the other tabs."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
-from learnharness_protocol import LearningResponse, StudentMessage
-from PyQt6.QtCore import QSettings
+from project_tab_helpers import _ask, _record, make_window
 from pytest import MonkeyPatch
 from pytestqt.qtbot import QtBot
 
-from learnharness_client.config import AppSettings
-from learnharness_client.domain.profile import StudentProfile
 from learnharness_client.domain.project import create_python_project
 from learnharness_client.domain.project_plan import MAX_TURNS, ProjectPlan
-from learnharness_client.net.fake_tutor_client import FakeTutorClient
 from learnharness_client.texts import T
-from learnharness_client.ui.editor import editor_tabs as editor_tabs_module
 from learnharness_client.ui.main_window import MainWindow
 
 
 @pytest.fixture
 def window(qtbot: QtBot, tmp_path: Path, monkeypatch: MonkeyPatch) -> MainWindow:
-    monkeypatch.setattr(editor_tabs_module, "app_data_dir", lambda: tmp_path / "data")
-    settings = AppSettings()
-    settings._settings = QSettings(str(tmp_path / "settings.ini"), QSettings.Format.IniFormat)
-    profile = StudentProfile.create("Fuchs", 1)
-    settings.save_student_profile(profile)
-    main = MainWindow(settings, FakeTutorClient(delay_ms=1), profile, server_url="fake")
-    qtbot.addWidget(main)
-    main.show()
-    main.open_project(create_python_project(tmp_path, "Quiz"))
-    qtbot.waitUntil(lambda: main.session_id is not None)
-    return main
-
-
-def _record(window: MainWindow) -> list[StudentMessage]:
-    sent: list[StudentMessage] = []
-    original = window.tutor_client.send_message
-    window.tutor_client.send_message = lambda message: (sent.append(message), original(message))
-    return sent
-
-
-def _ask(qtbot: QtBot, window: MainWindow) -> None:
-    panel = window.project_panel
-    panel.description.setPlainText("Ein Mathe-Quiz")
-    panel.plan_button.click()
-    qtbot.waitUntil(lambda: bool(panel.plan.question))
-
-
-def _answer(qtbot: QtBot, window: MainWindow, text: str) -> None:
-    panel = window.project_panel
-    count = len(panel.plan.turns)
-    panel.reply.setText(text)
-    panel.reply_button.click()
-    qtbot.waitUntil(lambda: len(panel.plan.turns) == count + 1)
+    return make_window(qtbot, tmp_path, monkeypatch)
 
 
 def test_project_tab_comes_first_and_has_no_todos(window: MainWindow) -> None:
@@ -62,101 +25,6 @@ def test_project_tab_comes_first_and_has_no_todos(window: MainWindow) -> None:
     assert window.learning_tabs.tabText(1) == "LearnAgent"
     assert window.learning_tabs.currentWidget() is window.project_panel
     assert not hasattr(window, "todo_bar") and not hasattr(window.project_panel, "todos")
-
-
-def test_helper_asks_one_question_after_the_other(qtbot: QtBot, window: MainWindow) -> None:
-    sent = _record(window)
-    _ask(qtbot, window)
-    panel = window.project_panel
-    first = panel.plan.question
-    assert panel.helper_card.isVisible() and panel.question.text() == first
-    assert sent[0].project_question is None
-    _answer(qtbot, window, "Kinder aus meiner Klasse")
-    assert sent[1].project_question == first and sent[1].message == "Kinder aus meiner Klasse"
-    assert panel.plan.question != first and panel.reply.text() == ""
-    _answer(qtbot, window, "Viele Punkte holen")
-    assert [turn.answer for turn in sent[2].project_turns] == ["Kinder aus meiner Klasse"]
-
-
-def test_description_changes_only_when_the_child_accepts(qtbot: QtBot, window: MainWindow) -> None:
-    _ask(qtbot, window)
-    panel = window.project_panel
-    _answer(qtbot, window, "Für meine Klasse")
-    proposal = panel.plan.suggestion
-    assert panel.suggestion_card.isVisible() and "Für meine Klasse" in proposal
-    assert panel.description.toPlainText() == "Ein Mathe-Quiz"
-    panel.accept_button.click()
-    assert panel.description.toPlainText() == proposal == panel.plan.description
-    assert not panel.suggestion_card.isVisible()
-    panel.description.undo()
-    assert panel.description.toPlainText() == "Ein Mathe-Quiz"
-
-
-def test_own_edit_replaces_an_old_proposal(qtbot: QtBot, window: MainWindow) -> None:
-    _ask(qtbot, window)
-    panel = window.project_panel
-    _answer(qtbot, window, "Für meine Klasse")
-    panel.description.setPlainText("Ganz anders")
-    assert panel.plan.suggestion == "" and not panel.suggestion_card.isVisible()
-
-
-def test_edit_while_waiting_drops_the_late_proposal(window: MainWindow) -> None:
-    panel = window.project_panel
-    panel.description.setPlainText("Quiz")
-    panel._request("Quiz", answer=None)
-    panel.description.setPlainText("Rennspiel")
-    panel.show_response(
-        LearningResponse(mode="project_plan", message="Und?", description_suggestion="Quiz mit X")
-    )
-    assert panel.plan.suggestion == "" and panel.description.toPlainText() == "Rennspiel"
-
-
-def test_failed_answer_stays_and_is_not_counted(window: MainWindow) -> None:
-    panel = window.project_panel
-    panel.description.setPlainText("Quiz")
-    panel.plan.question = "Wer spielt?"
-    panel.reply.setText("Meine Klasse")
-    panel._send_reply()
-    panel.show_error("Pause")
-    assert panel.reply.text() == "Meine Klasse" and panel.plan.turns == []
-    assert panel.open_question is None
-
-
-def test_other_question_tells_the_helper_what_was_skipped(qtbot: QtBot, window: MainWindow) -> None:
-    sent = _record(window)
-    _ask(qtbot, window)
-    panel = window.project_panel
-    first = panel.plan.question
-    panel.plan_button.click()
-    qtbot.waitUntil(lambda: panel.plan.question != first)
-    second = panel.plan.question
-    assert sent[1].project_skipped_questions == [first] and sent[1].project_question is None
-    assert panel.plan.turns == [] and panel.plan.suggestion == ""
-    panel.plan_button.click()
-    qtbot.waitUntil(lambda: panel.plan.question != second)
-    assert sent[2].project_skipped_questions == [first, second]
-    saved = ProjectPlan.from_dict(panel.plan.to_dict())
-    assert saved.skipped == [first, second]
-
-
-def test_failed_skip_is_not_remembered(window: MainWindow) -> None:
-    panel = window.project_panel
-    panel.description.setPlainText("Quiz")
-    panel.plan.question = "Wer spielt?"
-    panel._request_from_description()
-    assert panel.skipped_questions == ["Wer spielt?"]
-    panel.show_error("Pause")
-    assert panel.skipped_questions == [] and panel.plan.skipped == []
-
-
-def test_after_five_answers_it_is_enough(qtbot: QtBot, window: MainWindow) -> None:
-    _ask(qtbot, window)
-    panel = window.project_panel
-    for number in range(5):
-        assert not panel.ready_label.isVisible()
-        _answer(qtbot, window, f"Antwort {number}")
-    assert panel.ready_label.isVisible() and panel.ready_label.text() == T.PLAN_READY
-    assert panel.reply_button is not None and panel.helper_card.isVisible()
 
 
 def test_start_button_leads_to_the_project_mission(qtbot: QtBot, window: MainWindow) -> None:
@@ -212,15 +80,6 @@ def test_late_answer_does_not_land_in_another_project(
         panel.plan_button.click()
         window.open_project(create_python_project(tmp_path, "Anderes"))
     assert panel.plan.question == ""
-
-
-def test_emptying_the_description_starts_a_new_talk(qtbot: QtBot, window: MainWindow) -> None:
-    _ask(qtbot, window)
-    panel = window.project_panel
-    _answer(qtbot, window, "Für meine Klasse")
-    panel.description.setPlainText("")
-    assert panel.plan.turns == [] and panel.plan.question == ""
-    assert not panel.helper_card.isVisible()
 
 
 def test_offline_description_can_still_be_written(window: MainWindow) -> None:

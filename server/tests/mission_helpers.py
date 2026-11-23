@@ -4,21 +4,17 @@ from __future__ import annotations
 
 from typing import Any
 
-import pytest
 from learnharness_protocol import (
-    FillBlanksExercise,
     LearningResponse,
     Mission,
     MissionStep,
-    MultipleChoiceExercise,
     StudentMessage,
     Submission,
-    TextBlanksExercise,
 )
 from tutor_helpers import ScriptedProvider
 
-from tutor import engine, harness
-from tutor.models import AiSettings, ExerciseRecord, TutorSession
+from tutor import engine
+from tutor.models import TutorSession
 
 
 def _answer(stage: int, skill: str = "loops") -> dict[str, Any]:

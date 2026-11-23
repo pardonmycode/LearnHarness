@@ -84,10 +84,12 @@ Lernserver und zentrale Verwaltung. Die Beschreibung ist jeweils der Kopfkomment
 | [__init__.py](../server/tutor/harness/__init__.py) | The harness between children and the AI. |
 | [checks.py](../server/tutor/harness/checks.py) | Checks structured AI output; answers stay on the server. |
 | [game_blueprint.py](../server/tutor/harness/game_blueprint.py) | Skeleton and architecture the AI follows when a child's project is a game. |
+| [mission_code.py](../server/tutor/harness/mission_code.py) | Keeps a mission exercise and the code released after it in line. |
 | [prompts.py](../server/tutor/harness/prompts.py) | Builds what goes out to the AI. |
 | [rules.py](../server/tutor/harness/rules.py) | Fixed rules, levels and tasks of the prompts. |
 | [schemas.py](../server/tutor/harness/schemas.py) | JSON formats the AI must answer in. |
 | [stream_guard.py](../server/tutor/harness/stream_guard.py) | Filters code out of text while it streams. |
+| [topics.py](../server/tutor/harness/topics.py) | The topics missions teach and the three stages every child works through per topic. |
 
 ## `server/tutor/providers/`
 
