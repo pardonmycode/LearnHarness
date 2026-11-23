@@ -20,7 +20,7 @@ from learnharness_protocol.exercises import Exercise
 from .code_fence import unwrap_code_fence
 from .errors import HarnessRejected
 from .exercise_kinds import build_find_bug, build_ordering
-from .learn_levels import LEVEL_KINDS
+from .learn_levels import LEVEL_KINDS, SINGLE_BLANK_LEVELS
 from .rules import SKILLS
 from .stream_guard import filter_text, looks_like_code
 from .topics import MISSION_TOPICS, STAGE_KINDS, normalize_typed
@@ -160,6 +160,8 @@ def build_exercise(
             choices=choices,
         )
         answers = {"choice": chr(ord("a") + correct[0])}
+    if level in SINGLE_BLANK_LEVELS and len(getattr(exercise, "blanks", [])) != 1:
+        raise HarnessRejected(f"Level {level} verlangt genau eine Lücke")
     explanation, more = filter_text(str(data.get("explanation_after_correct", "")), max_lines)
     return BuiltExercise(
         exercise=exercise,

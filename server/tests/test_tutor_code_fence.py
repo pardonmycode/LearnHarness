@@ -67,4 +67,4 @@ def test_fence_inside_the_file_gets_a_second_try(
 def test_rules_separate_child_texts_from_file_code() -> None:
     system = harness.system_prompt("mission_step", AiSettings.load(), language="python")
     assert "in deinen Texten keine fertigen" in system
-    assert 'Ausnahme von Regel 1 und 2: Die JSON-Felder "code" und "new_file_content"' in system
+    assert 'Ausnahme von Regel 1 und 2: Die JSON-Felder "code", "ordered_lines"' in system

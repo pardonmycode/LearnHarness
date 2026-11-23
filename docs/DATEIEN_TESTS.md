@@ -84,6 +84,7 @@ Alle Testdateien. Die Beschreibung ist jeweils der Kopfkommentar der Datei.
 | [test_tutor_mission_safety.py](../server/tests/test_tutor_mission_safety.py) | Mission exercises stay small, do not give the answer away and keep Python runnable. |
 | [test_tutor_code_fence.py](../server/tests/test_tutor_code_fence.py) | Markdown fences never end up in a child's script. |
 | [test_tutor_learn_levels.py](../server/tests/test_tutor_learn_levels.py) | Each LearnAgent level has its own kind of exercise, checked by the server. |
+| [test_tutor_learn_prompt.py](../server/tests/test_tutor_learn_prompt.py) | The LearnAgent prompt has no contradicting rules. |
 | [mission_helpers.py](../server/tests/mission_helpers.py) | Shared helpers for the tests of mission topics and stages. |
 | [test_tutor_providers.py](../server/tests/test_tutor_providers.py) | Provider switch, health and session access. |
 | [test_tutor_rounds.py](../server/tests/test_tutor_rounds.py) | Learning rounds and missions. |

@@ -18,6 +18,9 @@ from tutor.models import AiCall, AiSettings, TutorSession
 pytestmark = pytest.mark.django_db
 
 
+# Channels closes "old" connections around each step, which would end a test transaction on
+# PostgreSQL. SQLite in memory ignores that, so only a real commit behaves the same on both.
+@pytest.mark.django_db(transaction=True)
 def test_websocket_streams_filtered_chat(
     token: str, session: TutorSession, scripted: dict[str, ScriptedProvider]
 ) -> None:

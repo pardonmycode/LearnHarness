@@ -136,7 +136,7 @@ class TutorRounds:
         built = self._exercise_round(
             "learn",
             message,
-            extra=harness.learn_topics_note(self._topic_levels()),
+            extra=harness.learn_topics_note(self._topic_levels(), bool(message.skill_focus)),
             allow_code=True,
             prefix="learn",
             level=message.learning_level,
