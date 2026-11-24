@@ -54,6 +54,10 @@ Alle Testdateien. Die Beschreibung ist jeweils der Kopfkommentar der Datei.
 | [test_project_talk.py](../client/tests/ui/test_project_talk.py) | The helper's questions make the project description clearer. |
 | [test_tutor_hints.py](../client/tests/ui/test_tutor_hints.py) | The hint button works on the child's project. |
 | [test_code_review.py](../client/tests/ui/test_code_review.py) | The button "Code prüfen lassen" sends the open script and marks the lines. |
+| [test_teststand_config.py](../client/tests/teststand/test_teststand_config.py) | The test stand keeps keys out of files unless asked and never puts them on a command line. |
+| [test_teststand_log.py](../client/tests/teststand/test_teststand_log.py) | The test stand reads the prompt log of the local server and shows it. |
+| [test_teststand_window.py](../client/tests/teststand/test_teststand_window.py) | The test stand window reads its form and refuses to start without the essentials. |
+| [test_teststand_commands.py](../server/tests/test_teststand_commands.py) | The commands that set up and check the local test stand. |
 | [test_run_error.py](../client/tests/domain/test_run_error.py) | Only the real error of a program reaches the tutor, without private paths. |
 | [test_terminal_errors.py](../client/tests/ui/test_terminal_errors.py) | The tutor knows the latest error from the terminal and forgets it once it is fixed. |
 | [project_tab_helpers.py](../client/tests/ui/project_tab_helpers.py) | Shared helpers for the tests of the Projekt tab. |

@@ -40,6 +40,7 @@
 | Grundgerüst und Architektur für Spiele ändern | [`harness/game_blueprint.py`](../server/tutor/harness/game_blueprint.py) |
 | Missionsthemen und die 3 Stufen ändern | [`topics.py`](../server/tutor/harness/topics.py) |
 | die 10 LearnAgent-Level und ihre Aufgabentypen ändern | [`learn_levels.py`](../server/tutor/harness/learn_levels.py) |
+| den Teststand für Prompts ändern | [`teststand/`](../client/src/learnharness_client/teststand/), [`teststand_settings.py`](../server/learnharness_server/teststand_settings.py) |
 | ändern, was die KI zum Projekt fragt | `INTENTS["project_plan"]` in [`rules.py`](../server/tutor/harness/rules.py) |
 | den Code-Filter ändern | [`harness/stream_guard.py`](../server/tutor/harness/stream_guard.py) |
 | den Projektplan der KI ändern | `project_plan` in [`rules.py`](../server/tutor/harness/rules.py), Ablauf in [`engine/rounds.py`](../server/tutor/engine/rounds.py) |

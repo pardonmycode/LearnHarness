@@ -7,7 +7,7 @@ from pathlib import Path
 from PyQt6.QtCore import QStandardPaths
 
 from .admin_settings import AdminSettings
-from .base import SettingsBase
+from .base import SettingsBase, data_dir_override
 from .plans import PlanSettings
 from .preferences import PreferenceSettings
 from .profiles import ProfileSettings
@@ -23,7 +23,8 @@ class AppSettings(
 
 
 def app_data_dir() -> Path:
+    override = data_dir_override()
     location = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
-    path = Path(location)
+    path = override / "data" if override is not None else Path(location)
     path.mkdir(parents=True, exist_ok=True)
     return path

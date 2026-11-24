@@ -3,15 +3,30 @@
 from __future__ import annotations
 
 import json
+import os
+from pathlib import Path
 
 from PyQt6.QtCore import QSettings
+
+# The test stand keeps its profiles and settings apart from the real ones.
+DATA_DIR_VARIABLE = "LEARNHARNESS_DATA_DIR"
+
+
+def data_dir_override() -> Path | None:
+    value = os.environ.get(DATA_DIR_VARIABLE, "").strip()
+    return Path(value) if value else None
 
 
 class SettingsBase:
     """Holds the QSettings object."""
 
     def __init__(self) -> None:
-        self._settings = QSettings("LearnHarness", "LearnHarnessClient")
+        override = data_dir_override()
+        if override is not None:
+            override.mkdir(parents=True, exist_ok=True)
+            self._settings = QSettings(str(override / "settings.ini"), QSettings.Format.IniFormat)
+        else:
+            self._settings = QSettings("LearnHarness", "LearnHarnessClient")
 
     def _json_value(self, key: str, default: object) -> object:
         try:

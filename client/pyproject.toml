@@ -46,6 +46,8 @@ files = [
     "src/learnharness_client/godot",
     "src/learnharness_client/texts",
     "src/learnharness_client/qtcompat.py",
+    "src/learnharness_client/teststand/config.py",
+    "src/learnharness_client/teststand/log_reader.py",
     "../protocol/src/learnharness_protocol",
 ]
 

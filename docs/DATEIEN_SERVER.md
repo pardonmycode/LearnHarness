@@ -96,6 +96,9 @@ Lernserver und zentrale Verwaltung. Die Beschreibung ist jeweils der Kopfkomment
 | [schemas.py](../server/tutor/harness/schemas.py) | JSON formats the AI must answer in. |
 | [stream_guard.py](../server/tutor/harness/stream_guard.py) | Filters code out of text while it streams. |
 | [topics.py](../server/tutor/harness/topics.py) | The topics missions teach and the three stages every child works through per topic. |
+| [teststand_settings.py](../server/learnharness_server/teststand_settings.py) | Settings for the local test stand: SQLite file, no device token, only on this computer. |
+| [teststand_prepare.py](../server/tutor/management/commands/teststand_prepare.py) | Sets up the local test stand: which AI answers and an admin login for this computer. |
+| [teststand_check.py](../server/tutor/management/commands/teststand_check.py) | Checks whether the AI of the test stand answers; the reason is printed in plain words. |
 
 ## `server/tutor/providers/`
 

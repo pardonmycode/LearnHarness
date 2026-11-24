@@ -44,6 +44,13 @@ Die App auf dem Rechner des Kindes. Die Beschreibung ist jeweils der Kopfkomment
 | [python_check.py](../client/src/learnharness_client/domain/python_check.py) | Syntax check for Python scripts. The code is only parsed, never executed. |
 | [run_target.py](../client/src/learnharness_client/domain/run_target.py) | The programs the terminal may start: a Python script of the project or the Godot game. |
 | [run_error.py](../client/src/learnharness_client/domain/run_error.py) | Finds the error of a finished program and removes private paths from it. |
+| [teststand/__init__.py](../client/src/learnharness_client/teststand/__init__.py) | Local test stand: try the real prompts with Claude or vLLM without a learning server. |
+| [teststand/__main__.py](../client/src/learnharness_client/teststand/__main__.py) | Entry point of the test stand window. |
+| [teststand/config.py](../client/src/learnharness_client/teststand/config.py) | What the test stand remembers and where its data lives (outside the repository). |
+| [teststand/runner.py](../client/src/learnharness_client/teststand/runner.py) | Starts the local learning server and the app for the test stand, step by step. |
+| [teststand/log_reader.py](../client/src/learnharness_client/teststand/log_reader.py) | Reads the AI calls the local server logged, straight from its SQLite file. |
+| [teststand/log_view.py](../client/src/learnharness_client/teststand/log_view.py) | Every AI call of the test stand: what went out, what came back, what the harness did. |
+| [teststand/window.py](../client/src/learnharness_client/teststand/window.py) | The test stand window: choose the AI, start server and app, read every prompt. |
 | [terminal_commands.py](../client/src/learnharness_client/domain/terminal_commands.py) | The few commands children can type. Nothing here reaches a system shell. |
 | [recovery.py](../client/src/learnharness_client/domain/recovery.py) | Crash-recovery drafts stored outside the Godot project. |
 | [script_document.py](../client/src/learnharness_client/domain/script_document.py) | In-memory representation of a GDScript file. |

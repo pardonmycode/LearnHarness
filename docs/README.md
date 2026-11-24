@@ -18,6 +18,7 @@ Hier findest du schnell die richtige Stelle im Code. Wenn du etwas ändern wills
 |---|---|
 | [Wo ändere ich was?](WO_AENDERN.md) | Von der Aufgabe direkt zur Datei |
 | [Entwicklung](ENTWICKLUNG.md) | Befehle, Tests und Regeln für den Code |
+| [TESTSTAND.md](TESTSTAND.md) | Prompts mit Claude oder vLLM ausprobieren, ohne Lernserver einzurichten |
 
 ## Alle Dateien
 
