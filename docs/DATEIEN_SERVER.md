@@ -86,6 +86,7 @@ Lernserver und zentrale Verwaltung. Die Beschreibung ist jeweils der Kopfkomment
 | [code_fence.py](../server/tutor/harness/code_fence.py) | Markdown code fences belong in chat texts, never into a child's script. |
 | [errors.py](../server/tutor/harness/errors.py) | Errors of the harness. |
 | [exercise_kinds.py](../server/tutor/harness/exercise_kinds.py) | Ordering and find-the-bug exercises; their solutions stay on the server. |
+| [explain.py](../server/tutor/harness/explain.py) | The answer format and checks of the tab "Code verstehen". |
 | [learn_levels.py](../server/tutor/harness/learn_levels.py) | Which kind of exercise each of the ten LearnAgent levels uses. |
 | [game_blueprint.py](../server/tutor/harness/game_blueprint.py) | Skeleton and architecture the AI follows when a child's project is a game. |
 | [mission_code.py](../server/tutor/harness/mission_code.py) | Keeps a mission exercise and the code released after it in line. |

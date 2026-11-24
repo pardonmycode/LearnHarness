@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
 from django.contrib import admin, messages
 from django.contrib.admin.views.decorators import staff_member_required
@@ -24,15 +25,12 @@ INTENT_LABELS = {
     "mission": "Mission aus einem Wunsch planen",
     "mission_step": "Missionsschritt",
     "project_plan": "Fragen zur Projektbeschreibung",
-    "review": "Code-Abgabe prüfen",
+    "review": "Code prüfen lassen",
 }
 SCHEMAS = {
-    "explain": harness.EXERCISE_SCHEMA,
-    "learn": harness.EXERCISE_SCHEMA,
-    "mission_step": harness.EXERCISE_SCHEMA,
     "mission": harness.MISSION_SCHEMA,
     "project_plan": harness.PROJECT_PLAN_SCHEMA,
-    "review": harness.REVIEW_SCHEMA,
+    "review": harness.PROJECT_REVIEW_SCHEMA,
 }
 EXAMPLE_CODE = "extends CharacterBody2D\n\nvar speed = 200\n"
 
@@ -42,6 +40,21 @@ def _int(value: str | None, default: int, low: int, high: int) -> int:
         return max(low, min(high, int(value or default)))
     except ValueError:
         return default
+
+
+def _format_and_schema(intent: str, level: int) -> tuple[str, dict[str, Any] | None]:
+    """What this request really adds to the prompt at the chosen level."""
+    if intent == "explain":
+        return harness.EXPLAIN_FORMAT_HELP, harness.EXPLAIN_SCHEMA
+    if intent == "learn":
+        return harness.level_instructions(level), harness.learn_exercise_schema(level)
+    if intent == "mission_step":
+        stage = min(level, 3)  # missions have three stages per topic
+        return (
+            harness.stage_instructions("variables", stage),
+            harness.mission_exercise_schema(stage, "variables"),
+        )
+    return "", SCHEMAS.get(intent)
 
 
 @staff_member_required
@@ -70,9 +83,9 @@ def prompt_overview(request: HttpRequest) -> HttpResponse:
             hint_level=2,
             game=True,
         )
-        if intent in ("learn", "explain", "mission_step"):
-            system += "\n\n" + harness.EXERCISE_FORMAT_HELP
-        schema = SCHEMAS.get(intent)
+        format_help, schema = _format_and_schema(intent, level)
+        if format_help:
+            system += "\n\n" + format_help
         intents.append(
             {
                 "key": intent,

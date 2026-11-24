@@ -87,6 +87,13 @@ def mission_step_context(mission: Mission, step: MissionStep) -> str:
     return "Die Mission:\n" + _tag("mission", "\n".join(lines))
 
 
+def history_entry(message: StudentMessage) -> str:
+    """Only what the child said: old code, errors and tasks must not linger in the talk."""
+    if message.project_hint_level:
+        return f"(Das Kind bittet um Hinweis {message.project_hint_level} von 4.)"
+    return _tag("kind", message.message)
+
+
 def user_prompt(message: StudentMessage, *, task: str | None = None, extra: str = "") -> str:
     parts = []
     if task:
@@ -100,7 +107,11 @@ def user_prompt(message: StudentMessage, *, task: str | None = None, extra: str 
         parts.append("Code der Datei:\n" + _tag("code", ""))
     if message.last_error:
         source = LANGUAGES[message.language]["error_source"]
-        parts.append(f"Letzte Fehlermeldung aus {source}:\n" + _tag("fehler", message.last_error))
+        parts.append(
+            f"Letzte bekannte Fehlermeldung aus {source}. Sie kann schon behoben sein: Prüfe "
+            "das am Code, soweit er zu sehen ist, und sag ehrlich, wenn du es nicht sicher "
+            "weißt.\n" + _tag("fehler", message.last_error)
+        )
     if message.project_description:
         parts.append("Projektidee des Kindes:\n" + _tag("projekt", message.project_description))
     if message.project_done_missions:
@@ -127,6 +138,8 @@ def user_prompt(message: StudentMessage, *, task: str | None = None, extra: str 
     by_button = (
         message.intent == "mission_step"
         or message.mission_from_project
+        or message.project_hint_level is not None
+        or message.intent == "review"
         or (message.intent == "project_plan" and not message.project_question)
     )
     if not by_button:

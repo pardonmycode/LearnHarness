@@ -17,28 +17,40 @@ class TutorRounds:
     """Conversations and exercises."""
 
     def _chat(self, message: StudentMessage, on_chunk: Callable[[str], None] | None) -> Response:
-        task = TASKS.get(message.current_task or "")
+        # A child with a project works on that, not on the built-in example task.
+        task = None if message.project_description else TASKS.get(message.current_task or "")
         prompt = harness.user_prompt(
-            message, task=f"{task.title}: {task.instructions}" if task else None
+            message,
+            task=f"{task.title}: {task.instructions}" if task else None,
+            extra=harness.chat_topics_note(self._topic_levels()),
         )
         history: list[Message] = [
             {"role": item["role"], "content": item["content"]}
             for item in self.session.history[-HISTORY_TURNS:]
             if item.get("role") in ("user", "assistant")
         ]
+        hint = message.project_hint_level
+        intent = "hint" if hint else "chat"
+        system = (
+            self._system("hint", message, hint_level=hint)
+            if hint
+            else self._system("chat", message)
+        )
         text, _ = self._call_stream(
-            "chat",
-            self._system("chat", message),
+            intent,
+            system,
             [*history, {"role": "user", "content": prompt}],
             on_chunk,
         )
         self.session.history = [
             *self.session.history[-HISTORY_TURNS:],
-            {"role": "user", "content": prompt},
+            {"role": "user", "content": harness.history_entry(message)},
             {"role": "assistant", "content": text},
         ]
         self.session.save(update_fields=["history"])
-        return LearningResponse(mode="socratic", message=text)
+        return LearningResponse(
+            mode="hint" if hint else "socratic", message=text, hint_level=hint or 0
+        )
 
     def _exercise_round(
         self,
@@ -55,6 +67,9 @@ class TutorRounds:
         help_text = harness.stage_instructions(topic, stage) if stage else None
         if level:
             help_text = harness.level_instructions(level)
+        explaining = intent == "explain"
+        if explaining:
+            help_text = harness.EXPLAIN_FORMAT_HELP
         checked = intent in ("learn", "mission_step")
         system = (
             self._system(intent, message) + "\n\n" + (help_text or harness.EXERCISE_FORMAT_HELP)
@@ -64,6 +79,8 @@ class TutorRounds:
             schema = harness.mission_exercise_schema(stage, topic)
         elif level:
             schema = harness.learn_exercise_schema(level)
+        elif explaining:
+            schema = harness.EXPLAIN_SCHEMA
         prompt = harness.user_prompt(message, extra=extra)
         before = message.code_excerpt or ""
 
@@ -75,7 +92,12 @@ class TutorRounds:
                 stage=stage,
                 topic=topic,
                 level=level,
+                kind="multiple_choice" if explaining else None,
             )
+            if explaining:
+                reason = harness.check_explanation(built.exercise, built.answers, built.message)
+                if reason:
+                    raise harness.HarnessRejected(f"Erklärung abgelehnt: {reason}")
             if checked:
                 unclear = harness.check_blanks_are_clear(
                     built.exercise, built.answers, built.message

@@ -11,7 +11,12 @@ class LearningTexts:
     TUTOR_HINT_PROGRESS = "Hinweisstufe %v von %m"
     TUTOR_SEND = "Frage senden"
     TUTOR_NEXT_HINT = "Nächster Hinweis"
+    TUTOR_HINT_REQUEST = "Ich brauche Hinweis {level} von 4."
     TUTOR_STOP = "Stopp"
+    TUTOR_REVIEW = "Code prüfen lassen"
+    TUTOR_REVIEW_TIP = "Der Lernhelfer schaut sich dein geöffnetes Skript an und gibt dir Tipps."
+    TUTOR_REVIEW_REQUEST = "Bitte prüfe meinen Code in {file}."
+    TUTOR_REVIEW_NEEDS_FILE = "Öffne zuerst das Skript, das ich prüfen soll."
 
     # LearnAgent panel
     AGENT_HEADING = "LearnAgent"

@@ -71,6 +71,7 @@ class Tutor(AiCalls, TutorRounds, TutorMissions, TutorReviews):
             "mission": self._plan_mission,
             "mission_step": self._mission_step,
             "project_plan": self._plan_project,
+            "review": self._review_project,
         }
         try:
             if message.intent in handlers:

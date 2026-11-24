@@ -36,6 +36,7 @@ class ProblemsPanel(QWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.language = "gdscript"
+        self._resolved: list[Problem] = []
         layout = QVBoxLayout(self)
         row = QHBoxLayout()
         self.error_input = QLineEdit()
@@ -94,6 +95,8 @@ class ProblemsPanel(QWidget):
 
     def add_problem(self, problem: Problem) -> bool:
         """Adds the problem unless the same one is already listed."""
+        if problem in self._resolved:
+            self._resolved.remove(problem)  # it came back
         if problem in self.problems():
             return False
         location = f"{problem.file}:{problem.line} – " if problem.file else ""
@@ -114,8 +117,14 @@ class ProblemsPanel(QWidget):
         if isinstance(problem, Problem) and problem.file:
             self.problem_activated.emit(problem.file, problem.line)
 
+    def mark_resolved(self) -> None:
+        """The program ran without an error: what is listed so far is not current any more."""
+        self._resolved = self.problems()
+
     def last_error(self) -> str | None:
         if self.list.count() == 0:
             return None
         problem = self.list.item(self.list.count() - 1).data(Qt.ItemDataRole.UserRole)
-        return problem.message if isinstance(problem, Problem) else None
+        if not isinstance(problem, Problem) or problem in self._resolved:
+            return None
+        return problem.message

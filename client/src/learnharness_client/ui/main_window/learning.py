@@ -48,10 +48,12 @@ class LearningActions:
         )
         self.tutor_client.send_message(message)
 
-    def send_tutor_message(self, text: str) -> None:
+    def send_tutor_message(self, text: str, *, hint_level: int | None = None) -> None:
         if not self.project or not self.session_id:
             self.tutor_panel.show_error(T.WAIT_FOR_SESSION)
             return
+        if hint_level is None:
+            self._reset_project_hints()  # a new question starts its hints from the beginning
         document = self.editor_tabs.current_document()
         editor = self.editor_tabs.current_editor()
         excerpt: str | None = None
@@ -78,10 +80,48 @@ class LearningActions:
             file=relative,
             code_excerpt=excerpt,
             excerpt_start_line=start_line,
-            last_error=self.problems_panel.last_error(),
+            last_error=self._latest_error(),
+            project_hint_level=hint_level,
             message=text,
         )
         self.tutor_client.send_message(message)
+
+    def request_code_review(self) -> None:
+        """Feedback on the whole open script; it changes nothing in the file."""
+        if not self.project or not self.session_id:
+            self.tutor_panel.show_error(T.WAIT_FOR_SESSION)
+            return
+        relative = self._relative_current_file()
+        code = self._current_file_text()
+        if relative is None or code is None:
+            self.tutor_panel.show_error(T.TUTOR_REVIEW_NEEDS_FILE)
+            return
+        text = T.TUTOR_REVIEW_REQUEST.format(file=relative)
+        self.tutor_panel.show_request(text)
+        self.tutor_panel.set_waiting()
+        self._review_file = relative
+        self.tutor_client.send_message(
+            StudentMessage(
+                intent="review",
+                language=self.project.language,
+                **self._project_context(),
+                session_id=self.session_id,
+                project_id=self.project.project_id,
+                experience_level=int(self.student_profile.experience_level),
+                current_task=self.current_task_id,
+                file=relative,
+                code_excerpt=code,
+                excerpt_start_line=1,
+                last_error=self._latest_error(),
+                message=text,
+            )
+        )
+
+    def _show_review_lines(self, lines: list[int]) -> None:
+        """Marks the lines only while the reviewed script is still the open one."""
+        editor = self.editor_tabs.current_editor()
+        if editor is not None and self._relative_current_file() == self._review_file:
+            editor.set_error_lines(lines)
 
     def _submit_agent_exercise(self, submission: Submission) -> None:
         self._exercise_owner = "agent"

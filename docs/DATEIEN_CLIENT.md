@@ -43,6 +43,7 @@ Die App auf dem Rechner des Kindes. Die Beschreibung ist jeweils der Kopfkomment
 | [project_plan.py](../client/src/learnharness_client/domain/project_plan.py) | A child's project description and the conversation that makes it clearer. |
 | [python_check.py](../client/src/learnharness_client/domain/python_check.py) | Syntax check for Python scripts. The code is only parsed, never executed. |
 | [run_target.py](../client/src/learnharness_client/domain/run_target.py) | The programs the terminal may start: a Python script of the project or the Godot game. |
+| [run_error.py](../client/src/learnharness_client/domain/run_error.py) | Finds the error of a finished program and removes private paths from it. |
 | [terminal_commands.py](../client/src/learnharness_client/domain/terminal_commands.py) | The few commands children can type. Nothing here reaches a system shell. |
 | [recovery.py](../client/src/learnharness_client/domain/recovery.py) | Crash-recovery drafts stored outside the Godot project. |
 | [script_document.py](../client/src/learnharness_client/domain/script_document.py) | In-memory representation of a GDScript file. |

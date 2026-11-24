@@ -108,6 +108,9 @@ class MainWindow(
         # The script each pending code change was made from.
         self._learn_base_text: str | None = None
         self._mission_base_text: str | None = None
+        self._project_hint_level = 0
+        self._pending_hint: int | None = None
+        self._review_file: str | None = None
         self.setWindowTitle(T.APP_TITLE)
         self.resize(*design.MAIN_WINDOW_SIZE)
 

@@ -105,6 +105,44 @@ class TutorReviews:
             generated_files=generated,
         )
 
+    def _review_project(self, message: StudentMessage) -> Response:
+        """Feedback on the open script; it never changes the child's progress."""
+        code = message.code_excerpt or ""
+        if not code.strip():
+            return _error("no_code", "Öffne zuerst das Skript, das ich prüfen soll.")
+        task = None if message.project_description else TASKS.get(message.current_task or "")
+        line_count = len(code.splitlines())
+
+        def build(data: dict[str, Any]) -> LearningResponse:
+            feedback, _ = harness.filter_text(
+                str(data.get("feedback", "")), self.settings.max_code_lines_in_chat
+            )
+            if not feedback.strip():
+                raise harness.HarnessRejected("Rückmeldung fehlt")
+            lines = {
+                number
+                for number in data.get("marked_lines") or []
+                if isinstance(number, int) and not isinstance(number, bool)
+                if 1 <= number <= line_count
+            }
+            return LearningResponse(
+                mode="review", message=feedback.strip(), marked_lines=sorted(lines)[:20]
+            )
+
+        prompt = harness.user_prompt(
+            message,
+            task=f"{task.title}: {task.instructions}" if task else None,
+            extra=harness.chat_topics_note(self._topic_levels()),
+        )
+        response, _ = self._call_json(
+            "review",
+            self._system("review", message),
+            [{"role": "user", "content": prompt}],
+            harness.PROJECT_REVIEW_SCHEMA,
+            build,
+        )
+        return response
+
     def review_code(self, submission: CodeSubmission) -> ReviewResult | ErrorMessage:
         task = TASKS.get(submission.task_id)
         if task is None:

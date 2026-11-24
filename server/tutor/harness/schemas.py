@@ -55,6 +55,18 @@ def mission_exercise_schema(stage: int, topic: str | None) -> dict[str, Any]:
     return _obj(properties)
 
 
+EXPLAIN_SCHEMA = _obj(
+    {
+        key: value
+        for key, value in {
+            **EXERCISE_SCHEMA["properties"],
+            "kind": {"type": "string", "enum": ["multiple_choice"]},
+        }.items()
+        if key not in ("blanks", "new_file_content")
+    }
+)
+
+
 MISSION_SCHEMA = _obj(
     {
         "title": _STR,
@@ -110,6 +122,11 @@ def mission_schema(topics: list[str]) -> dict[str, Any]:
     properties = dict(MISSION_SCHEMA["properties"])
     properties["skill"] = {"type": "string", "enum": topics}
     return _obj(properties)
+
+
+PROJECT_REVIEW_SCHEMA = _obj(
+    {"feedback": _STR, "marked_lines": {"type": "array", "items": {"type": "integer"}}}
+)
 
 
 REVIEW_SCHEMA = _obj(

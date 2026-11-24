@@ -62,6 +62,7 @@ class ProjectActions:
         saved_plan = self.settings.project_plan(self.student_profile.profile_id, project.project_id)
         self.project_panel.load(ProjectPlan.from_dict(saved_plan))
         self._sync_project_idea()
+        self._reset_project_hints()
         self.settings.remember_project(project.root)
         self._refresh_recent_menu()
         self.script_tree.set_project(project)

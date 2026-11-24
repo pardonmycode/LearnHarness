@@ -44,6 +44,17 @@ class FakeConversation(FakeClientBase):
         )
         self._later(lambda: self.stream_finished.emit(response))
 
+    def _review_code(self, message: StudentMessage) -> None:
+        response = LearningResponse(
+            mode="review",
+            message=(
+                "Gut, dass du schon etwas gebaut hast! Schau dir Zeile 1 noch einmal an: "
+                "Macht sie genau das, was dein Projekt braucht?"
+            ),
+            marked_lines=[1] if (message.code_excerpt or "").strip() else [],
+        )
+        self._later(lambda: self.stream_finished.emit(response))
+
     def request_next_hint(self, task_id: str) -> None:
         python = task_id == "python_first_program"
         self.hint_level = min(4, self.hint_level + 1)

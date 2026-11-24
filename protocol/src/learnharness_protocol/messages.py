@@ -13,8 +13,9 @@ from .missions import Mission
 # chat: tutor chat · learn: LearnAgent round · explain: explain selected code
 # mission: start a mission from a wish · mission_step: work on one mission step
 # project_plan: ask the child questions so its project description gets clearer
+# review: feedback on the open script, without exercise and without progress
 StudentIntent = Literal[
-    "chat", "learn", "explain", "mission", "mission_step", "project_plan"
+    "chat", "learn", "explain", "mission", "mission_step", "project_plan", "review"
 ]
 MissionTitle = Annotated[str, Field(min_length=1, max_length=120)]
 ProjectQuestion = Annotated[str, Field(min_length=1, max_length=1000)]
@@ -47,6 +48,8 @@ class StudentMessage(ProtocolModel):
     mission_step_id: str | None = Field(default=None, max_length=64)
     # Started with the project button: the child named no wish of its own.
     mission_from_project: bool = False
+    # The hint button in a project: which of the four hint levels is wanted.
+    project_hint_level: int | None = Field(default=None, ge=1, le=4)
     project_description: str | None = Field(default=None, max_length=2000)
     project_question: str | None = Field(default=None, max_length=1000)
     project_turns: list[ProjectTurn] = Field(default_factory=list, max_length=12)
@@ -85,6 +88,8 @@ class LearningResponse(ProtocolModel):
     # Only a proposal: the description changes when the child accepts it.
     description_suggestion: str | None = Field(default=None, max_length=2000)
     project_ready: bool = False
+    # Lines of the reviewed script that need a look (only for mode "review").
+    marked_lines: list[int] = Field(default_factory=list, max_length=50)
     code_changes: list[dict[str, object]] = Field(default_factory=list)
 
 

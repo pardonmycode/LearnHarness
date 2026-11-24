@@ -48,6 +48,9 @@ class ServerResponses:
             self.learn_agent_panel.show_response(response)
             return
         self.tutor_panel.finish_stream(response)
+        self._hint_answered()
+        if response.mode == "review":
+            self._show_review_lines(response.marked_lines)
         if response.exercise is not None:
             self._exercise_received(response.exercise)
 
@@ -69,6 +72,7 @@ class ServerResponses:
 
     def _client_error(self, error: ClientError) -> None:
         owner, self._response_owner = self._response_owner, None
+        self._pending_hint = None  # the same hint can be asked for again
         if owner == "explain":
             self.explain_panel.show_error(error.message_for_child)
         elif owner == "mission":

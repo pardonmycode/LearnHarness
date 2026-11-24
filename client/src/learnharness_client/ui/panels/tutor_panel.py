@@ -43,6 +43,7 @@ class MessageInput(QPlainTextEdit):
 class TutorPanel(QWidget):
     message_submitted = pyqtSignal(str)
     next_hint_requested = pyqtSignal()
+    review_requested = pyqtSignal()
     cancel_requested = pyqtSignal()
 
     def __init__(self, parent=None) -> None:
@@ -73,10 +74,13 @@ class TutorPanel(QWidget):
         self.send_button = QPushButton(T.TUTOR_SEND)
         self.send_button.setProperty("primary", "true")
         self.hint_button = QPushButton(T.TUTOR_NEXT_HINT)
+        self.review_button = QPushButton(T.TUTOR_REVIEW)
+        self.review_button.setToolTip(T.TUTOR_REVIEW_TIP)
         self.stop_button = QPushButton(T.TUTOR_STOP)
         self.stop_button.setEnabled(False)
         buttons.addWidget(self.send_button)
         buttons.addWidget(self.hint_button)
+        buttons.addWidget(self.review_button)
         buttons.addWidget(self.stop_button)
         buttons.addStretch(1)
         buttons.addWidget(self.counter)
@@ -88,6 +92,7 @@ class TutorPanel(QWidget):
         self.send_button.clicked.connect(self._submit)
         self.input.submit_requested.connect(self._submit)
         self.hint_button.clicked.connect(self.next_hint_requested)
+        self.review_button.clicked.connect(self.review_requested)
         self.stop_button.clicked.connect(self.cancel_requested)
         self.input.textChanged.connect(self._update_counter)
         self._stream_cursor: QTextCursor | None = None
@@ -105,10 +110,12 @@ class TutorPanel(QWidget):
         can_send = self._online and not self._streaming
         self.send_button.setEnabled(can_send)
         self.hint_button.setEnabled(can_send)
+        self.review_button.setEnabled(can_send)
         self.stop_button.setEnabled(self._streaming)
         tip = "" if self._online else T.TUTOR_OFFLINE_TIP
         self.send_button.setToolTip(tip)
         self.hint_button.setToolTip(tip)
+        self.review_button.setToolTip(tip or T.TUTOR_REVIEW_TIP)
 
     def _update_counter(self) -> None:
         text = self.input.toPlainText()
@@ -128,12 +135,14 @@ class TutorPanel(QWidget):
         self.input.clear()
         self.message_submitted.emit(text)
 
-    def ask(self, text: str) -> None:
-        """Sends a question for the child, for example a hint request."""
-        if not self.send_button.isEnabled():
-            return
+    def show_request(self, text: str) -> None:
+        """Shows a request the app sends for the child, for example a hint."""
         self.append_message(T.CHILD_NAME, text, QColor(colors().accent), markdown=False)
-        self.message_submitted.emit(text)
+
+    def set_waiting(self) -> None:
+        """A request without streamed text is on its way: no second one meanwhile."""
+        self._streaming = True
+        self._sync_buttons()
 
     def _begin_message(self, sender: str, color: QColor) -> QTextCursor:
         cursor = self.history.textCursor()
@@ -190,7 +199,8 @@ class TutorPanel(QWidget):
         self._stream_cursor = None
         self._streaming = False
         self._sync_buttons()
-        self.hint_progress.setValue(response.hint_level)
+        if response.mode != "review":  # a review is no step of the hints
+            self.hint_progress.setValue(response.hint_level)
 
     def show_error(self, message: str) -> None:
         self.append_message(T.NOTICE_NAME, message, QColor(colors().danger), markdown=False)

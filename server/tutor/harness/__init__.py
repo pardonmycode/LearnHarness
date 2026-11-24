@@ -27,8 +27,9 @@ from .checks import (
 )
 from .code_fence import has_stray_fence, unwrap_code_fence
 from .exercise_kinds import check_kind_in_file
+from .explain import EXPLAIN_FORMAT_HELP, check_explanation
 from .game_blueprint import game_blueprint, is_game_project
-from .learn_levels import LEVEL_KINDS, learn_topics_note, level_instructions
+from .learn_levels import LEVEL_KINDS, chat_topics_note, learn_topics_note, level_instructions
 from .mission_code import (
     apply_typed_answers,
     check_blanks_are_clear,
@@ -37,13 +38,21 @@ from .mission_code import (
     check_python_syntax,
 )
 from .mission_plan import check_mission_plan
-from .prompts import mission_step_context, system_prompt, topic_levels, user_prompt
+from .prompts import (
+    history_entry,
+    mission_step_context,
+    system_prompt,
+    topic_levels,
+    user_prompt,
+)
 from .rules import BASE_RULES, EXPERIENCE, INTENTS, LANGUAGES, LEVELS, SKILLS
 from .schemas import (
     EXERCISE_FORMAT_HELP,
     EXERCISE_SCHEMA,
+    EXPLAIN_SCHEMA,
     MISSION_SCHEMA,
     PROJECT_PLAN_SCHEMA,
+    PROJECT_REVIEW_SCHEMA,
     REVIEW_SCHEMA,
     learn_exercise_schema,
     mission_exercise_schema,
@@ -74,6 +83,8 @@ __all__ = [
     "MAX_DESCRIPTION_LENGTH",
     "PLAN_ENOUGH_ANSWERS",
     "PLAN_MIN_ANSWERS",
+    "EXPLAIN_FORMAT_HELP",
+    "EXPLAIN_SCHEMA",
     "LEVEL_KINDS",
     "MISSION_SCHEMA",
     "MISSION_TOPICS",
@@ -82,6 +93,7 @@ __all__ = [
     "mission_exercise_schema",
     "mission_schema",
     "has_stray_fence",
+    "history_entry",
     "known_topics_note",
     "learn_exercise_schema",
     "learn_topics_note",
@@ -91,6 +103,7 @@ __all__ = [
     "stage_for",
     "stage_instructions",
     "PROJECT_PLAN_SCHEMA",
+    "PROJECT_REVIEW_SCHEMA",
     "REPLACEMENT",
     "REVIEW_SCHEMA",
     "SKILLS",
@@ -98,8 +111,10 @@ __all__ = [
     "apply_typed_answers",
     "build_exercise",
     "changed_lines",
+    "chat_topics_note",
     "check_answers",
     "check_blanks_are_clear",
+    "check_explanation",
     "check_blanks_in_file",
     "check_keeps_code",
     "check_kind_in_file",

@@ -6,11 +6,12 @@ import codecs
 import re
 from collections.abc import Callable
 
-from PyQt6.QtCore import QProcess, QProcessEnvironment, QTimer
+from PyQt6.QtCore import QProcess, QProcessEnvironment, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 from learnharness_client import design
 from learnharness_client.domain.project import Project
+from learnharness_client.domain.run_error import find_run_error, hide_private_paths
 from learnharness_client.domain.run_target import RunTarget
 from learnharness_client.domain.terminal_commands import CommandShell
 
@@ -19,10 +20,13 @@ from .terminal_console import TerminalConsole
 
 MAX_PENDING = 32_000  # an endless print loop must not freeze the window
 FLUSH_MS = 40
+MAX_ERROR_SCAN = 16_000  # the end of the output, where an error stands
 _ANSI_CODE = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
 
 
 class TerminalPanel(QWidget):
+    run_succeeded = pyqtSignal()
+
     def __init__(
         self,
         before_run: Callable[[], bool],
@@ -36,6 +40,9 @@ class TerminalPanel(QWidget):
         self._pending = ""
         self._dropped = False
         self._stopped = False
+        self._target: RunTarget | None = None
+        self._run_output = ""
+        self.last_error: str | None = None
         self._decoder = codecs.getincrementaldecoder("utf-8")("replace")
         self.process = QProcess(self)
         self.process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
@@ -62,6 +69,7 @@ class TerminalPanel(QWidget):
 
     def set_project(self, project: Project) -> None:
         self.shutdown()
+        self.last_error = None
         self.shell = CommandShell(project)
         self.console.reset()
         self.console.write(self.shell.welcome() + "\n")
@@ -118,6 +126,8 @@ class TerminalPanel(QWidget):
     # The running program --------------------------------------------------------------
 
     def _start(self, target: RunTarget) -> None:
+        self._target = target
+        self._run_output = ""
         self._pending = ""
         self._dropped = False
         self._stopped = False
@@ -142,6 +152,7 @@ class TerminalPanel(QWidget):
 
     def _append(self, text: str) -> None:
         self._pending += text
+        self._run_output = (self._run_output + text)[-MAX_ERROR_SCAN:]
         if len(self._pending) > MAX_PENDING:
             self._pending = self._pending[-MAX_PENDING:]
             self._dropped = True
@@ -162,11 +173,23 @@ class TerminalPanel(QWidget):
             self.console.write(T.TERMINAL_NOT_STARTED + "\n")
             self._write_prompt()
 
-    def _finished(self, _code: int, _status: QProcess.ExitStatus) -> None:
+    def _remember_result(self, code: int) -> None:
+        """The latest error for the tutor; a run without one makes older errors obsolete."""
+        target = self._target
+        if target is None:
+            return
+        output = _ANSI_CODE.sub("", self._run_output).replace("\r\n", "\n").replace("\r", "\n")
+        found = find_run_error(output, is_python=target.is_python, exit_code=code)
+        self.last_error = hide_private_paths(found, target.project_root) if found else None
+        if found is None and code == 0 and not self._stopped:
+            self.run_succeeded.emit()
+
+    def _finished(self, code: int, _status: QProcess.ExitStatus) -> None:
         self._read_output()
         self._append(self._decoder.decode(b"", final=True))
         self._flush_timer.stop()
         self._flush()
+        self._remember_result(code)
         if self._stopped:
             if not self.console.at_line_start():
                 self.console.write("\n")

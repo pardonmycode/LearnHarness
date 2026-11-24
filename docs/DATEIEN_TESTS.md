@@ -52,6 +52,10 @@ Alle Testdateien. Die Beschreibung ist jeweils der Kopfkommentar der Datei.
 | [test_project_choice.py](../client/tests/ui/test_project_choice.py) | Finding Godot's known projects and choosing one at first start. |
 | [test_project_panel.py](../client/tests/ui/test_project_panel.py) | The Projekt tab: description, saved state and the way into the other tabs. |
 | [test_project_talk.py](../client/tests/ui/test_project_talk.py) | The helper's questions make the project description clearer. |
+| [test_tutor_hints.py](../client/tests/ui/test_tutor_hints.py) | The hint button works on the child's project. |
+| [test_code_review.py](../client/tests/ui/test_code_review.py) | The button "Code prüfen lassen" sends the open script and marks the lines. |
+| [test_run_error.py](../client/tests/domain/test_run_error.py) | Only the real error of a program reaches the tutor, without private paths. |
+| [test_terminal_errors.py](../client/tests/ui/test_terminal_errors.py) | The tutor knows the latest error from the terminal and forgets it once it is fixed. |
 | [project_tab_helpers.py](../client/tests/ui/project_tab_helpers.py) | Shared helpers for the tests of the Projekt tab. |
 | [test_python_editor.py](../client/tests/ui/test_python_editor.py) | Editing Python: indentation, highlighting, and the LearnAgent writing Python only. |
 | [test_review_fixes.py](../client/tests/ui/test_review_fixes.py) | Regression tests for fixes from the TODO_CLAUDE review. |
@@ -85,6 +89,9 @@ Alle Testdateien. Die Beschreibung ist jeweils der Kopfkommentar der Datei.
 | [test_tutor_code_fence.py](../server/tests/test_tutor_code_fence.py) | Markdown fences never end up in a child's script. |
 | [test_tutor_learn_levels.py](../server/tests/test_tutor_learn_levels.py) | Each LearnAgent level has its own kind of exercise, checked by the server. |
 | [test_tutor_learn_prompt.py](../server/tests/test_tutor_learn_prompt.py) | The LearnAgent prompt has no contradicting rules. |
+| [test_tutor_explain.py](../server/tests/test_tutor_explain.py) | The tab "Code verstehen" explains openly and asks a question that cannot be copied. |
+| [test_tutor_chat.py](../server/tests/test_tutor_chat.py) | The tutor chat works on the child's project and keeps its history small. |
+| [test_tutor_code_review.py](../server/tests/test_tutor_code_review.py) | Feedback on the open script: about the project, without progress or a fake message. |
 | [mission_helpers.py](../server/tests/mission_helpers.py) | Shared helpers for the tests of mission topics and stages. |
 | [test_tutor_providers.py](../server/tests/test_tutor_providers.py) | Provider switch, health and session access. |
 | [test_tutor_rounds.py](../server/tests/test_tutor_rounds.py) | Learning rounds and missions. |

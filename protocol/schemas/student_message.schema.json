@@ -5,7 +5,7 @@
       "description": "One question of the helper about the project and the child's answer.",
       "properties": {
         "protocol_version": {
-          "default": "1.9",
+          "default": "1.11",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -33,7 +33,7 @@
   "additionalProperties": false,
   "properties": {
     "protocol_version": {
-      "default": "1.9",
+      "default": "1.11",
       "title": "Protocol Version",
       "type": "string"
     },
@@ -51,7 +51,8 @@
         "explain",
         "mission",
         "mission_step",
-        "project_plan"
+        "project_plan",
+        "review"
       ],
       "title": "Intent",
       "type": "string"
@@ -198,6 +199,20 @@
       "default": false,
       "title": "Mission From Project",
       "type": "boolean"
+    },
+    "project_hint_level": {
+      "anyOf": [
+        {
+          "maximum": 4,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Project Hint Level"
     },
     "project_description": {
       "anyOf": [

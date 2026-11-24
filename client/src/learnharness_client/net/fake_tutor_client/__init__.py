@@ -34,6 +34,9 @@ class FakeTutorClient(FakeMissions, FakeLearning, FakeConversation, FakeClientBa
         if message.intent == "explain":
             self._explain(message)
             return
+        if message.intent == "review":
+            self._review_code(message)
+            return
         if message.intent == "project_plan":
             self._plan_project(message)
             return
@@ -57,6 +60,9 @@ class FakeTutorClient(FakeMissions, FakeLearning, FakeConversation, FakeClientBa
         text = questions.get(self.experience_level, questions[0])
         if message.language == "python":
             text = "Was soll dein Programm als Erstes auf dem Bildschirm anzeigen?"
+        hint = message.project_hint_level
+        if hint:
+            text = f"Hinweis {hint}: Was ist der kleinste nächste Schritt für dein Projekt?"
         words = [
             word + (" " if index < len(text.split()) - 1 else "")
             for index, word in enumerate(text.split())
@@ -66,9 +72,9 @@ class FakeTutorClient(FakeMissions, FakeLearning, FakeConversation, FakeClientBa
         self._later(
             lambda: self._finish_stream(
                 LearningResponse(
-                    mode="socratic",
+                    mode="hint" if hint else "socratic",
                     message=text,
-                    hint_level=self.hint_level,
+                    hint_level=hint or self.hint_level,
                 )
             ),
             len(words) + 1,

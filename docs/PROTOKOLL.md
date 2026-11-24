@@ -31,6 +31,7 @@ Die erzeugten Schemas liegen in [`protocol/schemas/`](../protocol/schemas/).
 | `mission` | Mission aus einem Wunsch planen | `_plan_mission` |
 | `mission_step` | Einen Missionsschritt bearbeiten | `_mission_step` |
 | `project_plan` | Fragen zum Projekt stellen, Beschreibung vorschlagen | `_plan_project` |
+| `review` | Rückmeldung zum geöffneten Skript, ohne Fortschritt; Antwort mit `marked_lines` | `_review_project` |
 
 `language` ist `gdscript` oder `python`.
 
@@ -41,6 +42,8 @@ Kind den Vorschlag übernimmt.
 
 `mission_from_project` markiert eine Mission, die das Kind ohne eigenen Wunsch über den
 Projekt-Knopf startet. Dann gilt die Lernreihenfolge der Themen verbindlich.
+
+`project_hint_level` (1 bis 4) markiert den Hinweis-Knopf in einem Projekt.
 
 ## Protokoll ändern
 

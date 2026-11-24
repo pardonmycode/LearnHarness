@@ -80,3 +80,18 @@ def learn_topics_note(levels: dict[str, int], has_focus: bool = False) -> str:
         f"{start} Braucht der Wunsch ein weiteres Thema, nimm nur dieses eine und erkläre es "
         "einfach. Vorhandenen Code darfst du weiter nutzen."
     )
+
+
+def chat_topics_note(levels: dict[str, int]) -> str:
+    """The same limit in words that fit a question in the tutor chat."""
+    known = [topic for topic in MISSION_TOPICS if levels.get(topic, 0) >= 1]
+    start = (
+        f"Diese Themen kennt das Kind schon: {', '.join(known)}. Erkläre und zeige möglichst nur "
+        "damit"
+        if known
+        else "Das Kind hat noch kein Thema begonnen. Erkläre mit den einfachsten Anweisungen"
+    )
+    return (
+        f"{start}, auch wenn ein Bauplan mehr vorsieht. Braucht die Frage ein weiteres Thema, nimm "
+        "nur dieses eine und erkläre es einfach. Vorhandenen Code darfst du weiter nutzen."
+    )

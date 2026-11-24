@@ -94,6 +94,7 @@ def build_exercise(
     stage: int | None = None,
     topic: str | None = None,
     level: int | None = None,
+    kind: str | None = None,
 ) -> BuiltExercise:
     """Turn structured AI output into a protocol exercise; answers stay on the server.
 
@@ -102,7 +103,7 @@ def build_exercise(
     exercise_id = f"{prefix}_{uuid4().hex[:12]}"
     allowed = MISSION_TOPICS if stage else SKILLS
     skill_id = topic or (data.get("skill") if data.get("skill") in allowed else "variables")
-    required = STAGE_KINDS[stage] if stage else LEVEL_KINDS.get(level or 0)
+    required = STAGE_KINDS[stage] if stage else kind or LEVEL_KINDS.get(level or 0)
     if required and data.get("kind") != required:
         raise HarnessRejected(f"Hier ist nur die Aufgabenart {required} erlaubt")
     message, notes = filter_text(str(data.get("message", "")).strip(), max_lines)

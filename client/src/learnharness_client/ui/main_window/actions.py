@@ -101,8 +101,10 @@ class WindowActions:
         self.editor_tabs.generated_file_applied.connect(self._generated_file_applied)
         self.tutor_panel.message_submitted.connect(self.send_tutor_message)
         self.tutor_panel.next_hint_requested.connect(self._next_hint)
+        self.tutor_panel.review_requested.connect(self.request_code_review)
         self.tutor_panel.cancel_requested.connect(self.tutor_client.cancel)
         self.problems_panel.problem_activated.connect(self.open_problem)
+        self.terminal.run_succeeded.connect(self.problems_panel.mark_resolved)
 
         self.tutor_client.health_changed.connect(self._health_changed)
         self.tutor_client.session_started.connect(self._session_started)
