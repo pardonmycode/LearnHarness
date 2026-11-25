@@ -33,15 +33,30 @@ from .messages import (
 from .missions import Mission, MissionList, MissionStep
 from .profiles import ChildProfile, ChildProfileList, ChildProfileUpdate, LevelUnlock
 from .progress import ProgressUpdate, Skill, SkillLevel
+from .scenes import (
+    AddNode,
+    ConnectSignal,
+    DisconnectSignal,
+    RemoveNode,
+    SceneChange,
+    SceneConnection,
+    SceneContext,
+    SceneEdit,
+    SceneNode,
+    SetProperty,
+)
 
 __all__ = [
     "PROTOCOL_VERSION",
+    "AddNode",
     "Blank",
     "ChildProfile",
     "ChildProfileList",
     "ChildProfileUpdate",
     "Choice",
     "CodeSubmission",
+    "ConnectSignal",
+    "DisconnectSignal",
     "ErrorMessage",
     "Exercise",
     "FillBlanksExercise",
@@ -59,10 +74,17 @@ __all__ = [
     "OrderingExercise",
     "ProgressUpdate",
     "ProjectTurn",
+    "RemoveNode",
     "ReviewItem",
     "ReviewResult",
+    "SceneChange",
+    "SceneConnection",
+    "SceneContext",
+    "SceneEdit",
+    "SceneNode",
     "SessionCreate",
     "SessionInfo",
+    "SetProperty",
     "Skill",
     "SkillLevel",
     "StreamChunk",

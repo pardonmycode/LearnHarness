@@ -3,7 +3,7 @@
 [← Zur Übersicht](README.md) · [Alle Protokoll-Dateien](DATEIEN_PROTOKOLL.md)
 
 Das Paket `learnharness_protocol` definiert alle Nachrichten mit Pydantic. Client und Server
-nutzen dieselben Modelle. Die aktuelle Version ist **1.6**
+nutzen dieselben Modelle. Die aktuelle Version ist **1.12**
 ([`base.py`](../protocol/src/learnharness_protocol/base.py)). Unbekannte Felder werden abgelehnt,
 deshalb sollten Client und Server immer zusammen aktualisiert werden.
 
@@ -14,6 +14,7 @@ deshalb sollten Client und Server immer zusammen aktualisiert werden.
 | [`messages.py`](../protocol/src/learnharness_protocol/messages.py) | `StudentMessage`, `LearningResponse`, Sitzung, Aufgaben |
 | [`exercises.py`](../protocol/src/learnharness_protocol/exercises.py) | Übungen, Abgaben, `ReviewResult` |
 | [`missions.py`](../protocol/src/learnharness_protocol/missions.py) | Missionen und Schritte |
+| [`scenes.py`](../protocol/src/learnharness_protocol/scenes.py) | Godot-Szenen: Kontext, erlaubte Änderungen, Werteprüfung |
 | [`progress.py`](../protocol/src/learnharness_protocol/progress.py) | Fähigkeiten und Fortschritt |
 | [`profiles.py`](../protocol/src/learnharness_protocol/profiles.py) | Kinderprofile der Verwaltung |
 | [`health.py`](../protocol/src/learnharness_protocol/health.py) | Serverstatus |
@@ -44,6 +45,31 @@ Kind den Vorschlag übernimmt.
 Projekt-Knopf startet. Dann gilt die Lernreihenfolge der Themen verbindlich.
 
 `project_hint_level` (1 bis 4) markiert den Hinweis-Knopf in einem Projekt.
+
+## Godot-Szenen
+
+Bei Godot-Projekten schickt der Client mit jeder Anfrage `scene` und `input_actions` mit.
+`scene` ist die Szene (`.tscn`, nur Godot 4), an der das offene Skript hängt: Knoten mit Pfad,
+Typ, Instanz, Skript und ein paar einfachen Werten, dazu die Signalverbindungen und der Name der
+Wurzel (`root_name`). Knoten innerhalb einer Instanz sind unbekannt und bleiben unberührt.
+`input_actions` sind die Aktionen aus dem Abschnitt `[input]` von `project.godot`.
+`project_files` listet die Szenen und Skripte des Projekts (höchstens 200, Szenen zuerst).
+Neuer Code darf mit `preload()`/`load()` nur `.tscn`- und `.gd`-Dateien daraus laden.
+
+Eine LearnAgent-Runde oder ein Missionsschritt kann die Szene ändern. Die Änderungen sind einzelne,
+geprüfte Schritte (`SceneChange`), nie eine ganze Datei:
+
+| `op` | Felder |
+|---|---|
+| `add_node` | `parent`, `name`, `type` (nur Typen aus `NODE_TYPES`) |
+| `set_property` | `node`, `property`, `value` (nur einfache Werte, siehe `value_problem`) |
+| `remove_node` | `node` (nicht die Wurzel, nicht der Knoten mit dem Skript) |
+| `connect` / `disconnect` | `signal`, `from_node`, `to_node`, `method` |
+
+`LearningResponse.scene_preview` zeigt vor der Antwort, was dazukommt. `ReviewResult.scene_edits`
+liefert die Änderungen erst nach einer richtigen Antwort. Der Client schreibt die Szene nur, wenn
+sie seit der Anfrage gleich geblieben ist und der Code geschrieben wurde, und legt vorher eine
+Sicherung unter „Ältere Versionen“ an.
 
 ## Protokoll ändern
 

@@ -16,6 +16,7 @@ class ProjectFlow:
         return {
             "project_description": plan.description.strip() or None,
             "project_done_missions": list(plan.finished_missions),
+            **self._scene_request_context(),
         }
 
     def _latest_error(self) -> str | None:

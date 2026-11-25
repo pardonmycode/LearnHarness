@@ -46,3 +46,24 @@ def check_mission_plan(
     if not any(step["kind"] == "exercise" for step in steps):
         raise HarnessRejected('Mission braucht mindestens einen Schritt "exercise"')
     return steps
+
+
+def check_open_file(value: Any, files: list[str], current: str | None) -> str | None:
+    """Another script the wish belongs in, a scene that still needs a script, or None."""
+    path = str(value or "").strip().removeprefix("res://").lstrip("/")
+    if not path:
+        return None
+    known = {item.casefold(): item for item in files}
+    folded = path.casefold()
+    found = known.get(folded)
+    if found is None or folded == (current or "").casefold():
+        raise HarnessRejected('"open_file" muss ein anderes Skript aus <dateien> sein oder leer')
+    if folded.endswith(".gd"):
+        return found
+    folder = folded.rpartition("/")[0]
+    has_script = any(item.endswith(".gd") and item.rpartition("/")[0] == folder for item in known)
+    if not folded.endswith(".tscn") or has_script:
+        raise HarnessRejected(
+            '"open_file" nennt eine Szene nur, wenn in ihrem Ordner noch kein Skript liegt'
+        )
+    return found

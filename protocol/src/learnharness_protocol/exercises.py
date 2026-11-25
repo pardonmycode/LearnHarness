@@ -7,6 +7,7 @@ from typing import Annotated, Literal
 from pydantic import Field, model_validator
 
 from .base import ProtocolModel
+from .scenes import SceneEdit
 
 
 class Blank(ProtocolModel):
@@ -104,10 +105,11 @@ class ReviewResult(ProtocolModel):
     follow_up_question: str | None = None
     marked_lines: list[int] = Field(default_factory=list)
     generated_files: list[GeneratedFile] = Field(default_factory=list)
+    scene_edits: list[SceneEdit] = Field(default_factory=list, max_length=1)
 
     @model_validator(mode="after")
     def generated_code_requires_correct_answer(self) -> ReviewResult:
-        if self.generated_files and self.correct is not True:
+        if (self.generated_files or self.scene_edits) and self.correct is not True:
             raise ValueError(
                 "Generierter Code ist nur nach einer richtigen Antwort erlaubt."
             )

@@ -74,6 +74,11 @@ class TutorRounds:
         system = (
             self._system(intent, message) + "\n\n" + (help_text or harness.EXERCISE_FORMAT_HELP)
         )
+        godot_code = allow_code and message.language == "gdscript"
+        if godot_code:
+            system += "\n\n" + harness.scene_help(message.scene)
+        elif intent == "mission_step" and message.scene is not None:
+            system += "\n\n" + harness.NO_CODE_STEP_NOTE
         schema = harness.EXERCISE_SCHEMA
         if stage:
             schema = harness.mission_exercise_schema(stage, topic)
@@ -81,6 +86,8 @@ class TutorRounds:
             schema = harness.learn_exercise_schema(level)
         elif explaining:
             schema = harness.EXPLAIN_SCHEMA
+        if godot_code and message.scene is not None:
+            schema = harness.with_scene_changes(schema)
         prompt = harness.user_prompt(message, extra=extra)
         before = message.code_excerpt or ""
 
@@ -132,6 +139,15 @@ class TutorRounds:
                     )
                     if reason:
                         raise harness.HarnessRejected(f"Code passt nicht zur Übung: {reason}")
+                if godot_code:
+                    built.scene_changes = harness.checked_scene_changes(
+                        message.scene,
+                        message.input_actions,
+                        message.project_files,
+                        data.get("scene_changes"),
+                        before,
+                        built.new_file_content,
+                    )
             else:
                 built.new_file_content = ""
             return built
@@ -149,6 +165,8 @@ class TutorRounds:
             explanation=built.explanation,
             generated_path=(message.file or "") if built.new_file_content else "",
             generated_content=built.new_file_content,
+            scene_path=message.scene.path if built.scene_changes and message.scene else "",
+            scene_changes=[change.model_dump(mode="json") for change in built.scene_changes],
         )
         return built
 
@@ -167,6 +185,7 @@ class TutorRounds:
             mode="exercise",
             message=built.message or "Beantworte diese Frage, dann schreibe ich den Code.",
             exercise=built.exercise,
+            scene_preview=harness.scene_preview(message.scene, built.scene_changes),
         )
 
     def _explain(self, message: StudentMessage) -> Response:

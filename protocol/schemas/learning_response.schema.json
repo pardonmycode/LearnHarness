@@ -1,10 +1,49 @@
 {
   "$defs": {
+    "AddNode": {
+      "additionalProperties": false,
+      "properties": {
+        "protocol_version": {
+          "default": "1.12",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "op": {
+          "const": "add_node",
+          "default": "add_node",
+          "title": "Op",
+          "type": "string"
+        },
+        "parent": {
+          "maxLength": 300,
+          "minLength": 1,
+          "pattern": "^(?:\\.|[^\"\\\\\\[\\]\\n:%@/.][^\"\\\\\\[\\]\\n:%@/]{0,79}(?:/[^\"\\\\\\[\\]\\n:%@/.][^\"\\\\\\[\\]\\n:%@/]{0,79})*)$",
+          "title": "Parent",
+          "type": "string"
+        },
+        "name": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,39}$",
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "parent",
+        "name",
+        "type"
+      ],
+      "title": "AddNode",
+      "type": "object"
+    },
     "Blank": {
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.11",
+          "default": "1.12",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -32,7 +71,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.11",
+          "default": "1.12",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -52,11 +91,115 @@
       "title": "Choice",
       "type": "object"
     },
+    "ConnectSignal": {
+      "additionalProperties": false,
+      "properties": {
+        "protocol_version": {
+          "default": "1.12",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "op": {
+          "const": "connect",
+          "default": "connect",
+          "title": "Op",
+          "type": "string"
+        },
+        "signal": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-z_][A-Za-z0-9_]{0,63}$",
+          "title": "Signal",
+          "type": "string"
+        },
+        "from_node": {
+          "maxLength": 300,
+          "minLength": 1,
+          "pattern": "^(?:\\.|[^\"\\\\\\[\\]\\n:%@/.][^\"\\\\\\[\\]\\n:%@/]{0,79}(?:/[^\"\\\\\\[\\]\\n:%@/.][^\"\\\\\\[\\]\\n:%@/]{0,79})*)$",
+          "title": "From Node",
+          "type": "string"
+        },
+        "to_node": {
+          "maxLength": 300,
+          "minLength": 1,
+          "pattern": "^(?:\\.|[^\"\\\\\\[\\]\\n:%@/.][^\"\\\\\\[\\]\\n:%@/]{0,79}(?:/[^\"\\\\\\[\\]\\n:%@/.][^\"\\\\\\[\\]\\n:%@/]{0,79})*)$",
+          "title": "To Node",
+          "type": "string"
+        },
+        "method": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-z_][A-Za-z0-9_]{0,63}$",
+          "title": "Method",
+          "type": "string"
+        }
+      },
+      "required": [
+        "signal",
+        "from_node",
+        "to_node",
+        "method"
+      ],
+      "title": "ConnectSignal",
+      "type": "object"
+    },
+    "DisconnectSignal": {
+      "additionalProperties": false,
+      "properties": {
+        "protocol_version": {
+          "default": "1.12",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "op": {
+          "const": "disconnect",
+          "default": "disconnect",
+          "title": "Op",
+          "type": "string"
+        },
+        "signal": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-z_][A-Za-z0-9_]{0,63}$",
+          "title": "Signal",
+          "type": "string"
+        },
+        "from_node": {
+          "maxLength": 300,
+          "minLength": 1,
+          "pattern": "^(?:\\.|[^\"\\\\\\[\\]\\n:%@/.][^\"\\\\\\[\\]\\n:%@/]{0,79}(?:/[^\"\\\\\\[\\]\\n:%@/.][^\"\\\\\\[\\]\\n:%@/]{0,79})*)$",
+          "title": "From Node",
+          "type": "string"
+        },
+        "to_node": {
+          "maxLength": 300,
+          "minLength": 1,
+          "pattern": "^(?:\\.|[^\"\\\\\\[\\]\\n:%@/.][^\"\\\\\\[\\]\\n:%@/]{0,79}(?:/[^\"\\\\\\[\\]\\n:%@/.][^\"\\\\\\[\\]\\n:%@/]{0,79})*)$",
+          "title": "To Node",
+          "type": "string"
+        },
+        "method": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-z_][A-Za-z0-9_]{0,63}$",
+          "title": "Method",
+          "type": "string"
+        }
+      },
+      "required": [
+        "signal",
+        "from_node",
+        "to_node",
+        "method"
+      ],
+      "title": "DisconnectSignal",
+      "type": "object"
+    },
     "FillBlanksExercise": {
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.11",
+          "default": "1.12",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -112,7 +255,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.11",
+          "default": "1.12",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -168,7 +311,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.11",
+          "default": "1.12",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -229,7 +372,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.11",
+          "default": "1.12",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -281,7 +424,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.11",
+          "default": "1.12",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -349,7 +492,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.11",
+          "default": "1.12",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -373,7 +516,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.11",
+          "default": "1.12",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -420,11 +563,143 @@
       "title": "OrderingExercise",
       "type": "object"
     },
+    "RemoveNode": {
+      "additionalProperties": false,
+      "properties": {
+        "protocol_version": {
+          "default": "1.12",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "op": {
+          "const": "remove_node",
+          "default": "remove_node",
+          "title": "Op",
+          "type": "string"
+        },
+        "node": {
+          "maxLength": 300,
+          "minLength": 1,
+          "pattern": "^(?:\\.|[^\"\\\\\\[\\]\\n:%@/.][^\"\\\\\\[\\]\\n:%@/]{0,79}(?:/[^\"\\\\\\[\\]\\n:%@/.][^\"\\\\\\[\\]\\n:%@/]{0,79})*)$",
+          "title": "Node",
+          "type": "string"
+        }
+      },
+      "required": [
+        "node"
+      ],
+      "title": "RemoveNode",
+      "type": "object"
+    },
+    "SceneEdit": {
+      "additionalProperties": false,
+      "description": "Changes to one scene file; the client applies them in this order.",
+      "properties": {
+        "protocol_version": {
+          "default": "1.12",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "path": {
+          "maxLength": 500,
+          "minLength": 6,
+          "title": "Path",
+          "type": "string"
+        },
+        "changes": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "add_node": "#/$defs/AddNode",
+                "connect": "#/$defs/ConnectSignal",
+                "disconnect": "#/$defs/DisconnectSignal",
+                "remove_node": "#/$defs/RemoveNode",
+                "set_property": "#/$defs/SetProperty"
+              },
+              "propertyName": "op"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/AddNode"
+              },
+              {
+                "$ref": "#/$defs/SetProperty"
+              },
+              {
+                "$ref": "#/$defs/RemoveNode"
+              },
+              {
+                "$ref": "#/$defs/ConnectSignal"
+              },
+              {
+                "$ref": "#/$defs/DisconnectSignal"
+              }
+            ]
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Changes",
+          "type": "array"
+        },
+        "explanation": {
+          "default": "",
+          "maxLength": 1000,
+          "title": "Explanation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "changes"
+      ],
+      "title": "SceneEdit",
+      "type": "object"
+    },
+    "SetProperty": {
+      "additionalProperties": false,
+      "properties": {
+        "protocol_version": {
+          "default": "1.12",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "op": {
+          "const": "set_property",
+          "default": "set_property",
+          "title": "Op",
+          "type": "string"
+        },
+        "node": {
+          "maxLength": 300,
+          "minLength": 1,
+          "pattern": "^(?:\\.|[^\"\\\\\\[\\]\\n:%@/.][^\"\\\\\\[\\]\\n:%@/]{0,79}(?:/[^\"\\\\\\[\\]\\n:%@/.][^\"\\\\\\[\\]\\n:%@/]{0,79})*)$",
+          "title": "Node",
+          "type": "string"
+        },
+        "property": {
+          "maxLength": 64,
+          "title": "Property",
+          "type": "string"
+        },
+        "value": {
+          "maxLength": 200,
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "node",
+        "property",
+        "value"
+      ],
+      "title": "SetProperty",
+      "type": "object"
+    },
     "TextBlank": {
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.11",
+          "default": "1.12",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -448,7 +723,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.11",
+          "default": "1.12",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -504,7 +779,7 @@
   "additionalProperties": false,
   "properties": {
     "protocol_version": {
-      "default": "1.11",
+      "default": "1.12",
       "title": "Protocol Version",
       "type": "string"
     },
@@ -627,6 +902,17 @@
       },
       "title": "Code Changes",
       "type": "array"
+    },
+    "scene_preview": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SceneEdit"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     }
   },
   "required": [

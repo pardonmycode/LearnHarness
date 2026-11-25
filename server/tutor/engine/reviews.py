@@ -13,6 +13,7 @@ from learnharness_protocol import (
     LearningResponse,
     ReviewItem,
     ReviewResult,
+    SceneEdit,
     StudentMessage,
     Submission,
 )
@@ -91,6 +92,17 @@ class TutorReviews:
                     explanation="Die Kommentare im Code erklären jede neue Zeile.",
                 )
             )
+        scene_edits = (
+            [
+                SceneEdit(
+                    path=record.scene_path,
+                    changes=record.scene_changes,
+                    explanation=harness.SCENE_EXPLANATION,
+                )
+            ]
+            if record.scene_path and record.scene_changes and generated
+            else []
+        )
         if record.solved_at is None:
             record.solved_at = timezone.now()
             record.save(update_fields=["solved_at"])
@@ -103,6 +115,7 @@ class TutorReviews:
             per_item=per_item,
             feedback=record.explanation or "Richtig!",
             generated_files=generated,
+            scene_edits=scene_edits,
         )
 
     def _review_project(self, message: StudentMessage) -> Response:
@@ -112,6 +125,18 @@ class TutorReviews:
             return _error("no_code", "Öffne zuerst das Skript, das ich prüfen soll.")
         task = None if message.project_description else TASKS.get(message.current_task or "")
         line_count = len(code.splitlines())
+        findings = (
+            harness.scene_findings(
+                message.scene,
+                message.input_actions,
+                message.project_files,
+                code,
+                message.excerpt_start_line or 1,
+            )
+            if message.language == "gdscript"
+            else []
+        )
+        found_lines = {line for _, line in findings if line is not None}
 
         def build(data: dict[str, Any]) -> LearningResponse:
             feedback, _ = harness.filter_text(
@@ -119,7 +144,7 @@ class TutorReviews:
             )
             if not feedback.strip():
                 raise harness.HarnessRejected("Rückmeldung fehlt")
-            lines = {
+            lines = found_lines | {
                 number
                 for number in data.get("marked_lines") or []
                 if isinstance(number, int) and not isinstance(number, bool)
@@ -129,10 +154,11 @@ class TutorReviews:
                 mode="review", message=feedback.strip(), marked_lines=sorted(lines)[:20]
             )
 
+        extra = harness.chat_topics_note(self._topic_levels(), subject="deine Rückmeldung")
+        if findings:
+            extra = harness.findings_text(findings) + "\n\n" + extra
         prompt = harness.user_prompt(
-            message,
-            task=f"{task.title}: {task.instructions}" if task else None,
-            extra=harness.chat_topics_note(self._topic_levels()),
+            message, task=f"{task.title}: {task.instructions}" if task else None, extra=extra
         )
         response, _ = self._call_json(
             "review",

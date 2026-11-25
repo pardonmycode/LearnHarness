@@ -137,7 +137,7 @@ def test_mission_prompt_explains_every_field_and_its_limits() -> None:
     system = harness.system_prompt("mission", AiSettings.load(), language="python", game=True)
     for field in harness.MISSION_SCHEMA["properties"]:
         assert f'"{field}":' in system
-    assert "nur den\n  Teil für diese Datei" in system
+    assert "plane den Teil für diese Datei" in system
     assert "nicht zu Kindern" in system
     assert system.index("Nutze außer dem gewählten Thema") < system.index("Grundgerüst für")
 

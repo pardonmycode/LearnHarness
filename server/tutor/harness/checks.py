@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import difflib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 from uuid import uuid4
 
@@ -12,6 +12,7 @@ from learnharness_protocol import (
     Choice,
     FillBlanksExercise,
     MultipleChoiceExercise,
+    SceneChange,
     TextBlank,
     TextBlanksExercise,
 )
@@ -53,6 +54,7 @@ class BuiltExercise:
     explanation: str
     new_file_content: str
     notes: list[str]
+    scene_changes: list[SceneChange] = field(default_factory=list)
 
 
 def _text_blanks(

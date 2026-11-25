@@ -167,6 +167,9 @@ class ExerciseRecord(models.Model):
     explanation = models.TextField(blank=True)
     generated_path = models.CharField(max_length=500, blank=True)
     generated_content = models.TextField(blank=True)
+    # Checked changes to the Godot scene; like the code they go out after a correct answer.
+    scene_path = models.CharField(max_length=500, blank=True)
+    scene_changes = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     solved_at = models.DateTimeField(null=True, blank=True)
     wrong_attempts = models.PositiveSmallIntegerField(default=0)  # before it was solved

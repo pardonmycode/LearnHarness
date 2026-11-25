@@ -35,6 +35,7 @@ class ServerResponses:
             self.explain_panel.show_response(response)
             return
         if owner == "mission":
+            self._show_scene_preview(response.scene_preview)
             self.mission_panel.show_step_response(response)
             return
         if owner == "project":
@@ -45,6 +46,7 @@ class ServerResponses:
         if self._awaiting_learn_response:
             # LearnAgent answers belong in the LearnAgent tab, not in the tutor chat.
             self._awaiting_learn_response = False
+            self._show_scene_preview(response.scene_preview)
             self.learn_agent_panel.show_response(response)
             return
         self.tutor_panel.finish_stream(response)

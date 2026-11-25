@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from PyQt6.QtWidgets import QDialog, QHBoxLayout, QMessageBox
+from PyQt6.QtCore import QByteArray
+from PyQt6.QtWidgets import QDialog, QHBoxLayout, QMessageBox, QSplitter
 
 from learnharness_client import design
 
@@ -16,7 +17,30 @@ from ..panels.diagnostics_panel import DiagnosticsPanel
 
 
 class WindowDialogs:
-    """Settings, teacher area, versions, tutorial."""
+    """Settings, teacher area, versions, tutorial and the saved window layout."""
+
+    def _restore_window_state(self) -> None:
+        geometry = self.settings.value("window/geometry")
+        state = self.settings.value("window/state")
+        if isinstance(geometry, QByteArray):
+            self.restoreGeometry(geometry)
+        if isinstance(state, QByteArray):
+            self.restoreState(state)
+        for key, splitter in self._saved_splitters():
+            sizes = self.settings.value(key)
+            if isinstance(sizes, list) and len(sizes) == splitter.count():
+                splitter.setSizes([int(size) for size in sizes])
+            elif splitter is self.splitter:
+                tabs = round(self.width() * design.LEARNING_TABS_SHARE)
+                splitter.setSizes([self.width() - tabs, tabs])
+
+    def _saved_splitters(self) -> tuple[tuple[str, QSplitter], ...]:
+        return (
+            ("window/main_splitter_v2", self.splitter),
+            ("window/code_splitter", self.code_splitter),
+            ("window/work_splitter", self.work_splitter),
+            ("window/side_splitter", self.side_splitter),
+        )
 
     def open_relative_file(self, relative: str) -> None:
         if self.project:

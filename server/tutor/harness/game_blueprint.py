@@ -62,8 +62,10 @@ Architektur:
 - Nur Daten, die das ganze Spiel braucht, gehören in game_state.gd.
 - Die Anzeige liest nichts aus dem Spieler, sondern reagiert auf Signale.
 - Gruppen wie „enemies“ und Kollisionsebenen statt Abfragen nach Namen.
-- Szenen, Knoten und Eingabe-Aktionen legt das Kind in Godot an. Sag ihm genau, was dort zu tun
-  ist, denn die App bearbeitet nur Skripte.
+- Neue Szenen-Dateien und Eingabe-Aktionen legt das Kind in Godot an. Sag ihm genau, was dort zu
+  tun ist. Knoten ergänzt die App nur in der Szene des offenen Skripts und nur über
+  "scene_changes", wenn dein Antwortformat dieses Feld hat. Sonst legt das Kind auch sie in Godot
+  an.
 
 Reihenfolge: Hauptszene → Figur bewegen → Welt und Kollision → Ziel oder Gegner → Punkte und
 Anzeige → Gewinnen und Verlieren → Töne und Feinschliff."""

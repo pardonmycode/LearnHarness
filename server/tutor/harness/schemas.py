@@ -117,10 +117,14 @@ def learn_exercise_schema(level: int) -> dict[str, Any]:
     return _obj(properties)
 
 
-def mission_schema(topics: list[str]) -> dict[str, Any]:
-    """The mission format with only these topics to choose from."""
+def mission_schema(topics: list[str], *, other_file: bool = False) -> dict[str, Any]:
+    """The mission format with only these topics to choose from.
+
+    With other_file the AI may name another script instead of planning (Godot projects)."""
     properties = dict(MISSION_SCHEMA["properties"])
     properties["skill"] = {"type": "string", "enum": topics}
+    if other_file:
+        properties["open_file"] = _STR
     return _obj(properties)
 
 

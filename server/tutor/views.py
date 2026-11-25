@@ -11,7 +11,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
-from learnharness_protocol import StudentMessage
+from learnharness_protocol import SceneContext, SceneNode, StudentMessage
 
 from . import harness
 from .models import AiSettings
@@ -33,6 +33,15 @@ SCHEMAS = {
     "review": harness.PROJECT_REVIEW_SCHEMA,
 }
 EXAMPLE_CODE = "extends CharacterBody2D\n\nvar speed = 200\n"
+EXAMPLE_SCENE = SceneContext(
+    path="player/player.tscn",
+    script_node=".",
+    nodes=[
+        SceneNode(path=".", type="CharacterBody2D", script="res://player/player.gd"),
+        SceneNode(path="Sprite2D", type="Sprite2D"),
+        SceneNode(path="CollisionShape2D", type="CollisionShape2D"),
+    ],
+)
 
 
 def _int(value: str | None, default: int, low: int, high: int) -> int:
@@ -47,12 +56,15 @@ def _format_and_schema(intent: str, level: int) -> tuple[str, dict[str, Any] | N
     if intent == "explain":
         return harness.EXPLAIN_FORMAT_HELP, harness.EXPLAIN_SCHEMA
     if intent == "learn":
-        return harness.level_instructions(level), harness.learn_exercise_schema(level)
+        return (
+            harness.level_instructions(level) + "\n\n" + harness.SCENE_HELP,
+            harness.with_scene_changes(harness.learn_exercise_schema(level)),
+        )
     if intent == "mission_step":
         stage = min(level, 3)  # missions have three stages per topic
         return (
-            harness.stage_instructions("variables", stage),
-            harness.mission_exercise_schema(stage, "variables"),
+            harness.stage_instructions("variables", stage) + "\n\n" + harness.SCENE_HELP,
+            harness.with_scene_changes(harness.mission_exercise_schema(stage, "variables")),
         )
     return "", SCHEMAS.get(intent)
 
@@ -71,6 +83,8 @@ def prompt_overview(request: HttpRequest) -> HttpResponse:
         file="player.gd",
         code_excerpt=EXAMPLE_CODE,
         excerpt_start_line=1,
+        scene=EXAMPLE_SCENE,
+        input_actions=["springen"],
         message="Meine Figur soll springen können",
     )
     intents = []

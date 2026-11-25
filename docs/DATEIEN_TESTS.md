@@ -59,6 +59,8 @@ Alle Testdateien. Die Beschreibung ist jeweils der Kopfkommentar der Datei.
 | [test_teststand_window.py](../client/tests/teststand/test_teststand_window.py) | The test stand window reads its form and refuses to start without the essentials. |
 | [test_teststand_commands.py](../server/tests/test_teststand_commands.py) | The commands that set up and check the local test stand. |
 | [test_run_error.py](../client/tests/domain/test_run_error.py) | Only the real error of a program reaches the tutor, without private paths. |
+| [test_scene_files.py](../client/tests/domain/test_scene_files.py) | Godot 4 scenes: read, found for a script and changed without touching anything else. |
+| [test_scene_flow.py](../client/tests/ui/test_scene_flow.py) | The scene goes along with a request and changes only after a correct answer. |
 | [test_terminal_errors.py](../client/tests/ui/test_terminal_errors.py) | The tutor knows the latest error from the terminal and forgets it once it is fixed. |
 | [project_tab_helpers.py](../client/tests/ui/project_tab_helpers.py) | Shared helpers for the tests of the Projekt tab. |
 | [test_python_editor.py](../client/tests/ui/test_python_editor.py) | Editing Python: indentation, highlighting, and the LearnAgent writing Python only. |
@@ -71,6 +73,7 @@ Alle Testdateien. Die Beschreibung ist jeweils der Kopfkommentar der Datei.
 |---|---|
 | [test_profiles.py](../protocol/tests/test_profiles.py) |  |
 | [test_protocol.py](../protocol/tests/test_protocol.py) |  |
+| [test_scenes.py](../protocol/tests/test_scenes.py) | Scene changes: only simple, checked values and known node types. |
 
 ## `server/tests/`
 
@@ -90,6 +93,11 @@ Alle Testdateien. Die Beschreibung ist jeweils der Kopfkommentar der Datei.
 | [test_tutor_mission_code.py](../server/tests/test_tutor_mission_code.py) | The code released after a mission exercise matches the exercise and the child. |
 | [test_tutor_mission_blanks.py](../server/tests/test_tutor_mission_blanks.py) | Mission exercises must not mark a right answer as wrong. |
 | [test_tutor_mission_safety.py](../server/tests/test_tutor_mission_safety.py) | Mission exercises stay small, do not give the answer away and keep Python runnable. |
+| [test_tutor_scene_checks.py](../server/tests/test_tutor_scene_checks.py) | Scene changes from the AI: parsed strictly and played through on the node list. |
+| [test_tutor_scene_rounds.py](../server/tests/test_tutor_scene_rounds.py) | Scene changes travel with an exercise and go out only after a correct answer. |
+| [test_tutor_scene_missions.py](../server/tests/test_tutor_scene_missions.py) | Planning a mission in a Godot project: right script, missing scenes and keys. |
+| [test_tutor_scene_chat.py](../server/tests/test_tutor_scene_chat.py) | Chat, hints and reviews read the scene too, without being able to change it. |
+| [test_tutor_scene_review.py](../server/tests/test_tutor_scene_review.py) | Code review in a Godot project: sure findings from the app, checked against the scene. |
 | [test_tutor_code_fence.py](../server/tests/test_tutor_code_fence.py) | Markdown fences never end up in a child's script. |
 | [test_tutor_learn_levels.py](../server/tests/test_tutor_learn_levels.py) | Each LearnAgent level has its own kind of exercise, checked by the server. |
 | [test_tutor_learn_prompt.py](../server/tests/test_tutor_learn_prompt.py) | The LearnAgent prompt has no contradicting rules. |

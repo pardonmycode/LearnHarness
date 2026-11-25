@@ -9,6 +9,7 @@ from pydantic import Field
 from .base import ProtocolModel
 from .exercises import Exercise
 from .missions import Mission
+from .scenes import SceneContext, SceneEdit
 
 # chat: tutor chat · learn: LearnAgent round · explain: explain selected code
 # mission: start a mission from a wish · mission_step: work on one mission step
@@ -19,6 +20,8 @@ StudentIntent = Literal[
 ]
 MissionTitle = Annotated[str, Field(min_length=1, max_length=120)]
 ProjectQuestion = Annotated[str, Field(min_length=1, max_length=1000)]
+InputAction = Annotated[str, Field(min_length=1, max_length=64)]
+ProjectFile = Annotated[str, Field(min_length=1, max_length=300)]
 
 
 class ProjectTurn(ProtocolModel):
@@ -61,6 +64,11 @@ class StudentMessage(ProtocolModel):
     project_done_missions: list[MissionTitle] = Field(
         default_factory=list, max_length=30
     )
+    # Godot only: the scene of the open script and the actions of the project's input map.
+    scene: SceneContext | None = None
+    input_actions: list[InputAction] = Field(default_factory=list, max_length=64)
+    # Scenes and scripts of the project (relative paths), so code only loads files that exist.
+    project_files: list[ProjectFile] = Field(default_factory=list, max_length=200)
     message: str = Field(min_length=1, max_length=4000)
 
 
@@ -91,6 +99,8 @@ class LearningResponse(ProtocolModel):
     # Lines of the reviewed script that need a look (only for mode "review").
     marked_lines: list[int] = Field(default_factory=list, max_length=50)
     code_changes: list[dict[str, object]] = Field(default_factory=list)
+    # What the exercise will change in the scene; written only after a correct answer.
+    scene_preview: SceneEdit | None = None
 
 
 class ErrorMessage(ProtocolModel):

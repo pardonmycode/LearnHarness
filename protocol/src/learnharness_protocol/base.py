@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
-PROTOCOL_VERSION = "1.11"
+PROTOCOL_VERSION = "1.12"
 
 
 def protocol_major(version: str) -> str:

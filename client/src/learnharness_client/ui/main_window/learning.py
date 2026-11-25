@@ -9,6 +9,7 @@ from learnharness_protocol import ReviewResult, StudentMessage, Submission
 from ...texts import T
 from ..panels.problems_panel import Problem
 from .constants import is_target_file
+from .scenes import ScenePlan
 
 LOG = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ class LearningActions:
             skill_focus=self.learn_agent_panel.current_focus,
             message=prompt,
         )
+        self._keep_scene_base()
         self.tutor_client.send_message(message)
 
     def send_tutor_message(self, text: str, *, hint_level: int | None = None) -> None:
@@ -154,7 +156,8 @@ class LearningActions:
         explanations: list[str] = []
         if review.generated_files and not self.learn_round_active:
             LOG.warning("Ignored generated files outside an active LearnAgent round")
-        if review.correct and self.learn_round_active:
+        scene_plan = self._plan_scene_edit(review) if review.correct else None
+        if review.correct and self.learn_round_active and scene_plan is not False:
             for generated in review.generated_files:
                 if not self._is_learn_target(generated.path):
                     # The agent may only write the file the child chose for this round.
@@ -165,9 +168,18 @@ class LearningActions:
                 ):
                     written_files.append(generated.path)
                     explanations.append(generated.explanation)
+            code_written = len(written_files)
+            wrote_scene = (
+                bool(written_files)
+                and isinstance(scene_plan, ScenePlan)
+                and self._write_scene(scene_plan)
+            )
+            if wrote_scene and isinstance(scene_plan, ScenePlan):
+                written_files.append(scene_plan.relative)
+                explanations.append(T.SCENE_WRITTEN.format(file=scene_plan.relative))
             if review.generated_files:
                 self.learn_agent_panel.show_code_result(written_files, explanations)
-            if written_files and len(written_files) == len(review.generated_files):
+            if code_written and code_written == len(review.generated_files):
                 unlocked = self.settings.unlock_learning_level(
                     self.student_profile.profile_id,
                     min(10, self.active_learning_level + 1),

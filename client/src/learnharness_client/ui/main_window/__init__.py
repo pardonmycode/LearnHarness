@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from PyQt6.QtCore import QByteArray, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import (
     QDockWidget,
@@ -34,6 +34,7 @@ from ..panels.progress_panel import ProgressPanel
 from ..panels.project_panel import ProjectPanel
 from ..panels.terminal_panel import TerminalPanel
 from ..panels.tutor_panel import TutorPanel
+from ..scene_tree_view import SceneTreeView
 from ..script_tree import ScriptTree
 from ..theme import set_state
 from .actions import WindowActions
@@ -50,6 +51,7 @@ from .project_flow import ProjectFlow
 from .projects import ProjectActions
 from .responses import ServerResponses
 from .running import RunActions
+from .scenes import SceneActions
 from .window_dialogs import WindowDialogs
 
 __all__ = [
@@ -75,6 +77,7 @@ class MainWindow(
     CheckActions,
     RunActions,
     ProjectFlow,
+    SceneActions,
     QMainWindow,
 ):
     def __init__(
@@ -111,10 +114,15 @@ class MainWindow(
         self._project_hint_level = 0
         self._pending_hint: int | None = None
         self._review_file: str | None = None
+        # The scene sent with the last request and the one an exercise may change.
+        self._last_scene = None
+        self._scene_base = None
         self.setWindowTitle(T.APP_TITLE)
         self.resize(*design.MAIN_WINDOW_SIZE)
 
         self.script_tree = ScriptTree()
+        self.scene_view = SceneTreeView()
+        self.scene_view.setVisible(False)
         self.editor_tabs = EditorTabs(settings)
         self.learn_agent_panel = LearnAgentPanel(
             settings.max_unlocked_learning_level(student_profile.profile_id),
@@ -139,7 +147,12 @@ class MainWindow(
 
         self.terminal = TerminalPanel(self._save_open_files, self._godot_program)
         code_splitter = QSplitter(Qt.Orientation.Horizontal)
-        code_splitter.addWidget(self.script_tree)
+        side_splitter = QSplitter(Qt.Orientation.Vertical)
+        side_splitter.addWidget(self.script_tree)
+        side_splitter.addWidget(self.scene_view)
+        side_splitter.setChildrenCollapsible(False)
+        self.side_splitter = side_splitter
+        code_splitter.addWidget(side_splitter)
         code_splitter.addWidget(self.editor_tabs)
         code_splitter.setStretchFactor(0, design.CODE_STRETCH[0])
         code_splitter.setStretchFactor(1, design.CODE_STRETCH[1])
@@ -205,28 +218,6 @@ class MainWindow(
         self._restore_window_state()
         self.connection_monitor = ConnectionMonitor(tutor_client, self)
         self.connection_monitor.start()
-
-    def _restore_window_state(self) -> None:
-        geometry = self.settings.value("window/geometry")
-        state = self.settings.value("window/state")
-        if isinstance(geometry, QByteArray):
-            self.restoreGeometry(geometry)
-        if isinstance(state, QByteArray):
-            self.restoreState(state)
-        for key, splitter in self._saved_splitters():
-            sizes = self.settings.value(key)
-            if isinstance(sizes, list) and len(sizes) == splitter.count():
-                splitter.setSizes([int(size) for size in sizes])
-            elif splitter is self.splitter:
-                tabs = round(self.width() * design.LEARNING_TABS_SHARE)
-                splitter.setSizes([self.width() - tabs, tabs])
-
-    def _saved_splitters(self) -> tuple[tuple[str, QSplitter], ...]:
-        return (
-            ("window/main_splitter_v2", self.splitter),
-            ("window/code_splitter", self.code_splitter),
-            ("window/work_splitter", self.work_splitter),
-        )
 
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 - Qt API
         self.editor_tabs.write_recovery_drafts()

@@ -8,6 +8,7 @@ from learnharness_protocol import ReviewResult, StudentMessage, Submission
 
 from ...texts import T
 from .constants import is_target_file
+from .scenes import ScenePlan
 
 LOG = logging.getLogger(__name__)
 
@@ -94,6 +95,7 @@ class ExplainMissionActions:
         # Like the LearnAgent: generated code may only go into the file chosen for this step.
         self._mission_target_file = message.file
         self._mission_base_text = self._open_script_text()
+        self._keep_scene_base()
         self._response_owner = "mission"
         self.tutor_client.send_message(message)
 
@@ -115,7 +117,8 @@ class ExplainMissionActions:
 
     def _apply_mission_files(self, review: ReviewResult) -> None:
         written: list[str] = []
-        for generated in review.generated_files:
+        scene_plan = self._plan_scene_edit(review)
+        for generated in review.generated_files if scene_plan is not False else []:
             if not is_target_file(generated.path, self._mission_target_file):
                 LOG.warning("Rejected generated file outside the mission target")
                 continue
@@ -125,5 +128,7 @@ class ExplainMissionActions:
                 written.append(generated.path)
         if written:
             self.statusBar().showMessage(T.AGENT_WROTE_FILE.format(file=", ".join(written)))
+        if written and isinstance(scene_plan, ScenePlan):
+            self._write_scene(scene_plan)
         self._mission_target_file = None
         self._mission_base_text = None

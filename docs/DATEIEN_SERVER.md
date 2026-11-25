@@ -93,6 +93,9 @@ Lernserver und zentrale Verwaltung. Die Beschreibung ist jeweils der Kopfkomment
 | [mission_plan.py](../server/tutor/harness/mission_plan.py) | Checks the plan of a mission before a child gets to see it. |
 | [prompts.py](../server/tutor/harness/prompts.py) | Builds what goes out to the AI. |
 | [rules.py](../server/tutor/harness/rules.py) | Fixed rules, levels and tasks of the prompts. |
+| [scene_check.py](../server/tutor/harness/scene_check.py) | Checks scene changes from the AI and plays them through on the node list. |
+| [scene_code.py](../server/tutor/harness/scene_code.py) | What the code relies on: nodes of the scene, input actions and project files. |
+| [scene_prompt.py](../server/tutor/harness/scene_prompt.py) | How the scene of the open script and the input map go out to the AI. |
 | [schemas.py](../server/tutor/harness/schemas.py) | JSON formats the AI must answer in. |
 | [stream_guard.py](../server/tutor/harness/stream_guard.py) | Filters code out of text while it streams. |
 | [topics.py](../server/tutor/harness/topics.py) | The topics missions teach and the three stages every child works through per topic. |

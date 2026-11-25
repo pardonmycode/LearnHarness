@@ -90,6 +90,8 @@ class WindowActions:
         self.script_tree.file_open_requested.connect(self.editor_tabs.open_file)
         self.editor_tabs.status_message.connect(self.statusBar().showMessage)
         self.editor_tabs.current_file_changed.connect(self.file_status.setText)
+        self.editor_tabs.current_file_changed.connect(lambda _text: self._refresh_scene_view())
+        self.scene_view.scene_file_changed.connect(self._refresh_scene_view)
         self.editor_tabs.cursor_changed.connect(
             lambda line, column: self.cursor_status.setText(
                 T.CURSOR.format(line=line, column=column)

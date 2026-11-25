@@ -16,6 +16,7 @@
 | eine neue Übungsart anzeigen | [`C/ui/exercises/`](../client/src/learnharness_client/ui/exercises/), registriert in [`factory.py`](../client/src/learnharness_client/ui/exercises/factory.py) |
 | den Ablauf im Projekt-Tab ändern | [`project_panel/`](../client/src/learnharness_client/ui/panels/project_panel/), [`main_window/project_flow.py`](../client/src/learnharness_client/ui/main_window/project_flow.py) |
 | Schriftgrößen, Farben, Abstände oder Fenstergrößen ändern | [`design.py`](../client/src/learnharness_client/design.py) |
+| Godot-Szenen: erlaubte Knotentypen, Werte, Änderungen | [`scenes.py` (Protokoll)](../protocol/src/learnharness_protocol/scenes.py), Prüfung in [`scene_check.py`](../server/tutor/harness/scene_check.py), Prompt in [`scene_prompt.py`](../server/tutor/harness/scene_prompt.py), Schreiben in [`scene_edit.py`](../client/src/learnharness_client/godot/scene_edit.py) |
 | das Terminal ändern | [`terminal_panel.py`](../client/src/learnharness_client/ui/panels/terminal_panel.py), Befehle in [`terminal_commands.py`](../client/src/learnharness_client/domain/terminal_commands.py) |
 | eine Einstellung ergänzen | [`C/config/preferences.py`](../client/src/learnharness_client/config/preferences.py), Dialog in [`settings_dialog.py`](../client/src/learnharness_client/ui/dialogs/settings_dialog.py) |
 

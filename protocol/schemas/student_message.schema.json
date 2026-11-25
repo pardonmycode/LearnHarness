@@ -5,7 +5,7 @@
       "description": "One question of the helper about the project and the child's answer.",
       "properties": {
         "protocol_version": {
-          "default": "1.11",
+          "default": "1.12",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -28,12 +28,170 @@
       ],
       "title": "ProjectTurn",
       "type": "object"
+    },
+    "SceneConnection": {
+      "additionalProperties": false,
+      "properties": {
+        "protocol_version": {
+          "default": "1.12",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "signal": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Signal",
+          "type": "string"
+        },
+        "from_node": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "From Node",
+          "type": "string"
+        },
+        "to_node": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "To Node",
+          "type": "string"
+        },
+        "method": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Method",
+          "type": "string"
+        }
+      },
+      "required": [
+        "signal",
+        "from_node",
+        "to_node",
+        "method"
+      ],
+      "title": "SceneConnection",
+      "type": "object"
+    },
+    "SceneContext": {
+      "additionalProperties": false,
+      "description": "The scene the open script belongs to, as far as the AI needs it.",
+      "properties": {
+        "protocol_version": {
+          "default": "1.12",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "path": {
+          "maxLength": 500,
+          "minLength": 6,
+          "title": "Path",
+          "type": "string"
+        },
+        "root_name": {
+          "default": "",
+          "maxLength": 80,
+          "title": "Root Name",
+          "type": "string"
+        },
+        "script_node": {
+          "maxLength": 300,
+          "minLength": 1,
+          "pattern": "^(?:\\.|[^\"\\\\\\[\\]\\n:%@/.][^\"\\\\\\[\\]\\n:%@/]{0,79}(?:/[^\"\\\\\\[\\]\\n:%@/.][^\"\\\\\\[\\]\\n:%@/]{0,79})*)$",
+          "title": "Script Node",
+          "type": "string"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/SceneNode"
+          },
+          "maxItems": 150,
+          "minItems": 1,
+          "title": "Nodes",
+          "type": "array"
+        },
+        "connections": {
+          "items": {
+            "$ref": "#/$defs/SceneConnection"
+          },
+          "maxItems": 80,
+          "title": "Connections",
+          "type": "array"
+        }
+      },
+      "required": [
+        "path",
+        "script_node",
+        "nodes"
+      ],
+      "title": "SceneContext",
+      "type": "object"
+    },
+    "SceneNode": {
+      "additionalProperties": false,
+      "properties": {
+        "protocol_version": {
+          "default": "1.12",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "path": {
+          "maxLength": 300,
+          "minLength": 1,
+          "pattern": "^(?:\\.|[^\"\\\\\\[\\]\\n:%@/.][^\"\\\\\\[\\]\\n:%@/]{0,79}(?:/[^\"\\\\\\[\\]\\n:%@/.][^\"\\\\\\[\\]\\n:%@/]{0,79})*)$",
+          "title": "Path",
+          "type": "string"
+        },
+        "type": {
+          "default": "",
+          "maxLength": 64,
+          "title": "Type",
+          "type": "string"
+        },
+        "instance": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Instance"
+        },
+        "script": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Script"
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "maxProperties": 8,
+          "title": "Properties"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "title": "SceneNode",
+      "type": "object"
     }
   },
   "additionalProperties": false,
   "properties": {
     "protocol_version": {
-      "default": "1.11",
+      "default": "1.12",
       "title": "Protocol Version",
       "type": "string"
     },
@@ -266,6 +424,37 @@
       },
       "maxItems": 30,
       "title": "Project Done Missions",
+      "type": "array"
+    },
+    "scene": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SceneContext"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "input_actions": {
+      "items": {
+        "maxLength": 64,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 64,
+      "title": "Input Actions",
+      "type": "array"
+    },
+    "project_files": {
+      "items": {
+        "maxLength": 300,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 200,
+      "title": "Project Files",
       "type": "array"
     },
     "message": {

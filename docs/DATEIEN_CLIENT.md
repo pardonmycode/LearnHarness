@@ -63,6 +63,9 @@ Die App auf dem Rechner des Kindes. Die Beschreibung ist jeweils der Kopfkomment
 | [log_reader.py](../client/src/learnharness_client/godot/log_reader.py) | Read recent errors from Godot's runtime log (only if file logging is enabled). |
 | [output_parser.py](../client/src/learnharness_client/godot/output_parser.py) | Parse Godot console and log output into file/line messages. |
 | [paths.py](../client/src/learnharness_client/godot/paths.py) | Where Godot 4 keeps its files on Windows, Linux and macOS. |
+| [scene_context.py](../client/src/learnharness_client/godot/scene_context.py) | Finds the scene of the open script and the input actions of the project. |
+| [scene_edit.py](../client/src/learnharness_client/godot/scene_edit.py) | Applies checked scene changes to the text of a Godot 4 scene. |
+| [scene_file.py](../client/src/learnharness_client/godot/scene_file.py) | Reads Godot 4 scene files (.tscn, format=3) without changing a single character. |
 | [project_list.py](../client/src/learnharness_client/godot/project_list.py) | Projects that the local Godot project manager already knows. |
 | [syntax_check.py](../client/src/learnharness_client/godot/syntax_check.py) | Optional syntax check via ``godot --headless --check-only`` without blocking the UI. |
 
@@ -131,6 +134,7 @@ Die App auf dem Rechner des Kindes. Die Beschreibung ist jeweils der Kopfkomment
 | [markdown.py](../client/src/learnharness_client/ui/markdown.py) | Safe Markdown for tutor answers: formatting yes, links, images and HTML no. |
 | [project_picker.py](../client/src/learnharness_client/ui/project_picker.py) | Project selection: known projects first, folder dialog as fallback, new Python projects. |
 | [script_tree.py](../client/src/learnharness_client/ui/script_tree.py) | Safe, compact script tree built only from PathGuard-approved files. |
+| [scene_tree_view.py](../client/src/learnharness_client/ui/scene_tree_view.py) | Read-only node tree of the scene the open script belongs to, with coming changes. |
 
 ## `client/src/learnharness_client/ui/dialogs/`
 
@@ -203,6 +207,7 @@ Die App auf dem Rechner des Kindes. Die Beschreibung ist jeweils der Kopfkomment
 | [__init__.py](../client/src/learnharness_client/ui/main_window/__init__.py) | Main application window tying safe editing and tutoring together. |
 | [actions.py](../client/src/learnharness_client/ui/main_window/actions.py) | Menus, signal wiring and the recent-projects menu. |
 | [checks.py](../client/src/learnharness_client/ui/main_window/checks.py) | Syntax checks for Godot and Python, and the Godot log. |
+| [scenes.py](../client/src/learnharness_client/ui/main_window/scenes.py) | The Godot scene of the open script: shown, sent along and changed after a correct answer. |
 | [constants.py](../client/src/learnharness_client/ui/main_window/constants.py) | Shared constants and rules of the main window. |
 | [explain_missions.py](../client/src/learnharness_client/ui/main_window/explain_missions.py) | Requests of the tabs Code verstehen and Missionen. |
 | [learning.py](../client/src/learnharness_client/ui/main_window/learning.py) | LearnAgent rounds, tutor messages and exercise reviews. |

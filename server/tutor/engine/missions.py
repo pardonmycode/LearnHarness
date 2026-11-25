@@ -13,6 +13,14 @@ from .. import harness
 from ..models import ExerciseRecord
 from .tasks import Response, _error
 
+_OTHER_FILE = {
+    True: "Das gehört in {file}. Öffne dieses Skript und frag dort noch einmal.",
+    False: (
+        "Das gehört in die Szene {file}. Hänge dort in Godot zuerst ein Skript an (Rechtsklick "
+        "auf den obersten Knoten → Skript anhängen), öffne es hier und frag dort noch einmal."
+    ),
+}
+
 
 class TutorMissions:
     """Missions."""
@@ -32,7 +40,16 @@ class TutorMissions:
                 "Baustein für <projekt> mit einem dieser Themen: " + ", ".join(topics)
             )
 
-        def build(data: dict[str, Any]) -> tuple[Mission, str]:
+        godot = message.language == "gdscript"
+
+        def build(data: dict[str, Any]) -> tuple[Mission | None, str]:
+            other = (
+                harness.check_open_file(data.get("open_file"), message.project_files, message.file)
+                if godot
+                else None
+            )
+            if other:
+                return None, other
             try_title = (
                 "Starte dein Programm"
                 if message.language == "python"
@@ -59,9 +76,11 @@ class TutorMissions:
             "mission",
             self._system("mission", message),
             [{"role": "user", "content": prompt}],
-            harness.mission_schema(topics),
+            harness.mission_schema(topics, other_file=godot),
             build,
         )
+        if mission is None:
+            return _error("open_other_file", _OTHER_FILE[text.endswith(".gd")].format(file=text))
         self.session.wish_missions = {
             **self.session.wish_missions,
             mission.id: mission.model_dump(mode="json"),
@@ -113,7 +132,12 @@ class TutorMissions:
             stage=stage,
             topic=topic,
         )
-        return LearningResponse(mode="exercise", message=built.message, exercise=built.exercise)
+        return LearningResponse(
+            mode="exercise",
+            message=built.message,
+            exercise=built.exercise,
+            scene_preview=harness.scene_preview(message.scene, built.scene_changes),
+        )
 
     def _topic_levels(self) -> dict[str, int]:
         child = self.session.child

@@ -67,6 +67,7 @@ class ProjectActions:
         self._refresh_recent_menu()
         self.script_tree.set_project(project)
         self.editor_tabs.set_project(project)
+        self._refresh_scene_view()
         self.project_status.setText(project.name)
         self.setWindowTitle(T.PROJECT_TITLE.format(project=project.name))
         self.session_id = None

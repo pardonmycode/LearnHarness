@@ -37,8 +37,9 @@ from .mission_code import (
     check_keeps_code,
     check_python_syntax,
 )
-from .mission_plan import check_mission_plan
+from .mission_plan import check_mission_plan, check_open_file
 from .prompts import (
+    findings_text,
     history_entry,
     mission_step_context,
     system_prompt,
@@ -46,6 +47,20 @@ from .prompts import (
     user_prompt,
 )
 from .rules import BASE_RULES, EXPERIENCE, INTENTS, LANGUAGES, LEVELS, SKILLS
+from .scene_check import SCENE_EXPLANATION, checked_scene_changes, scene_preview
+from .scene_code import scene_findings
+from .scene_prompt import (
+    CHAT_SCENE_NOTE,
+    EXPLAIN_SCENE_NOTE,
+    MISSION_FILES_NOTE,
+    NO_CODE_STEP_NOTE,
+    REVIEW_SCENE_NOTE,
+    SCENE_HEADER,
+    SCENE_HELP,
+    scene_help,
+    scene_tree_text,
+    with_scene_changes,
+)
 from .schemas import (
     EXERCISE_FORMAT_HELP,
     EXERCISE_SCHEMA,
@@ -106,6 +121,22 @@ __all__ = [
     "PROJECT_REVIEW_SCHEMA",
     "REPLACEMENT",
     "REVIEW_SCHEMA",
+    "CHAT_SCENE_NOTE",
+    "EXPLAIN_SCENE_NOTE",
+    "EXPLAIN_SCENE_NOTE",
+    "MISSION_FILES_NOTE",
+    "REVIEW_SCENE_NOTE",
+    "SCENE_HEADER",
+    "findings_text",
+    "scene_findings",
+    "NO_CODE_STEP_NOTE",
+    "SCENE_HELP",
+    "SCENE_EXPLANATION",
+    "checked_scene_changes",
+    "scene_preview",
+    "scene_help",
+    "scene_tree_text",
+    "with_scene_changes",
     "SKILLS",
     "StreamGuard",
     "apply_typed_answers",
@@ -119,6 +150,7 @@ __all__ = [
     "check_keeps_code",
     "check_kind_in_file",
     "check_mission_plan",
+    "check_open_file",
     "check_python_syntax",
     "check_generated_code",
     "clean_description",

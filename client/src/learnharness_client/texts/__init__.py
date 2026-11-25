@@ -15,6 +15,7 @@ from .learning import LearningTexts
 from .missions import MissionTexts
 from .onboarding import OnboardingTexts
 from .projects import ProjectTexts
+from .scenes import SceneTexts
 from .settings import SettingsTexts
 from .teacher import TeacherTexts
 from .terminal import TerminalTexts
@@ -35,5 +36,6 @@ class T(
     TerminalTexts,
     ProjectTexts,
     MissionTexts,
+    SceneTexts,
 ):
     """All child-facing texts; each group lives in its own file."""

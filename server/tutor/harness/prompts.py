@@ -14,6 +14,17 @@ from .rules import (
     LEVELS,
     SKILLS,
 )
+from .scene_prompt import (
+    ACTIONS_HEADER,
+    CHAT_SCENE_NOTE,
+    EXPLAIN_SCENE_NOTE,
+    FILES_INTENTS,
+    MISSION_FILES_NOTE,
+    REVIEW_SCENE_NOTE,
+    SCENE_HEADER,
+    files_text,
+    scene_tree_text,
+)
 from .topics import MISSION_TOPIC_GUIDE, MISSION_TOPICS, stage_for
 
 
@@ -48,8 +59,16 @@ def system_prompt(
             try_step=words["try"],
         )
     )
+    if intent == "chat" and language == "gdscript":
+        parts.append(CHAT_SCENE_NOTE)
+    if intent == "review" and language == "gdscript":
+        parts.append(REVIEW_SCENE_NOTE)
+    if intent == "explain" and language == "gdscript":
+        parts.append(EXPLAIN_SCENE_NOTE)
     if intent == "mission":
         parts.append(MISSION_TOPIC_GUIDE)
+        if language == "gdscript":
+            parts.append(MISSION_FILES_NOTE)
     blueprint = game_blueprint(intent, language) if game else ""
     if blueprint:
         parts.append(blueprint)
@@ -64,6 +83,17 @@ def system_prompt(
 def _tag(name: str, text: str) -> str:
     # The closing tag inside the child's text must not end the block early.
     return f"<{name}>\n{text.replace(f'</{name}>', f'</ {name}>')}\n</{name}>"
+
+
+def findings_text(findings: list[tuple[str, int | None]]) -> str:
+    """Mistakes the app found for sure, as a block for the review."""
+    lines = [
+        f"- Zeile {line}: {text}" if line is not None else f"- Szene: {text}"
+        for text, line in findings
+    ]
+    return "Das hat die App im Code und in der Szene gefunden:\n" + _tag(
+        "befunde", "\n".join(lines)
+    )
 
 
 def topic_levels(levels: dict[str, int]) -> str:
@@ -105,6 +135,22 @@ def user_prompt(message: StudentMessage, *, task: str | None = None, extra: str 
         parts.append(f"Code ab Zeile {start}:\n" + _tag("code", message.code_excerpt))
     elif message.intent in ("learn", "mission", "mission_step"):
         parts.append("Code der Datei:\n" + _tag("code", ""))
+    if message.language == "gdscript" and message.scene is not None:
+        parts.append(SCENE_HEADER + "\n" + _tag("szene", scene_tree_text(message.scene)))
+    # Explaining selected code needs the scene, but not the keys of the whole project.
+    wants_actions = message.intent != "explain"
+    if (
+        message.language == "gdscript"
+        and wants_actions
+        and (message.scene is not None or message.input_actions)
+    ):
+        actions = ", ".join(message.input_actions) or "(keine eigenen)"
+        parts.append(ACTIONS_HEADER + "\n" + _tag("eingaben", actions))
+    if message.language == "gdscript" and message.intent in FILES_INTENTS:
+        parts.append(
+            "Szenen und Skripte des Projekts:\n"
+            + _tag("dateien", files_text(message.project_files))
+        )
     if message.last_error:
         source = LANGUAGES[message.language]["error_source"]
         parts.append(
