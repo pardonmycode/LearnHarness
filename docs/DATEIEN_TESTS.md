@@ -28,6 +28,7 @@ Alle Testdateien. Die Beschreibung ist jeweils der Kopfkommentar der Datei.
 | [admin_sync_helpers.py](../client/tests/net/admin_sync_helpers.py) | Fake administration server for the sync tests. |
 | [conftest.py](../client/tests/net/conftest.py) | Fixtures of the network tests. |
 | [test_admin_sync.py](../client/tests/net/test_admin_sync.py) | Syncing profiles and level unlocks. |
+| [test_device_pairing.py](../client/tests/net/test_device_pairing.py) | This PC asks for access, shows the code and gets its token once a teacher approves. |
 | [test_admin_sync_missions.py](../client/tests/net/test_admin_sync_missions.py) | Assigned missions from the administration. |
 | [test_fake_tutor_client.py](../client/tests/net/test_fake_tutor_client.py) |  |
 | [test_fake_levels.py](../client/tests/net/test_fake_levels.py) | The offline helper uses the same kind of exercise per level as the learning server. |
@@ -82,6 +83,7 @@ Alle Testdateien. Die Beschreibung ist jeweils der Kopfkommentar der Datei.
 | [conftest.py](../server/tests/conftest.py) | Fixtures shared by the server tests. |
 | [test_admin.py](../server/tests/test_admin.py) | Smoke tests for the teacher administration. |
 | [test_api.py](../server/tests/test_api.py) | API contract tests: bodies are validated with the shared protocol models. |
+| [test_device_requests.py](../server/tests/test_device_requests.py) | A PC asks for access; a teacher approves it under „Wartende Geräte“ without any token typing. |
 | [test_missions_and_history.py](../server/tests/test_missions_and_history.py) | Missions maintained by teachers, the progress history and the CSV/print exports. |
 | [test_overview.py](../server/tests/test_overview.py) | Group overview for teachers (/uebersicht/). |
 | [test_tutor_channels.py](../server/tests/test_tutor_channels.py) | WebSocket, admin pages and prompt logging. |

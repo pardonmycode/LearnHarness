@@ -1,0 +1,43 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "protocol_version": {
+      "default": "1.13",
+      "title": "Protocol Version",
+      "type": "string"
+    },
+    "type": {
+      "const": "device_request_status",
+      "default": "device_request_status",
+      "title": "Type",
+      "type": "string"
+    },
+    "request_id": {
+      "pattern": "^[0-9a-f]{32}$",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "code": {
+      "pattern": "^\\d{4}$",
+      "title": "Code",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "expired"
+      ],
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "request_id",
+    "code",
+    "status"
+  ],
+  "title": "DeviceRequestStatus",
+  "type": "object"
+}

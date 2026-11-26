@@ -69,7 +69,8 @@ Kinder-PC (App) ──HTTP/WebSocket + Gerätetoken──► Server (Django)
 **Bearbeiten → Lehrkraft-Bereich …** (mit Passwort):
 - Level setzen oder senken, Fortschritt zurücksetzen, Profile löschen (nur ohne zentrale
   Verwaltung – sonst passiert das im Admin).
-- **Zentrale Verwaltung …**: Serveradresse, Gerätetoken und optional die Gruppe dieses PCs.
+- **Zentrale Verwaltung …**: Serveradresse, Name des PCs und „Zugang anfragen“ (oder ein
+  vorhandener Gerätetoken) sowie optional die Gruppe dieses PCs.
 
 ### Weitere Bedienung
 - Einstellungen: Lernserver-Adresse, Schriftgröße, helles/dunkles Design, automatisches Speichern,
@@ -107,6 +108,9 @@ Alles im Browser unter `http://SERVER:8000/admin/` (Anmeldung als Mitarbeiter).
 - **Missionen:** anlegen mit Titel, Ziel, 1–8 Schritten (Verstehen, Lernen, Üben, In Godot
   ausprobieren) und je Schritt einem **Hinweis für die KI**, den das Kind nicht sieht; Gruppen
   zuweisen (leer = alle); Anzeige, wie viele Kinder sie geschafft haben.
+- **Wartende Geräte:** PCs, die in der App „Zugang anfragen“ geklickt haben, mit einem
+  4-stelligen Code. Steht in der App derselbe Code, genügt ein Klick auf **Genehmigen**; die
+  App ist dann verbunden. Anfragen verfallen nach 15 Minuten.
 - **API-Zugänge:** ein Gerätetoken pro PC (wird nur einmal angezeigt, nur als Hash gespeichert),
   Token erneuern, Zugang sperren.
 - **KI-Einstellungen**, **Prompt-Übersicht** und **KI-Protokoll** – siehe nächster Abschnitt.
@@ -286,6 +290,11 @@ git pull && docker compose -f server/docker-compose.yml up -d --build   # Update
 ```
 
 ### Gerätetokens
+
+Am einfachsten verbindet sich ein PC selbst: In der App unter **Lehrkraft-Bereich → Zentrale
+Verwaltung** Adresse und Namen eintragen, **Zugang anfragen** klicken und den PC im Admin unter
+**Wartende Geräte** genehmigen (gleicher Code auf beiden Seiten). Der Token wird dabei nie
+angezeigt. Von Hand geht es weiterhin so:
 
 ```powershell
 # Token für einen Kinder-PC (wird einmal angezeigt)

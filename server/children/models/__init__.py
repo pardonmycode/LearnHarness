@@ -17,12 +17,13 @@ from .common import (
     mission_id_validator,
     new_profile_id,
 )
-from .devices import ApiClient
+from .devices import ApiClient, DeviceRequest
 from .missions import LearningMission, LearningMissionQuerySet, LearningMissionStep
 
 __all__ = [
     "ApiClient",
     "Child",
+    "DeviceRequest",
     "ExperienceLevel",
     "LearningGroup",
     "LearningMission",

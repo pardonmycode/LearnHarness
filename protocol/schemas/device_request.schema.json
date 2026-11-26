@@ -1,0 +1,35 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "protocol_version": {
+      "default": "1.13",
+      "title": "Protocol Version",
+      "type": "string"
+    },
+    "type": {
+      "const": "device_request",
+      "default": "device_request",
+      "title": "Type",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 40,
+      "minLength": 2,
+      "title": "Name",
+      "type": "string"
+    },
+    "token": {
+      "maxLength": 200,
+      "minLength": 32,
+      "pattern": "^[A-Za-z0-9_\\-]+$",
+      "title": "Token",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "token"
+  ],
+  "title": "DeviceRequestCreate",
+  "type": "object"
+}

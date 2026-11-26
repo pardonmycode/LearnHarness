@@ -3,7 +3,7 @@
 [← Zur Übersicht](README.md) · [Alle Protokoll-Dateien](DATEIEN_PROTOKOLL.md)
 
 Das Paket `learnharness_protocol` definiert alle Nachrichten mit Pydantic. Client und Server
-nutzen dieselben Modelle. Die aktuelle Version ist **1.12**
+nutzen dieselben Modelle. Die aktuelle Version ist **1.13**
 ([`base.py`](../protocol/src/learnharness_protocol/base.py)). Unbekannte Felder werden abgelehnt,
 deshalb sollten Client und Server immer zusammen aktualisiert werden.
 
@@ -14,6 +14,7 @@ deshalb sollten Client und Server immer zusammen aktualisiert werden.
 | [`messages.py`](../protocol/src/learnharness_protocol/messages.py) | `StudentMessage`, `LearningResponse`, Sitzung, Aufgaben |
 | [`exercises.py`](../protocol/src/learnharness_protocol/exercises.py) | Übungen, Abgaben, `ReviewResult` |
 | [`missions.py`](../protocol/src/learnharness_protocol/missions.py) | Missionen und Schritte |
+| [`devices.py`](../protocol/src/learnharness_protocol/devices.py) | Zugang anfragen: `DeviceRequestCreate`, `DeviceRequestStatus` |
 | [`scenes.py`](../protocol/src/learnharness_protocol/scenes.py) | Godot-Szenen: Kontext, erlaubte Änderungen, Werteprüfung |
 | [`progress.py`](../protocol/src/learnharness_protocol/progress.py) | Fähigkeiten und Fortschritt |
 | [`profiles.py`](../protocol/src/learnharness_protocol/profiles.py) | Kinderprofile der Verwaltung |

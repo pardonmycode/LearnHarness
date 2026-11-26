@@ -61,18 +61,20 @@ def test_missing_key_is_named(monkeypatch: MonkeyPatch) -> None:
     assert "ANTHROPIC_API_KEY fehlt" in providers.connection_problem(settings)
 
 
-def test_env_file_gives_only_ai_keys(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
-    for name in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "VLLM_API_KEY", "POSTGRES_HOST"):
+def test_env_file_gives_only_ai_keys_and_hosts(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    names = ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "VLLM_API_KEY", "POSTGRES_HOST")
+    for name in (*names, "DJANGO_ALLOWED_HOSTS"):
         monkeypatch.setenv(name, "platzhalter")
         monkeypatch.delenv(name)
     monkeypatch.setenv("OPENAI_API_KEY", "echt")
     env = tmp_path / ".env"
     env.write_text(
         '# Kommentar\nexport ANTHROPIC_API_KEY="sk-ant-test"\nOPENAI_API_KEY=datei\n'
-        "VLLM_API_KEY=\nPOSTGRES_HOST=db\n"
+        "VLLM_API_KEY=\nPOSTGRES_HOST=db\nDJANGO_ALLOWED_HOSTS=localhost,100.1.2.3\n"
     )
     load_env_file(env)
     assert os.environ["ANTHROPIC_API_KEY"] == "sk-ant-test"
     assert os.environ["OPENAI_API_KEY"] == "echt"
     assert "VLLM_API_KEY" not in os.environ
     assert "POSTGRES_HOST" not in os.environ
+    assert os.environ["DJANGO_ALLOWED_HOSTS"] == "localhost,100.1.2.3"

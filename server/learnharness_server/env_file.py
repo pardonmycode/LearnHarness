@@ -1,4 +1,4 @@
-"""Reads the AI keys from server/.env when the server runs without Docker."""
+"""Reads the AI keys and allowed host names from server/.env when running without Docker."""
 
 from __future__ import annotations
 
@@ -8,6 +8,8 @@ from pathlib import Path
 # Only these: the file also holds Docker values such as POSTGRES_HOST=db, which do not
 # exist outside Docker. Docker passes the whole file in by itself.
 AI_KEYS = frozenset({"ANTHROPIC_API_KEY", "OPENAI_API_KEY", "VLLM_API_KEY"})
+# Means the same with and without Docker, e.g. runserver 0.0.0.0:8000 in the home network.
+LOCAL_KEYS = AI_KEYS | {"DJANGO_ALLOWED_HOSTS"}
 
 
 def load_env_file(path: Path) -> None:
@@ -23,5 +25,5 @@ def load_env_file(path: Path) -> None:
         if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
             value = value[1:-1]
         # An empty line like "ANTHROPIC_API_KEY=" in the template sets nothing.
-        if name in AI_KEYS and value:
+        if name in LOCAL_KEYS and value:
             os.environ.setdefault(name, value)

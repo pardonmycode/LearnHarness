@@ -6,6 +6,8 @@ from PyQt6.QtCore import QByteArray
 from PyQt6.QtWidgets import QDialog, QHBoxLayout, QMessageBox, QSplitter
 
 from learnharness_client import design
+from learnharness_client.net.http_tutor_client import HttpTutorClient
+from learnharness_client.net.http_tutor_client.helpers import same_server
 
 from ...texts import T
 from ..dialogs.backup_dialog import BackupDialog
@@ -81,9 +83,19 @@ class WindowDialogs:
     def show_teacher_area(self) -> None:
         if not unlock_teacher_area(self.settings, self):
             return
-        dialog = TeacherDialog(self.settings, self.student_profile.profile_id, self)
+        dialog = TeacherDialog(
+            self.settings, self.student_profile.profile_id, self, server_url=self.server_url
+        )
         dialog.level_changed.connect(self._teacher_level_changed)
         dialog.exec()
+        self._use_device_token()
+
+    def _use_device_token(self) -> None:
+        """A PC approved just now: the learning helper uses the new access without a restart."""
+        if isinstance(self.tutor_client, HttpTutorClient) and same_server(
+            self.server_url, self.settings.admin_url
+        ):
+            self.tutor_client.token = self.settings.admin_token.strip()
 
     def _teacher_level_changed(self, profile_id: str, level: int) -> None:
         if profile_id == self.student_profile.profile_id:

@@ -5,7 +5,7 @@
       "description": "One question of the helper about the project and the child's answer.",
       "properties": {
         "protocol_version": {
-          "default": "1.12",
+          "default": "1.13",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -33,7 +33,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.12",
+          "default": "1.13",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -76,7 +76,7 @@
       "description": "The scene the open script belongs to, as far as the AI needs it.",
       "properties": {
         "protocol_version": {
-          "default": "1.12",
+          "default": "1.13",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -129,7 +129,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.12",
+          "default": "1.13",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -191,7 +191,7 @@
   "additionalProperties": false,
   "properties": {
     "protocol_version": {
-      "default": "1.12",
+      "default": "1.13",
       "title": "Protocol Version",
       "type": "string"
     },

@@ -8,6 +8,7 @@ from typing import Any, cast
 
 from pydantic import TypeAdapter
 
+from .devices import DeviceRequestCreate, DeviceRequestStatus
 from .exercises import Exercise, ReviewResult, Submission
 from .health import HealthStatus
 from .messages import LearningResponse, SessionCreate, StudentMessage
@@ -23,6 +24,8 @@ def export_schemas(destination: Path) -> None:
         "child_profile": ChildProfile.model_json_schema(),
         "child_profile_list": ChildProfileList.model_json_schema(),
         "child_profile_update": ChildProfileUpdate.model_json_schema(),
+        "device_request": DeviceRequestCreate.model_json_schema(),
+        "device_request_status": DeviceRequestStatus.model_json_schema(),
         "exercise": exercise_adapter.json_schema(),
         "health_status": HealthStatus.model_json_schema(),
         "learning_response": LearningResponse.model_json_schema(),

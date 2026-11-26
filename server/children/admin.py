@@ -10,6 +10,7 @@ from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
 
+from .device_admin import DeviceRequestAdmin  # noqa: F401 - registers „Wartende Geräte“
 from .models import (
     ApiClient,
     Child,

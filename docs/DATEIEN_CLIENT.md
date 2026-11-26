@@ -75,6 +75,7 @@ Die App auf dem Rechner des Kindes. Die Beschreibung ist jeweils der Kopfkomment
 |---|---|
 | [__init__.py](../client/src/learnharness_client/net/__init__.py) | Learning-server clients. |
 | [admin_client.py](../client/src/learnharness_client/net/admin_client.py) | HTTP client for the central administration (Django server in server/). |
+| [device_pairing.py](../client/src/learnharness_client/net/device_pairing.py) | Asks the administration for access and waits until a teacher approves this PC. |
 | [connection_monitor.py](../client/src/learnharness_client/net/connection_monitor.py) | Periodic health checks without blocking editor work. |
 | [tutor_client.py](../client/src/learnharness_client/net/tutor_client.py) | Qt signal-based interface shared by fake and network tutor clients. |
 

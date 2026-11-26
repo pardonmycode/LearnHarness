@@ -46,7 +46,9 @@ Der Server ist ein Django-Projekt mit zwei Apps:
 |---|---|
 | [`models/child.py`](../server/children/models/child.py) | Kind, Fähigkeiten, Verlauf |
 | [`models/missions.py`](../server/children/models/missions.py) | Missionen der Lehrkraft |
-| [`models/devices.py`](../server/children/models/devices.py) | Geräte-Tokens |
+| [`models/devices.py`](../server/children/models/devices.py) | Geräte-Tokens und wartende Geräte |
+| [`device_api.py`](../server/children/device_api.py) | Ein PC fragt ohne Token einen Zugang an |
+| [`device_admin.py`](../server/children/device_admin.py) | „Wartende Geräte“: genehmigen oder ablehnen |
 | [`models/common.py`](../server/children/models/common.py) | Gruppen, Stufen, Validatoren |
 | [`api.py`](../server/children/api.py) | JSON-API für die App |
 | [`admin.py`](../server/children/admin.py) | Django-Admin |

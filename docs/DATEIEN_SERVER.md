@@ -16,6 +16,8 @@ Lernserver und zentrale Verwaltung. Die Beschreibung ist jeweils der Kopfkomment
 |---|---|
 | [admin.py](../server/children/admin.py) | Teacher administration: groups, children, skills, missions and API access tokens. |
 | [api.py](../server/children/api.py) | JSON API for the learning app and the AI learning server. |
+| [device_admin.py](../server/children/device_admin.py) | „Wartende Geräte“: PCs that asked for access, approved or rejected with one click. |
+| [device_api.py](../server/children/device_api.py) | A PC asks for access without a token; a teacher approves it under „Wartende Geräte“. |
 | [apps.py](../server/children/apps.py) |  |
 | [urls.py](../server/children/urls.py) |  |
 
@@ -32,7 +34,7 @@ Lernserver und zentrale Verwaltung. Die Beschreibung ist jeweils der Kopfkomment
 | [__init__.py](../server/children/models/__init__.py) | Central data: groups, pseudonymous children, their skills and API access tokens. |
 | [child.py](../server/children/models/child.py) | A child with skills and history. |
 | [common.py](../server/children/models/common.py) | Levels, ids and validators shared by the models. |
-| [devices.py](../server/children/models/devices.py) | Device tokens. |
+| [devices.py](../server/children/models/devices.py) | Device tokens and PCs waiting for approval. |
 | [missions.py](../server/children/models/missions.py) | Missions the teacher assigns. |
 
 ## `server/children/views/`

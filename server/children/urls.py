@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import api
+from . import api, device_api
 
 urlpatterns = [
     path("children/", api.children, name="children"),
@@ -12,6 +12,12 @@ urlpatterns = [
         "children/<str:profile_id>/missions/<str:mission_id>/done/",
         api.child_mission_done,
         name="child-mission-done",
+    ),
+    path("devices/requests/", device_api.create_request, name="device-requests"),
+    path(
+        "devices/requests/<str:request_id>/",
+        device_api.request_status,
+        name="device-request-status",
     ),
     path("missions/", api.missions, name="missions"),
     path("missions/<str:mission_id>/", api.mission_detail, name="mission-detail"),

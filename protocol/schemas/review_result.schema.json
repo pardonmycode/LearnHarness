@@ -4,7 +4,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.12",
+          "default": "1.13",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -43,7 +43,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.12",
+          "default": "1.13",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -95,7 +95,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.12",
+          "default": "1.13",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -147,7 +147,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.12",
+          "default": "1.13",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -179,7 +179,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.12",
+          "default": "1.13",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -207,7 +207,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.12",
+          "default": "1.13",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -244,7 +244,7 @@
       "description": "Changes to one scene file; the client applies them in this order.",
       "properties": {
         "protocol_version": {
-          "default": "1.12",
+          "default": "1.13",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -307,7 +307,7 @@
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
-          "default": "1.12",
+          "default": "1.13",
           "title": "Protocol Version",
           "type": "string"
         },
@@ -347,7 +347,7 @@
   "additionalProperties": false,
   "properties": {
     "protocol_version": {
-      "default": "1.12",
+      "default": "1.13",
       "title": "Protocol Version",
       "type": "string"
     },

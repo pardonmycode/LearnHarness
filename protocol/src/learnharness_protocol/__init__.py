@@ -1,6 +1,7 @@
 """Validated messages shared by the LearnHarness client and server."""
 
 from .base import PROTOCOL_VERSION
+from .devices import DeviceRequestCreate, DeviceRequestStatus
 from .exercises import (
     Blank,
     Choice,
@@ -56,6 +57,8 @@ __all__ = [
     "Choice",
     "CodeSubmission",
     "ConnectSignal",
+    "DeviceRequestCreate",
+    "DeviceRequestStatus",
     "DisconnectSignal",
     "ErrorMessage",
     "Exercise",

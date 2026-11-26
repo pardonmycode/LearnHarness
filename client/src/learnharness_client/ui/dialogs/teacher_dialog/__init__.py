@@ -32,9 +32,12 @@ class TeacherDialog(QDialog):
 
     level_changed = pyqtSignal(str, int)  # profile_id, max unlocked level
 
-    def __init__(self, settings: AppSettings, current_profile_id: str, parent=None) -> None:
+    def __init__(
+        self, settings: AppSettings, current_profile_id: str, parent=None, *, server_url: str = ""
+    ) -> None:
         super().__init__(parent)
         self.settings = settings
+        self.server_url = server_url  # suggested as the administration's address
         self.current_profile_id = current_profile_id
         self.setWindowTitle(T.TEACHER_TITLE)
         self.resize(*design.TEACHER_DIALOG_SIZE)
@@ -176,7 +179,7 @@ class TeacherDialog(QDialog):
         self.refresh()
 
     def _open_admin(self) -> None:
-        AdminDialog(self.settings, self).exec()
+        AdminDialog(self.settings, self, suggested_url=self.server_url).exec()
         self.refresh()
         profile_id = self.current_profile_id
         self.level_changed.emit(profile_id, self.settings.max_unlocked_learning_level(profile_id))
