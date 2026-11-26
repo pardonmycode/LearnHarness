@@ -19,6 +19,8 @@ python -m learnharness_client.teststand
 ```
 
 1. Anbieter wählen: **Claude** (API-Schlüssel, Modell, Denkaufwand) oder **vLLM** (Adresse, Modell).
+   Bei vLLM darf das Modell leer bleiben: Der Teststand nimmt immer das erste Modell, das der
+   vLLM-Server meldet, und trägt es nach „Verbindung testen“ ins Feld ein.
 2. **Verbindung testen** prüft, ob die KI antwortet.
 3. **Starten** richtet den Lernserver ein und öffnet die App. Beim ersten Mal legst du dort ein
    Profil an und öffnest ein Projekt.

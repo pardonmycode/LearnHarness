@@ -15,7 +15,7 @@ from learnharness_protocol import SceneContext, SceneNode, StudentMessage
 
 from . import harness
 from .models import AiSettings
-from .providers import connection_problem, model_available
+from .providers import adopt_first_model, connection_problem, model_available
 
 INTENT_LABELS = {
     "chat": "Tutor-Chat",
@@ -127,6 +127,7 @@ def prompt_overview(request: HttpRequest) -> HttpResponse:
 @require_POST
 def test_connection(request: HttpRequest) -> HttpResponse:
     settings = AiSettings.load()
+    adopted = adopt_first_model(settings)  # a local vLLM: always its first model
     ok, latency = model_available(force=True)
     problem = connection_problem(settings)
     if problem:
@@ -135,7 +136,8 @@ def test_connection(request: HttpRequest) -> HttpResponse:
         messages.success(
             request,
             f"{settings.get_provider_display()} mit „{settings.active_model}“ erreichbar "
-            f"({latency} ms).",
+            f"({latency} ms)."
+            + (" Das Modell wurde vom vLLM-Server übernommen." if adopted else ""),
         )
     else:
         messages.error(

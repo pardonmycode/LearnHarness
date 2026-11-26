@@ -7,7 +7,7 @@ from typing import Any
 from django.core.management.base import BaseCommand, CommandError
 
 from tutor.models import AiSettings
-from tutor.providers import ProviderError, connection_problem, get_provider
+from tutor.providers import ProviderError, adopt_first_model, connection_problem, get_provider
 
 
 class Command(BaseCommand):
@@ -15,6 +15,11 @@ class Command(BaseCommand):
 
     def handle(self, *args: Any, **options: Any) -> None:
         settings = AiSettings.load()
+        if settings.provider == AiSettings.Provider.VLLM and adopt_first_model(settings) is None:
+            raise CommandError(
+                f"Der vLLM-Server unter {settings.vllm_base_url} antwortet nicht oder bietet "
+                "kein Modell an. Stimmt die Adresse, und läuft vLLM?"
+            )
         problem = connection_problem(settings)
         if problem:
             raise CommandError(problem)

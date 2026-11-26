@@ -35,6 +35,7 @@ LINKS = (
     ("Prompt-Übersicht", "/ki/prompts/"),
     ("Kinder und Stufen", "/admin/children/child/"),
 )
+CHECK_OK = "Verbindung klappt: "  # first words of teststand_check on success
 
 
 class TeststandWindow(QMainWindow):
@@ -63,7 +64,7 @@ class TeststandWindow(QMainWindow):
             self.anthropic_effort.addItem(label, key)
         self.vllm_url = QLineEdit()
         self.vllm_model = QLineEdit()
-        self.vllm_model.setPlaceholderText("z. B. Qwen/Qwen2.5-Coder-14B-Instruct")
+        self.vllm_model.setPlaceholderText("leer lassen: das erste Modell des Servers")
         self.vllm_key = self._secret("nur falls dein vLLM einen Schlüssel verlangt")
         self.pages.addWidget(
             self._page(
@@ -198,6 +199,11 @@ class TeststandWindow(QMainWindow):
 
     def _checked(self, ok: bool, text: str) -> None:
         last = text.strip().splitlines()[-1] if text.strip() else ""
+        model = last.removeprefix(CHECK_OK) if ok and last.startswith(CHECK_OK) else ""
+        if model and self.provider.currentData() == "vllm":
+            # The server took the first model of vLLM; show it, so the form says what runs.
+            self.vllm_model.setText(model)
+            stand_config.save(self.read_form(), self.data_dir)
         self.status.setText(("✓ " if ok else "Fehler: ") + (last or "keine Antwort"))
 
     def _open(self, path: str) -> None:

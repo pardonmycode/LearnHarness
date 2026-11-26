@@ -43,13 +43,17 @@ def test_key_goes_into_the_environment_not_the_arguments(tmp_path: Path) -> None
     assert not any("geheim" in argument for argument in arguments)
     vllm = TeststandConfig(provider="vllm", vllm_model="qwen", vllm_url="http://h:8001/v1")
     assert "--vllm-url=http://h:8001/v1" in stand_config.prepare_arguments(vllm)
+    assert "--model=qwen" in stand_config.prepare_arguments(vllm)
+    empty = TeststandConfig(provider="vllm", vllm_model="")
+    assert not any(a.startswith("--model") for a in stand_config.prepare_arguments(empty))
     assert "ANTHROPIC_API_KEY" not in stand_config.server_environment(vllm, tmp_path)
 
 
 @pytest.mark.parametrize(
     ("config", "problem"),
     [
-        (TeststandConfig(provider="vllm", vllm_model=""), "Modellnamen"),
+        (TeststandConfig(provider="vllm", vllm_model=""), None),
+        (TeststandConfig(provider="anthropic", anthropic_model=""), "Modellnamen"),
         (TeststandConfig(provider="vllm", vllm_model="m", vllm_url=""), "Adresse"),
         (TeststandConfig(provider="vllm", vllm_model="m"), None),
         (TeststandConfig(anthropic_key="k"), None),

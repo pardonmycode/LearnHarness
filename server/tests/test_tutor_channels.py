@@ -86,9 +86,15 @@ def test_admin_settings_prompts_and_log(
     assert prompts.status_code == 200
     assert "Lernstufe 7 von 10" in html and "LearnAgent-Runde" in html
 
+    monkeypatch.setattr("tutor.views.adopt_first_model", lambda settings: None)
     monkeypatch.setattr("tutor.views.model_available", lambda force=False: (False, 5))
     tested = teacher.post("/ki/verbindung-testen/", follow=True)
     assert "nicht erreichbar" in tested.content.decode()
+
+    monkeypatch.setattr("tutor.views.adopt_first_model", lambda settings: "qwen")
+    monkeypatch.setattr("tutor.views.model_available", lambda force=False: (True, 7))
+    tested = teacher.post("/ki/verbindung-testen/", follow=True)
+    assert "vom vLLM-Server übernommen" in tested.content.decode()
 
     call = AiCall.objects.create(
         session=session,

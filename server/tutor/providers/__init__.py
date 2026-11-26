@@ -26,6 +26,7 @@ __all__ = [
     "Provider",
     "ProviderError",
     "Usage",
+    "adopt_first_model",
     "connection_problem",
     "get_provider",
     "model_available",
@@ -54,6 +55,27 @@ def get_provider(settings: AiSettings | None = None) -> Provider:
     )
 
 
+def adopt_first_model(settings: AiSettings) -> str | None:
+    """Connection test of a local vLLM: the first model the server names becomes the model.
+
+    None when the server cannot be reached or offers no model; then nothing changes."""
+    if settings.provider != AiSettings.Provider.VLLM:
+        return None
+    provider = OpenAICompatibleProvider(
+        settings.provider,
+        settings.vllm_model,
+        settings.max_output_tokens,
+        settings.vllm_base_url,
+        AiSettings.api_key(settings.provider),
+        timeout=MODEL_LIST_TIMEOUT,
+    )
+    first = provider.first_model()
+    if first and first != settings.vllm_model:
+        settings.vllm_model = first
+        settings.save()
+    return first
+
+
 def connection_problem(settings: AiSettings) -> str | None:
     """For the admin's connection test: why Claude cannot answer, in plain words."""
     if settings.provider != AiSettings.Provider.ANTHROPIC:
@@ -66,6 +88,7 @@ def connection_problem(settings: AiSettings) -> str | None:
 
 
 PING_CACHE_SECONDS = 60
+MODEL_LIST_TIMEOUT = 5  # a vLLM that is down must not block the test stand for minutes
 
 
 def model_available(force: bool = False) -> tuple[bool, int | None]:

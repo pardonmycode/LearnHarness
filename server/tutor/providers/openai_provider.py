@@ -11,7 +11,14 @@ from .base import Message, Provider, ProviderError, Usage
 
 class OpenAICompatibleProvider(Provider):
     def __init__(
-        self, provider: str, model: str, max_tokens: int, base_url: str | None, api_key: str
+        self,
+        provider: str,
+        model: str,
+        max_tokens: int,
+        base_url: str | None,
+        api_key: str,
+        *,
+        timeout: float = 90,
     ) -> None:
         super().__init__(provider, model, max_tokens)
         import openai
@@ -19,7 +26,7 @@ class OpenAICompatibleProvider(Provider):
         self._openai = openai
         # vLLM accepts any key unless started with --api-key.
         self.client = openai.OpenAI(
-            base_url=base_url, api_key=api_key or "EMPTY", timeout=90, max_retries=1
+            base_url=base_url, api_key=api_key or "EMPTY", timeout=timeout, max_retries=1
         )
 
     def _limit(self) -> dict[str, int]:
@@ -66,6 +73,13 @@ class OpenAICompatibleProvider(Provider):
         if choice.finish_reason == "length":
             raise ProviderError("Antwort abgeschnitten (Höchstlänge erreicht)")
         return choice.message.content
+
+    def first_model(self) -> str | None:
+        """The first model the server offers; a local vLLM usually serves exactly one."""
+        try:
+            return next((item.id for item in self.client.models.list() if item.id), None)
+        except self._openai.APIError:
+            return None
 
     def ping(self) -> bool:
         try:

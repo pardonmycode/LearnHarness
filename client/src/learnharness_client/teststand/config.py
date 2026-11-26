@@ -31,7 +31,8 @@ class TeststandConfig:
 
     def problem(self) -> str | None:
         """What is missing before the stand can start, in plain words."""
-        if not self.model.strip():
+        # vLLM may leave it empty: the stand takes the first model the server offers.
+        if self.provider == "anthropic" and not self.model.strip():
             return "Bitte trage einen Modellnamen ein."
         claude_key = self.anthropic_key.strip() or os.environ.get("ANTHROPIC_API_KEY")
         if self.provider == "anthropic" and not claude_key:
@@ -89,11 +90,9 @@ def server_environment(config: TeststandConfig, data_dir: Path = DATA_DIR) -> di
 
 
 def prepare_arguments(config: TeststandConfig) -> list[str]:
-    arguments = [
-        f"--provider={config.provider}",
-        f"--model={config.model.strip()}",
-        f"--admin-password={config.admin_password}",
-    ]
+    arguments = [f"--provider={config.provider}", f"--admin-password={config.admin_password}"]
+    if config.model.strip():
+        arguments.append(f"--model={config.model.strip()}")
     if config.provider == "anthropic":
         arguments.append(f"--effort={config.anthropic_effort}")
     else:
